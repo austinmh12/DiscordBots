@@ -40,17 +40,17 @@
  * sheesha
 
 #### sheesh
- This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It displays the original sender at the very end of the message.
+ This command replaces the message of the user who called it with ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It displays the original sender at the very end of the message.
 
  **usage:** `.sheesh (es (4)) (user (None))`
 
 #### sheesha
- This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It doesn't say who sent the message to remain anonymous.
+ This command replaces the message of the user who called it with ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It doesn't say who sent the message to remain anonymous.
 
  **usage:** `.sheesha (es (4)) (user (None))`
 
 ### Waifus Cog
- This Cog provides the bot with a number of functions that parse the messages sent by MudaeBot to extract remaining times until a user can use a command again. It then periodically will send reminders mentioning users that have 5 minutes until they can use the command again. It has no commands itself, instead it just listens.
+ This cog provides the bot with a number of functions that parse the messages sent by MudaeBot to extract remaining times until a user can use a command again. It then periodically will send reminders mentioning users that have 5 minutes until they can use the command again. It has no commands itself, instead it just listens.
 
 ### Pokemons Cog
  Much like the Waifus cog, this does the same, but listens for the pokemon minigame from the MudaeBot. In addition, it also has commands to show a player's _bOofs_, which is when a player rolled 0 pokemon in the pokeslots.
@@ -84,3 +84,130 @@
  This command is only runnable by me and removes boofs from the mentioned user as the listener sometimes adds multiple boofs if the MudaeBot hits the Discord message rate limit while the player keeps rolling.
 
  **usage:** `.remove_boofs <amount> (user (None))`
+
+### Minecraft Cog
+ This cog allowed anyone in the server to add and remove mods and start and stop the minecraft server as I had the spare resources on my PC to run it and the best internet of the group, but wasn't always available to add things for them. Later I added the ability for people in the server to run certain commands as if they were ops, but without opping them in the server (for no reason other than why not?)
+
+ **Command List**
+ * add_mod
+ * remove_mod
+ * list_mods
+ * start
+ * stop
+ * restart
+ * status
+ * tp
+ * list
+ * weather
+ * clear
+ * rain
+ * thunder
+ * time
+ * day
+ * night
+ * midnight
+ * noon
+ * say
+
+#### add_mod
+ This command allowed a user to upload a mod to the mods folder of the server (in hindsight this is a terrible idea).
+
+ **usage:** `.add_mod` when uploading a .jar file
+
+ _aliases: .am_
+
+#### remove_mod
+ This command allowed a user to delete a mod from the server (also a terrible idea, since there's no voting or confirmation).
+
+ **usage:** `.remove_mod <mod name>`
+
+ _aliases: .rm_
+
+#### list_mods
+ This command lists the mods that the server currently has.
+
+ **usage:** `.list_mods`
+
+ _aliases: .lm_
+
+#### start
+ Starts the minecraft server.
+
+ **usage:** `.start`
+
+#### stop
+ Stops the minecraft server.
+
+ **usage:** `.stop`
+
+#### restart
+ Restarts the server by calling stop and then start.
+
+ **usage:** `.restart`
+
+#### status
+ Returns the status of the server, whether it's online or offline.
+
+ **usage:** `.status`
+
+#### tp
+ Passes the tp command to the minecraft server.
+
+ **usage:** `.tp <minecraft player name> <x coord or another minecraft player name> (y coord) (z coord)`
+
+#### list
+ Lists the players that are currently online in the minecraft server.
+
+ **usage:** `.list`
+
+ _aliases: .online_
+
+#### weather
+ Passes the weather command to the minecraft server.
+
+ **usage:** `.weather <type> (duration (120))`
+
+#### clear
+ A shortcut to using .weather clear
+
+ **usage:** `.clear (duration (120))`
+
+#### rain
+ A shortcut to using .weather rain
+
+ **usage:** `.rain (duration (120))`
+
+#### thunder
+ A shortvut to using .weather thunder
+
+ **usage:** `.thunder (duration (120))`
+
+#### time
+ Passes the time command to the minecraft server
+
+ **usage:** `.time <set or add> <amt>`
+
+#### day
+ A shortcut to using .time set day
+
+ **usage:** `.day`
+
+#### night
+ A shortcut to using .time set night
+
+ **usage:** `.night`
+
+#### midnight
+ A shortcut to using .time set midnight
+
+ **usage:** `.midnight`
+
+#### noon
+ A shortcut to using .time set noon
+
+ **usage:** `.noon`
+
+#### say
+ Allows for discord messages to be sent to the minecraft server using the minecraft say command and appears in minecraft as `discord nickname: message`
+
+ **usage:** `.say <message>`
