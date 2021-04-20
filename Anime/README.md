@@ -211,3 +211,368 @@
  Allows for discord messages to be sent to the minecraft server using the minecraft say command and appears in minecraft as `discord nickname: message`
 
  **usage:** `.say <message>`
+
+### PokeRoulette Cog
+ This cog is my own Pokemon Roulette game. Players roll for pokemon of varying rarities, release them for pokecash, then use that cash to buy upgrades. It also allowed users to create parties, battle trainers, gyms, and the elite four, and participate in raids to earn mega-evolved pokemon.
+
+ **Command List**
+ * boofs
+ * boofleaderboard
+ * pokeroll
+ * pokecashrelease
+ * pokecashautorelease
+ * pokedex
+ * pokeserver
+ * stats
+ * timers
+ * pokemart
+ * pokerollall
+ * trade
+ * safarizone
+ * daily
+ * pkmn
+ * reminder
+ * gift
+ * badge
+ * badge all
+ * ditto
+ * achievements
+ * pokehunt
+ * options
+ * stars
+ * party
+ * party clear
+ * battle
+ * daycare
+ * daycare claim
+ * savelist
+ * savelist clear
+ * gym
+ * elitefour
+ * pokebox
+ * wondertrade
+ * saveparty
+ * saveparty save
+ * saveparty load
+ * saveparty delete
+ * raid
+ * raid join
+ * raid quit
+ * raid start
+ * missing
+ * favourite
+
+#### boofs
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### boofleaderboard
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokeroll
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokecashrelease
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokecashautorelease
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokedex
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokeserver
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### stats
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### timers
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokemart
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokerollall
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### trade
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### safarizone
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### daily
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pkmn
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### reminder
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### gift
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### badge
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### badge all
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### ditto
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### achievements
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokehunt
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### options
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### stars
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### party
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### party clear
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### battle
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### daycare
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### daycare claim
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### savelist
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### savelist clear
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### gym
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### elitefour
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### pokebox
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### wondertrade
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### saveparty
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### saveparty save
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### saveparty load
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### saveparty delete
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### raid
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### raid join
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### raid quit
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### raid start
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### missing
+
+
+ **usage:** ``
+
+ _aliases: _
+
+#### favourite
+
+
+ **usage:** ``
+
+ _aliases: _
