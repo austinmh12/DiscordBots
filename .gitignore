@@ -12,6 +12,7 @@ __pycache__/
 
 # Changelogs
 *.txt
+*.diff
 
 # Minecraft stuff
 .mixin.out/
@@ -25,3 +26,6 @@ world/
 *.json
 *.jar
 server.properties
+
+# Temporary values
+tmp.*
