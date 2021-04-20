@@ -25,7 +25,7 @@ stream_format = logging.Formatter('[%(asctime)s - %(levelname)s] %(message)s')
 stream_handler.setFormatter(stream_format)
 log.addHandler(stream_handler)
 
-TOKEN = 'NjU2NzA4Nzk1NDkzNTE1MjY0.Xfmlyw.cqNhT8WZLfjfGOb_HFYbjeDVe4E'
+
 
 ECCHI_ID = 656320518458441728
 Austin_weeb_id = 686702534290964483
