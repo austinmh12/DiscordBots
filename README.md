@@ -1,6 +1,9 @@
 # DiscordBots
  A repository for all my Discord bots. Each bot has a more in-depth description of it and it's commands in its folder. Each folder contains (generally) a bot, and AustinBot contains all of the bots as cogs that can be registered to a guild.
 
+ Each bot's README will be split into cogs and each section will have a command list, and then a detailed list of the commands. Each command will have a **usage:** in it which uses the following notation:
+ `.command <required argument> (optional argument (default value))`
+
 ## Anime
  A discord bot that went through registered subreddits and downloaded images and uploaded them to discord, splitting them between SFW and NSFW channels. 
 
