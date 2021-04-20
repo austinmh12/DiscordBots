@@ -153,7 +153,7 @@
 #### tp
  Passes the tp command to the minecraft server.
 
- **usage:** `.tp <minecraft player name> <x coord or another minecraft player name> (y coord) (z coord)`
+ **usage:** `.tp <minecraft player name> <x coord or another minecraft player name> (y coord if x coord used) (z coord if x coord used)`
 
 #### list
  Lists the players that are currently online in the minecraft server.
