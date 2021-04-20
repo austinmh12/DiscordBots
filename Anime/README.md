@@ -40,14 +40,14 @@
  * sheesha
 
 #### sheesh
- This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "e"'s between 4 and 1900. It can also mention another user. It displays the original sender at the very end of the message.
+ This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It displays the original sender at the very end of the message.
 
  **usage:** `.sheesh (es (4)) (user (None))`
 
 #### sheesha
- This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "e"'s between 4 and 1900. It can also mention another user. It doesn't say who sent the message to remain anonymous.
+ This command replaces the message of the user who called it will ***SHEEeeee***eeesh, with a variable number of "***e***"'s between 4 and 1900. It can also mention another user. It doesn't say who sent the message to remain anonymous.
 
- **usage:** `.sheesh (es (4)) (user (None))`
+ **usage:** `.sheesha (es (4)) (user (None))`
 
 ### Waifus Cog
  This Cog provides the bot with a number of functions that parse the messages sent by MudaeBot to extract remaining times until a user can use a command again. It then periodically will send reminders mentioning users that have 5 minutes until they can use the command again. It has no commands itself, instead it just listens.
@@ -78,9 +78,9 @@
 #### add_boofs
  This command is only runnable by me and adds boofs to the mentioned user as the listener sometimes misses messages if they go to fast.
 
- **usage:** `.add_boofs <amount> (user (None))
+ **usage:** `.add_boofs <amount> (user (None))`
 
 #### remove_boofs
  This command is only runnable by me and removes boofs from the mentioned user as the listener sometimes adds multiple boofs if the MudaeBot hits the Discord message rate limit while the player keeps rolling.
 
- **usage:** `.remove_boofs <amount> (user (None))
+ **usage:** `.remove_boofs <amount> (user (None))`
