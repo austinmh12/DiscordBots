@@ -12,3 +12,16 @@ __pycache__/
 
 # Changelogs
 *.txt
+
+# Minecraft stuff
+.mixin.out/
+config/
+crash-reports/
+defaultconfigs/
+libraries/
+logs/
+mods/
+world/
+*.json
+*.jar
+server.properties
