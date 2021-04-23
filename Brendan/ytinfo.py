@@ -1,0 +1,9 @@
+device_auth = r.post(f'https://accounts.google.com/o/oauth2/device/code?client_id=clid&scope={sc}')
+dc = resp.json().get('device_code')
+vrl = resp.json().get('verification_url')
+uc = resp.json().get('user_code')
+token_ping = r.get(f'https://oauth2.googleapis.com/token?client_id=1079641881917-ha6tm479pficelokcbhevh2i5ivr6ntk.apps.googleusercontent.com&client_secret=s4_6jRTsdJv_Mi6ESBACB4Xg&code={dc}&grant_type=http://oauth.net/grant_type/device/1.0')
+scopes = 'https://www.googleapis.com/auth/youtube'
+uploads = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ytapik}&id={bwbid}&part=contentDetails')
+bwbupid = uploads.json().get('items')[0].get('contentDetails').get('relatedPlaylists').get('uploads')
+upload_items = r.get(f'https://www.googleapis.com/youtube/v3/playlistItems?key={ytapik}&part=contentDetails&playlistId={bwbupid}')

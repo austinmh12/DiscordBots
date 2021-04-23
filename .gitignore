@@ -29,3 +29,5 @@ server.properties
 
 # Temporary values
 tmp.*
+
+TestBot/test_cogs/rsc/
