@@ -17,7 +17,6 @@ log.addHandler(stream_handler)
 SCRIPT_PATH = 'S:/OldPC/Python/Bots/DnD/dnd.py'
 SCRIPT_MTIME = getmtime(SCRIPT_PATH)
 
-TOKEN = 'NTkyNTA5MDY0OTk1NTM2OTA5.XRAXcA.5Mu6HAuQzUxdTwX4knU46E0y0d0'
 
 dnd = Bot(command_prefix=commands.when_mentioned_or('!'))
 
