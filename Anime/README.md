@@ -388,7 +388,7 @@
 
  _aliases: _
 
-#### badge all
+##### badge all
 
 
  **usage:** ``
@@ -437,7 +437,7 @@
 
  _aliases: _
 
-#### party clear
+##### party clear
 
 
  **usage:** ``
@@ -458,7 +458,7 @@
 
  _aliases: _
 
-#### daycare claim
+##### daycare claim
 
 
  **usage:** ``
@@ -472,7 +472,7 @@
 
  _aliases: _
 
-#### savelist clear
+##### savelist clear
 
 
  **usage:** ``
@@ -514,21 +514,21 @@
 
  _aliases: _
 
-#### saveparty save
+##### saveparty save
 
 
  **usage:** ``
 
  _aliases: _
 
-#### saveparty load
+##### saveparty load
 
 
  **usage:** ``
 
  _aliases: _
 
-#### saveparty delete
+##### saveparty delete
 
 
  **usage:** ``
@@ -542,21 +542,21 @@
 
  _aliases: _
 
-#### raid join
+##### raid join
 
 
  **usage:** ``
 
  _aliases: _
 
-#### raid quit
+##### raid quit
 
 
  **usage:** ``
 
  _aliases: _
 
-#### raid start
+##### raid start
 
 
  **usage:** ``
