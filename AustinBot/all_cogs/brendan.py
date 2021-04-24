@@ -32,7 +32,7 @@ class BrendanCog(commands.Cog):
 
 	@commands.Cog.listener()
 	async def on_message(self, msg):
-		if msg.channel.id != brendans_channel or msg.author == self.bot.user:
+		if msg.channel.id != brendans_channel or msg.author == self.bot.user or msg.author.id == brendans_id:
 			return
 
 		if brendans_id in [m.id for m in msg.mentions]:
