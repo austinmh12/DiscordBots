@@ -9,6 +9,7 @@ import discord
 import logging
 import sys
 import typing
+from all_cogs.brendan import BrendanCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -29,6 +30,8 @@ client = Bot(command_prefix=commands.when_mentioned_or('.'), intents=intents, he
 @client.event
 async def on_ready():
 	log.info('Client is ready.')
+	# for ch in client.get_all_channels():
+	# 	log.debug(f'{ch.name} - {ch.id}')
 
 @client.event
 async def on_reaction_add(r, u):
@@ -96,4 +99,5 @@ async def check_for_changes():
 		await asyncio.sleep(1)
 
 client.loop.create_task(check_for_changes())
+client.add_cog(BrendanCog(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)

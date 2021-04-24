@@ -1,0 +1,57 @@
+import logging
+import json
+from datetime import datetime as dt, timedelta as td
+from discord.ext import commands
+from discord import Member, Embed, Colour, File
+import asyncio
+import requests as r
+import os, sys
+from os.path import getmtime
+from random import choice
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+stream_format = logging.Formatter('[%(asctime)s - %(name)s - %(levelname)s] %(message)s')
+stream_handler.setFormatter(stream_format)
+log.addHandler(stream_handler)
+
+# Version
+version = '0.0.0'
+
+# Constants
+brendans_channel = 587447130474414086
+brendans_id = 311306843718942740
+
+# Utility Functions
+
+
+class BrendanCog(commands.Cog):
+	def __init__(self, bot):
+		self.bot = bot
+
+	@commands.Cog.listener()
+	async def on_message(self, msg):
+		if msg.channel.id != brendans_channel or msg.author == self.bot.user:
+			return
+
+		if brendans_id in [m.id for m in msg.mentions]:
+			log.info('Brendan is already mentioned.')
+			return
+
+		atch = msg.attachments[0] if msg.attachments else None
+		if atch:
+			resp = r.get(atch.url)
+			ext = atch.filename.split('.')[-1]
+			with open(f'tmp.{ext}', 'wb') as f:
+				f.write(resp.content)
+			file = discord.File(f'tmp.{ext}')
+		at_d_msg = f'<@{brendans_id}> ' + msg.content
+		await msg.delete()
+		if atch:
+			await msg.channel.send(at_d_msg, file=file)
+			await asyncio.sleep(2)
+			file.close()
+			os.remove(f'tmp.{ext}')
+		else:
+			await msg.channel.send(at_d_msg)
