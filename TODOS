@@ -12,6 +12,8 @@ TODOS
 			- Adjust or remove badge rewards
 			- Add gigantimax pokemon as 9 star pokemon
 				- Add new raid difficulty for this
+			- Create function to integrate with Google Drive to backup database
+				- Check if a backup exists when initialising
 
 	Brendan
 		- Convert from individual bot to cog
