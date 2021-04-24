@@ -88,6 +88,8 @@
 ### Minecraft Cog
  This cog allowed anyone in the server to add and remove mods and start and stop the minecraft server as I had the spare resources on my PC to run it and the best internet of the group, but wasn't always available to add things for them. Later I added the ability for people in the server to run certain commands as if they were ops, but without opping them in the server (for no reason other than why not?)
 
+ Honestly of all the bots that I've made, this is probably my most impressive one and the one I'm most proud of. It seems like a small thing, but shoving the Minecraft server.jar into a process within the bot was no small task. The main reason being that once you'd start the server.jar file, the bot would no longer respond to commands, thus rendering all the commands useless.
+
  **Command List**
  * add_mod
  * remove_mod
@@ -215,6 +217,8 @@
 ### PokeRoulette Cog
  This cog is my own Pokemon Roulette game. Players roll for pokemon of varying rarities, release them for pokecash, then use that cash to buy upgrades. It also allowed users to create parties, battle trainers, gyms, and the elite four, and participate in raids to earn mega-evolved pokemon.
 
+ I love this little game, and it's my most repository with the most commits. I think I went live in my discord server on version 0.0.7 when I implemented rolling, and now it's on version 3.1.3. This is still in active development but I've taken a small break to reorganise my bots into this folder and to come up with solutions to problems that the game currently faces.
+
  **Command List**
  * boofs
  * boofleaderboard
@@ -263,316 +267,280 @@
  * favourite
 
 #### boofs
+ Shows the total boofs for the player or the player mentioned in the command. 
 
+ **usage:** `.boofs (user (None))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .b_
 
 #### boofleaderboard
+ Shows the leaderboard of player boofs and shows the player who ran the command's rank.
 
+ **usage:** `.boofleaderboard`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .bl_
 
 #### pokeroll
+ Rolls the pokemon roulette for the player that called the command.
 
+ **usage:** `.pokeroll`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .p_
 
 #### pokecashrelease
+ Releases a pokemon that the player owns for pokecash based on its rarity.
 
+ **usage:** `.pokecashrelease <pokemon>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .pr, .p_
 
 #### pokecashautorelease
+ Automatically releases any duplicate pokemon a player owns for pokecash of the passed rarity or lower.
 
+ **usage:** `.pokecashautorelease (rarity (3))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .parl, .arl_
 
 #### pokedex
+ Shows the player or mentioned player's pokedex, sortable by a number of methods, including id, name, duplicates, and more.
 
+ **usage:** `.pokedex (user (None)) (sorting (id))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .pd_
 
 #### pokeserver
+ Shows the leaderboards for the server (the whole bot actually, never stored guild_ids).
 
+ **usage:** `.pokeserver (leaderboard (unique))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .ps_
 
 #### stats
+ Shows the player or mentioned player's stats, including the number of times rolled, total pokecash earned, favourite pokemon, and various other stats tracked.
 
+ **usage:** `.stats (user (None))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .s_
 
 #### timers
+ Shows the time until you can do all the commands on timers.
 
+ **usage:** `.timers`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .t_
 
 #### pokemart
+ Allows a player to view and purchase upgrades using pokecash gained from releasing pokemon.
 
+ **usage:** `.pokemart (upgrade no (0)) (all (No))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .pm, .mart_
 
 #### pokerollall
+ Rolled all the stored rolls a player has saved from battles.
 
+ **usage:** `.pokerollall`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .pa_
 
 #### trade
+ Allowed a player to trade an owned pokemon with another player.
 
+ **usage:** `.trade <user> <pokemon>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .tr_
 
 #### safarizone
+ Allows a player to view and purchase pokemon that are randomly chosen daily.
 
+ **usage:** `.safarizone (slot (0)) (amt (1))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .sz_
 
 #### daily
+ A daily(ish) reward for players that rewarded extra rolls or cash.
 
+ **usage:** `.daily`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .d_
 
 #### pkmn
+ Shows the information of the pokemon.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.pkmn <pokemon>`
 
 #### reminder
+ Allows a player to receive a DM when the reminder they set goes off.
 
+ **usage:** `.reminder (reminder (roll))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .rd_
 
 #### gift
+ Allows a player to gift another player cash or rolls.
 
+ **usage:** `.gift <user> <gift>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .g_
 
 #### badge
+ Allows a player to trade in a certain number of pokemon for a badge of that pokemon. Later levels of badges award pokecash and extra rolls. If no pokemon is passed then all badges are shown.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.badge (pokemon (None))`
 
 ##### badge all
+ A subcommand of badge, automatically traded any eligible duplicate pokemon for badges.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.badge all`
 
 #### ditto
+ Awarded a random duplicate pokemon to a player daily(ish).
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.ditto`
 
 #### achievements
+ Showed all the achievements with checkmarks next to the ones achieved.
 
+ **usage:** `.achievements (user (None)) (category (all))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .a, .ach_
 
 #### pokehunt
+ Allows a player to _hunt_ for a specific pokemon, increasing the chance that they would roll it.
 
+ **usage:** `.pokehunt <pokemon>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .ph, .hunt_
 
 #### options
+ Allows a user to turn off the confirmation message in the wondertrade command.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.options <setting> <value>`
 
 #### stars
+ Shows the rarity of a pokemon without having to load the rest of the pokemon's information.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.stars <pokemon>`
 
 #### party
+ Allows a player to add to or remove pokemon from their party, or view their party.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.party (pokemon)/(pokemon)/...`
 
 ##### party clear
+ A subcommand of party, clears and resets the player's party. Also fixes a bug when releasing a pokemon that was in the player's party.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.party clear`
 
 #### battle
+ Battles a random trainer using the player's party, rewarding exp, pokecash, and extra rolls.
 
+ **usage:** `.battle`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .bt_
 
 #### daycare
+ Allows a player to put a pokemon into the daycare, where it periodically rolls for bonus rewards based on its rarity.
 
+ **usage:** `.daycare (pokemon (None))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .dc_
 
 ##### daycare claim
+ A subcommand of daycare, claims the current pokemon and rewards from the daycare. 
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.daycare claim`
 
 #### savelist
+ Allows a player to add pokemon to a list to prevent them from being auto released in the pokecashautorelease command.
 
+ **usage:** `.savelist (pokemon)/(pokemon)/...`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .sl_
 
 ##### savelist clear
+ A subcommand of savelist, clears the entire savelist.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.savelist clear`
 
 #### gym
+ Allows a player to view or challenge a gym for a gym badge, exp, pokecash, and extra rolls. After obtaining all 8 badges, the player can challenge the elite four.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.gym (slot (0))`
 
 #### elitefour
+ Challenges the elite four for exp, pokecash, and extra rolls. This can be done daily(ish)
 
+ **usage:** `.elitefour`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .e4_
 
 #### pokebox
+ Shows the player or mentioned player's pokemon that have gained experience at least once.
 
+ **usage:** `.pokebox (level (1))`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .pb_
 
 #### wondertrade
+ Allows a player to trade a random pokemon that they own for one of equal or better rarity.
 
+ **usage:** `.wondertrade <pokemon>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .wt_
 
 #### saveparty
+ Allows a player to save, load, or delete parties for quick switching between parties. Without using a subcommand, shows all the saved parties.
 
+ **usage:** `.saveparty`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .sparty, .sp_
 
 ##### saveparty save
+ Allows the player to save their current party for later loading.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.saveparty save (slot (highest + 1))`
 
 ##### saveparty load
+ Allows the player to load a saved party in place of their current one.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.saveparty load <slot>`
 
 ##### saveparty delete
+ Allows the player to delete a saved party.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.saveparty delete <slot>`
 
 #### raid
+ Allows for multiple players to pit their parties against mega-evolved pokemon for a chance at obtaining them as a reward. This is the only way to receive mega-evolved pokemon outside of trading another player. This command shows how to start, join, or quit a raid, as well as the time remaining until the next raid.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.raid (difficulty (None))`
 
 ##### raid join
+ Allows a player to join a raid that has been initiated.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.raid join`
 
 ##### raid quit
+ Allows a player to quit a raid that hasn't been started.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.raid quit`
 
 ##### raid start
+ Allows the player who intiated the raid to start the raid.
 
-
- **usage:** ``
-
- _aliases: _
+ **usage:** `.raid start`
 
 #### missing
+ Shows all the pokemon that a player is missing.
 
+ **usage:** `.missing`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .m_
 
 #### favourite
+ Sets a player's favourite pokemon which shows in the stats page.
 
+ **usage:** `.favourite <pokemon>`
 
- **usage:** ``
-
- _aliases: _
+ _aliases: .favorite, .fav, .f_
