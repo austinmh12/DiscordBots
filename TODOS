@@ -14,6 +14,7 @@ TODOS
 				- Add new raid difficulty for this
 			- Create function to integrate with Google Drive to backup database
 				- Check if a backup exists when initialising
+			- Add guild ids to tables to make things server specific
 
 	Brendan
 		- Convert from individual bot to cog
