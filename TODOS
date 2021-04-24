@@ -1,0 +1,36 @@
+TODOS
+	Anime
+		- Convert from individual bot to cog
+		- Use db to store information instead of txt files
+		- Save posts that have been viewed to avoid downloading imgs multiple times.
+		- Create function to register bot to channels as SFW or NSFW.
+
+	Mudae
+		PokeRoulette
+			- Improve the shiny support
+			- Create database initaliser functions if a database cannot be found
+			- Adjust or remove badge rewards
+			- Add gigantimax pokemon as 9 star pokemon
+				- Add new raid difficulty for this
+
+	Brendan
+		- Convert from individual bot to cog
+		- Bring this into the modern age.
+
+	Youtube
+		- Convert from individual bot to cog
+		- Update Youtube API methods and info
+		- Convert from .json file to sqlite3 db file
+		- Create one task that gets the subscriptions from the database instead of one task per subscription
+
+	DnD
+		Nothing
+
+	DnDxMTG
+		Nothing
+
+	Incremental
+		Nothing
+
+	TestBot
+		Start working on the monopoly cog
