@@ -1,0 +1,2 @@
+# DnD
+ All this bot is capable of is getting character sheet information from Google Sheets and draw rectangle fields. I'm not going to bother to really document this one because roll20 exists and is way better that anything I'm capable of in discord.
