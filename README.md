@@ -21,3 +21,6 @@
 
 ## Brendan
  A discord bot for my small group of friend's discord. Named after the person it was built to annoy, it also encompassed a youtube subscribtion function that would allow users to subscribe to youtube channels since YouTube's notifications aren't always the best. The first bot I made, and is very crude, but it did it's job.
+
+## TestBot
+ This is a bot that I use to test everything in my personal bot testing server. At the moment it serves as a test bed for the PokeRoulette game, but soon it'll be a monopoly bot.

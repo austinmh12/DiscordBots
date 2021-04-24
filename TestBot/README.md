@@ -1,0 +1,2 @@
+# TestBot
+ This bot is usually the test bed for which ever bot I'm currently working on starting from when I first learned how to make and use cogs. This bot's existence is purely to be used to test things from other bots before I commit changes to them.
