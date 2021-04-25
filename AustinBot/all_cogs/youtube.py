@@ -41,7 +41,7 @@ class YoutubeCog(commands.Cog):
 					pass_context=True,
 					description='Subscribe to a youtube channel',
 					brief='Subscribe to a youtube channel',
-					aliases=['sub'],
+					aliases=['unsub'],
 					usage='<channel>')
 	async def unsubscribe(self, ctx, *channel):
 		...
