@@ -1,4 +1,4 @@
-import logging
+from . import log
 import json
 from datetime import datetime as dt, timedelta as td
 from discord.ext import commands
@@ -9,15 +9,8 @@ import os, sys
 from os.path import getmtime
 from random import choice
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler()
-stream_format = logging.Formatter('[%(asctime)s - %(name)s - %(levelname)s] %(message)s')
-stream_handler.setFormatter(stream_format)
-log.addHandler(stream_handler)
-
 # Version
-version = '0.0.0'
+version = '0.0.1'
 
 # Constants
 brendans_channel = 587447130474414086
