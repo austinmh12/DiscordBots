@@ -1,13 +1,9 @@
 from . import log
-import json
 from datetime import datetime as dt, timedelta as td
 from discord.ext import commands
-from discord import Member, Embed, Colour, File
+from discord import File
 import asyncio
 import requests as r
-import os, sys
-from os.path import getmtime
-from random import choice
 
 # Version
 version = '0.0.1'
@@ -18,7 +14,7 @@ brendans_id = 311306843718942740
 
 # Utility Functions
 
-
+# Classes
 class BrendanCog(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
