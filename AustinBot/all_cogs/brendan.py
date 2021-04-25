@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord import File
 import asyncio
 import requests as r
+import os
 
 # Version
 version = '0.0.1'
@@ -34,7 +35,7 @@ class BrendanCog(commands.Cog):
 			ext = atch.filename.split('.')[-1]
 			with open(f'tmp.{ext}', 'wb') as f:
 				f.write(resp.content)
-			file = discord.File(f'tmp.{ext}')
+			file = File(f'tmp.{ext}')
 		at_d_msg = f'<@{brendans_id}> ' + msg.content
 		await msg.delete()
 		if atch:
