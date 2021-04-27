@@ -9,8 +9,9 @@ import discord
 import logging
 import sys
 import typing
-from all_cogs.brendan import BrendanCog
 from string import ascii_lowercase
+from all_cogs.brendan import BrendanCog
+from all_cogs.youtube import YoutubeCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -126,4 +127,5 @@ async def check_for_changes():
 
 client.loop.create_task(check_for_changes())
 client.add_cog(BrendanCog(client))
+client.add_cog(YoutubeCog(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)

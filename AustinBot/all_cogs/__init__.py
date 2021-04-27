@@ -3,6 +3,7 @@ from sqlite3 import connect
 import pandas as pd
 import logging
 from discord.ext import commands
+from discord import Embed, Colour
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
