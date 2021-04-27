@@ -122,6 +122,8 @@ class YoutubeCog(MyCog):
 			return await ctx.send(f'You are already subscribed to **{channel.name}**')
 		await ctx.send(f'You are now subscribed to **{channel.name}**!')
 		add_subscription(ctx.author.id, channel)
+		channel.video_count = channel.get_video_count()
+		add_channel(channel)
 		if channel not in self.channels:
 			self.channels.append(channel)
 
@@ -163,10 +165,7 @@ class Channel:
 		self.thumbnail = thumbnail
 		self.url = f'https://www.youtube.com/channel/{self.id}/videos'
 		self.colour = self.gen_channel_colour()
-		if not video_count:
-			self.video_count = self.get_video_count()
-		else:
-			self.video_count = video_count
+		self.video_count = video_count
 		log.info(f'{self.name}: {self.video_count}')
 
 	def gen_channel_colour(self):
