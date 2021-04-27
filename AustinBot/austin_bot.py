@@ -20,7 +20,7 @@ SCRIPT_PATH = f"{ENV['WINPATH']}/AustinBot" if sys.platform == 'win32' else f'{E
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler()
-stream_format = logging.Formatter('[%(asctime)s - %(levelname)s] %(message)s')
+stream_format = logging.Formatter('[%(asctime)s - %(name)s - %(levelname)s] %(message)s')
 stream_handler.setFormatter(stream_format)
 log.addHandler(stream_handler)
 
