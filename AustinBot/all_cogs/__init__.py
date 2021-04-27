@@ -2,6 +2,7 @@ from datetime import datetime as dt, timedelta as td
 from sqlite3 import connect
 import pandas as pd
 import logging
+from discord.ext import commands
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -86,3 +87,42 @@ class Page:
 			return '\n'.join(desc)
 		else:
 			raise TypeError(f'Expected str or iterable, got {type(desc)}')
+
+class MyCog(commands.Cog):
+	def __init__(self, bot):
+		self.bot = bot
+
+	async def paginated_embeds(self, ctx, pages, content=''):
+		idx = 0
+		if not isinstance(pages, list):
+			pages = [pages]
+		emb = pages[idx].embed
+		if len(pages) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+		msg = await ctx.send(content, embed=emb)
+		if len(pages) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+			def is_left_right(m):
+				return all([
+					(m.emoji.name == BACK or m.emoji.name == NEXT),
+					m.member.id != self.bot.user.id,
+					m.message_id == msg.id
+				])
+
+			while True:
+				try:
+					react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=60)
+				except asyncio.TimeoutError:
+					log.debug('Timeout, breaking')
+					break
+				if react.emoji.name == NEXT:
+					idx = (idx + 1) % len(pages)
+					await msg.remove_reaction(NEXT, react.member)
+				else:
+					idx = (idx - 1) % len(pages)
+					await msg.remove_reaction(BACK, react.member)
+				emb = pages[idx].embed
+				emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+				await msg.edit(content=content, embed=emb)
