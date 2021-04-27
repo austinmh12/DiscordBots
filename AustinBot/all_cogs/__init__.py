@@ -17,6 +17,9 @@ BASE_PATH = './all_cogs'
 BACK = '\u2b05\ufe0f' # Left arrow
 NEXT = '\u27a1\ufe0f' # Right arrow
 
+#############
+# Functions #
+#############
 def format_remaining_time(date):
 	time = date - dt.now()
 	hrs, rem = divmod(time.total_seconds(), 3600)
@@ -41,3 +44,45 @@ def sql(file, query, args=()):
 		return _df
 	except Exception:
 		return pd.DataFrame()
+
+###########
+# Classes #
+###########
+class Page:
+	def __init__(self, author, desc, colour=(255, 50, 20), title=None, icon=None, image=None, thumbnail=None, footer=None):
+		self.author = author
+		self.desc = self.parse_desc(desc)
+		self.colour = colour
+		self.title = title
+		self.icon = icon
+		self.image = image
+		self.thumbnail = thumbnail
+		self.footer = footer
+
+	@property
+	def embed(self):
+		emb = Embed(
+			description=self.desc,
+			colour=Colour.from_rgb(*self.colour)
+		)
+		if self.title:
+			emb.title = self.title
+		if self.icon:
+			emb.set_author(name=self.author, icon_url=self.icon)
+		else:
+			emb.set_author(name=self.author)
+		if self.image:
+			emb.set_image(url=self.image)
+		if self.thumbnail:
+			emb.set_thumbnail(url=self.thumbnail)
+		if self.footer:
+			emb.set_footer(text=self.footer)
+		return emb
+
+	def parse_desc(self, desc):
+		if isinstance(desc, str):
+			return desc
+		elif isinstance(desc, list) or isinstance(desc, tuple):
+			return '\n'.join(desc)
+		else:
+			raise TypeError(f'Expected str or iterable, got {type(desc)}')
