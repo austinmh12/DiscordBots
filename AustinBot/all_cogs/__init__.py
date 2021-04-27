@@ -2,6 +2,7 @@ from datetime import datetime as dt, timedelta as td
 from sqlite3 import connect
 import pandas as pd
 import logging
+import asyncio
 from discord.ext import commands
 from discord import Embed, Colour
 
