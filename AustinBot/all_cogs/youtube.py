@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.2.1'
+version = '0.3.0'
 
 # Constants
 with open('../.env') as f:
@@ -49,13 +49,19 @@ def get_channel(id):
 def add_channel(channel):
 	return sql('youtube', 'insert into channels values (?,?,?,?)', channel.to_row)
 
-def remove_channel(channel):
+def delete_channel(channel):
 	return sql('youtube', 'delete from channels where id = ?', (channel.id,))
 
 def update_channel(channel):
 	return sql('youtube', 'update channels set video_count = ? where id = ?', (channel.video_count, channel.id))
 
-def get_subscriptions(discord_id):
+def get_subscriptions_for_channel(channel):
+	df = sql('youtube', 'select * from subscriptions where channel_id = ?', (channel.id,))
+	if df.empty:
+		return []
+	return list(df.discord_id)
+
+def get_subscriptions_for_user(discord_id):
 	df = sql('youtube', 'select * from subscriptions where discord_id = ?', (discord_id, ))
 	if df.empty:
 		return []
@@ -69,7 +75,7 @@ def delete_subscription(discord_id, channel):
 	return sql('youtube', 'delete from subscriptions where discord_id = ? and channel_id = ?)', (discord_id, channel.id))
 
 def check_for_existing_subscription(discord_id, channel):
-	subs = get_subscriptions(discord_id)
+	subs = get_subscriptions_for_user(discord_id)
 	try:
 		return channel in subs
 	except AttributeError:
@@ -82,6 +88,7 @@ class YoutubeCog(MyCog):
 			log.info('Initialising database.')
 			initialise_db()
 		self.channels = self.initialise_channels()
+		self.check_for_videos.start()
 
 	def initialise_channels(self):
 		return get_channels()
@@ -151,7 +158,7 @@ class YoutubeCog(MyCog):
 	async def subscriptions(self, ctx):
 		"""Lists the user's subscriptions.
 		"""
-		subs = get_subscriptions(ctx.author.id)
+		subs = get_subscriptions_for_user(ctx.author.id)
 		subs.sort()
 		pages = []
 		for ch in chunk(subs, 15):
@@ -169,7 +176,25 @@ class YoutubeCog(MyCog):
 		value is higher than channel.video_count, set the channel.video_count to that and
 		then send the channel embed to the channel.
 		"""
-		...
+		log.info('Checking for new videos.')
+		yt_channel = await self.bot.fetch_channel(623291442726436884)
+		deleted_channels = []
+		for channel in self.channels:
+			subscribers = get_subscriptions_for_channel(channel)
+			if not subscribers:
+				delete_channel(channel)
+				deleted_channels.append(channel)
+				continue
+			video_count = channel.get_video_count()
+			if video_count > channel.video_count:
+				msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
+				await yt_channel.send(msg, embed=channel.new_video_embed.embed)
+				channel.video_count = video_count
+				update_channel(channel)
+
+	@check_for_videos.before_loop
+	async def before_check_for_videos(self):
+		await self.bot.wait_until_ready()
 
 class Channel:
 	def __init__(self, id, name, thumbnail, video_count=0):
