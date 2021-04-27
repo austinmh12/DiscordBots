@@ -16,7 +16,8 @@ version = '0.1.0'
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
 
-yt_channel = 623291442726436884
+def yt_check(ctx):
+	return ctx.channel.id == 623291442726436884
 
 # Utility Functions
 def initialise_db():
@@ -90,6 +91,7 @@ class YoutubeCog(MyCog):
 					brief='Subscribe to a youtube channel',
 					aliases=['sub'],
 					usage='<channel>')
+	@commands.check(yt_check)
 	async def subscribe(self, ctx, *channel):
 		"""Searches YouTube for the channel and then returns a list of the top 5 results
 		Lets the user then select a channel from the list. If a channel is selected, add
@@ -133,6 +135,7 @@ class YoutubeCog(MyCog):
 					brief='Subscribe to a youtube channel',
 					aliases=['unsub'],
 					usage='<channel>')
+	@commands.check(yt_check)
 	async def unsubscribe(self, ctx):
 		"""Provides a list of the user's subscriptions and allows them to select channels
 		to unsubscribe from using the number next to the name.
@@ -144,6 +147,7 @@ class YoutubeCog(MyCog):
 					description='Subscribe to a youtube channel',
 					brief='Subscribe to a youtube channel',
 					aliases=['subs'])
+	@commands.check(yt_check)
 	async def subscriptions(self, ctx):
 		"""Lists the user's subscriptions.
 		"""
