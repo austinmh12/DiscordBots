@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.4.1'
+version = '0.4.2'
 
 # Constants
 with open('../.env') as f:
@@ -198,7 +198,6 @@ class YoutubeCog(MyCog):
 			for channel in ch:
 				desc += f'[{channel.name}]({channel.url})\n'
 			pages.append(Page(f'{ctx.author.display_name}\'s Subscriptions', desc, colour=(232, 49, 39), icon=ctx.author.avatar_url))
-		pages.extend([s.info_embed for s in subs])
 		return await self.paginated_embeds(ctx, pages)
 
 	# Tasks #
@@ -262,15 +261,6 @@ class Channel:
 			colour=self.colour, 
 			thumbnail=self.thumbnail,
 			footer='This is an automated message based on video count.'
-		)
-	
-	@property
-	def info_embed(self):
-		return Page(
-			self.name, 
-			f'[Video list]({self.url})', 
-			colour=self.colour, 
-			image=self.thumbnail
 		)
 
 	@property
