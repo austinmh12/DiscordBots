@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.2.0'
+version = '0.2.1'
 
 # Constants
 with open('../.env') as f:
@@ -153,7 +153,14 @@ class YoutubeCog(MyCog):
 		"""
 		subs = get_subscriptions(ctx.author.id)
 		subs.sort()
-		return await self.paginated_embeds(ctx, [s.info_embed for s in subs])
+		pages = []
+		for ch in chunk(subs, 15):
+			desc = ''
+			for channel in ch:
+				desc += f'[{channel.name}]({channel.url})\n'
+			pages.append(Page(f'{ctx.author.display_name}\'s Subscriptions', desc, colour=(232, 49, 39), icon=ctx.author.avatar_url))
+		pages.extend([s.info_embed for s in subs])
+		return await self.paginated_embeds(ctx, pages)
 
 	# Tasks #
 	@tasks.loop(seconds=3600)
