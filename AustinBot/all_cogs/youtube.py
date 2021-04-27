@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.1.0'
+version = '0.2.0'
 
 # Constants
 with open('../.env') as f:
@@ -59,6 +59,7 @@ def get_subscriptions(discord_id):
 	df = sql('youtube', 'select * from subscriptions where discord_id = ?', (discord_id, ))
 	if df.empty:
 		return []
+	log.debug(df.head())
 	return [get_channel(c) for c in df.channel_id]
 
 def add_subscription(discord_id, channel):
@@ -78,6 +79,7 @@ class YoutubeCog(MyCog):
 	def __init__(self, bot):
 		super().__init__(bot)
 		if not os.path.exists(f'{BASE_PATH}/youtube.db'):
+			log.info('Initialising database.')
 			initialise_db()
 		self.channels = self.initialise_channels()
 
@@ -97,8 +99,6 @@ class YoutubeCog(MyCog):
 		Lets the user then select a channel from the list. If a channel is selected, add
 		that to the subscription table and then add the channel to the channels list
 		"""
-		if ctx.channel.id != yt_channel:
-			return await ctx.send('This command can only be used in _youtuber-updates_')
 		search_channel = '%20'.join(channel)
 		resp = r.get(f'https://www.googleapis.com/youtube/v3/search?part=snippet&q={search_channel}&type=channel&key={ENV["YTAPIKEY"]}')
 		channels = {i: Channel.from_item(item) for i, item in enumerate(resp.json().get('items', []), start=1)}
@@ -151,7 +151,9 @@ class YoutubeCog(MyCog):
 	async def subscriptions(self, ctx):
 		"""Lists the user's subscriptions.
 		"""
-		...
+		subs = get_subscriptions(ctx.author.id)
+		subs.sort()
+		return await self.paginated_embeds(ctx, [s.info_embed for s in subs])
 
 	# Tasks #
 	@tasks.loop(seconds=3600)
@@ -199,9 +201,10 @@ class Channel:
 	
 	@property
 	def info_embed(self):
+		log.debug('Creating info_embed')
 		return Page(
 			self.name, 
-			self.url, 
+			f'[Video list]({self.url})', 
 			colour=self.colour, 
 			image=self.thumbnail
 		)
@@ -214,6 +217,9 @@ class Channel:
 	def from_item(cls, item):
 		snippet = item['snippet']
 		return cls(snippet['channelId'], snippet['title'], snippet['thumbnails']['default']['url'])
+
+	def __gt__(self, c):
+		return self.name > c.name
 
 	def __eq__(self, c):
 		return self.id == c.id
