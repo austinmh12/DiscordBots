@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.4.0'
+version = '0.4.1'
 
 # Constants
 with open('../.env') as f:
@@ -178,6 +178,7 @@ class YoutubeCog(MyCog):
 			return await ctx.send('No channel selected.')
 		await ctx.send(f'You are no longer subscribed to **{channel.name}**')
 		delete_subscription(ctx.author.id, channel)
+		return await self.subscriptions(ctx)
 
 
 	@commands.command(name='subscriptions',
@@ -237,7 +238,6 @@ class Channel:
 		self.url = f'https://www.youtube.com/channel/{self.id}/videos'
 		self.colour = self.gen_channel_colour()
 		self.video_count = video_count
-		log.info(f'{self.name}: {self.video_count}')
 
 	def gen_channel_colour(self):
 		resp = r.get(self.thumbnail)
@@ -266,7 +266,6 @@ class Channel:
 	
 	@property
 	def info_embed(self):
-		log.debug('Creating info_embed')
 		return Page(
 			self.name, 
 			f'[Video list]({self.url})', 
