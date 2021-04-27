@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.3.1'
+version = '0.4.0'
 
 # Constants
 with open('../.env') as f:
@@ -65,14 +65,13 @@ def get_subscriptions_for_user(discord_id):
 	df = sql('youtube', 'select * from subscriptions where discord_id = ?', (discord_id, ))
 	if df.empty:
 		return []
-	log.debug(df.head())
 	return [get_channel(c) for c in df.channel_id]
 
 def add_subscription(discord_id, channel):
 	return sql('youtube', 'insert into subscriptions values (?,?)', (discord_id, channel.id))
 
 def delete_subscription(discord_id, channel):
-	return sql('youtube', 'delete from subscriptions where discord_id = ? and channel_id = ?)', (discord_id, channel.id))
+	return sql('youtube', 'delete from subscriptions where discord_id = ? and channel_id = ?', (discord_id, channel.id))
 
 def check_for_existing_subscription(discord_id, channel):
 	subs = get_subscriptions_for_user(discord_id)
@@ -123,7 +122,7 @@ class YoutubeCog(MyCog):
 			choice = int(reply.content)
 		except ValueError:
 			choice = 0
-		choice = choice if 1 <= choice <= 5 else 0 
+		choice = choice if 1 <= choice <= min(5, len(channels)) else 0
 		channel = channels.get(choice, None)
 		if not channel:
 			return await ctx.send('No channel selected.')
@@ -147,7 +146,39 @@ class YoutubeCog(MyCog):
 		"""Provides a list of the user's subscriptions and allows them to select channels
 		to unsubscribe from using the number next to the name.
 		"""
-		...
+		subs = get_subscriptions_for_user(ctx.author.id)
+		if not subs:
+			return await ctx.send('You have no subscriptions.')
+		subs.sort()
+		channels = {i: channel for i, channel in enumerate(subs, start=1)}
+		pages = []
+		idx = 1
+		for ch in chunk(subs, 15):
+			desc = ''
+			for channel in ch:
+				desc += f'**{idx}:** [{channel.name}]({channel.url})\n'
+				idx += 1
+			pages.append(Page(f'{ctx.author.display_name}\'s Subscriptions', desc, colour=(232, 49, 39), icon=ctx.author.avatar_url))
+		await self.paginated_embeds(ctx, pages, content='Which channel would you like to unsubscribe from? (type the number)')
+
+		def same_user_and_channel(msg):
+			return ctx.author == msg.author and ctx.channel == msg.channel
+
+		try:
+			reply = await self.bot.wait_for('message', check=same_user_and_channel, timeout=60)
+		except asyncio.TimeoutError:
+			return await ctx.send('You didn\'t make a selection.')
+		try:
+			choice = int(reply.content)
+		except ValueError:
+			choice = 0
+		choice = choice if 1 <= choice <= len(channels) else 0
+		channel = channels.get(choice, None)
+		if not channel:
+			return await ctx.send('No channel selected.')
+		await ctx.send(f'You are no longer subscribed to **{channel.name}**')
+		delete_subscription(ctx.author.id, channel)
+
 
 	@commands.command(name='subscriptions',
 					pass_context=True,
