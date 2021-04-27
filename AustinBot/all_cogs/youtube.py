@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.3.0'
+version = '0.3.1'
 
 # Constants
 with open('../.env') as f:
@@ -191,6 +191,8 @@ class YoutubeCog(MyCog):
 				await yt_channel.send(msg, embed=channel.new_video_embed.embed)
 				channel.video_count = video_count
 				update_channel(channel)
+		for channel in deleted_channels:
+			self.channels.pop(self.channels.index(channel))
 
 	@check_for_videos.before_loop
 	async def before_check_for_videos(self):
