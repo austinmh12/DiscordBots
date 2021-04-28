@@ -4,6 +4,12 @@
  Each bot's README will be split into cogs and each section will have a command list, and then a detailed list of the commands. Each command will have a **usage:** in it which uses the following notation:
  `.command <required argument> (optional argument (default value))`
 
+ Each cog (at least in AustinBot) will have a version in it and is in the format `A.B.C`
+
+ * A - This is the major version, usually incremented whenever a lot of new content is added
+ * B - This is minor version, usually incremented whenever a new command is added
+ * C - This is the minor minor version and is usually updated whenever a bug fix or performance improvement is made. I don't usually post these updates to my changelog in the discord unless they're involved in a game breaking bug.
+
 ## Anime
  A discord bot that went through registered subreddits and downloaded images and uploaded them to discord, splitting them between SFW and NSFW channels. 
 
