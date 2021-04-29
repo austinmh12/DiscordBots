@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.3.0'
+version = '1.3.1'
 
 # Constants
 with open('../.env') as f:
@@ -219,6 +219,7 @@ class AnimeCog(MyCog):
 			amount = amount
 		else:
 			amount = min(25, len([p for p in get_posts_from_db() if not p.nsfw]))
+		pics = []
 		while len(pics) < amount:
 			pic = get_post_from_db()
 			if pic not in pics:
@@ -239,6 +240,7 @@ class AnimeCog(MyCog):
 			amount = amount
 		else:
 			amount = min(25, len([p for p in get_posts_from_db() if p.nsfw]))
+		pics = []
 		while len(pics) < amount:
 			pic = get_post_from_db(1)
 			if pic not in pics:
