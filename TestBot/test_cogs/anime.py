@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.3.2'
+version = '1.3.3'
 
 # Constants
 with open('../.env') as f:
@@ -174,6 +174,18 @@ class AnimeCog(MyCog):
 			log.error(f'{pic.id} is too large. Upload by hand.')
 			file.close()
 
+	# Listeners
+	@commands.Cog.listener()
+	async def on_command_error(self, ctx, error):
+		log.debug(ctx.command)
+		if isinstance(error, commands.CheckFailure):
+			if ctx.command == 'animepic':
+				return await ctx.send('This channel is SFW registered')
+			if ctx.command == 'ecchipic':
+				return await ctx.send('This channel is NSFW registered')
+		log.error(error, exc_info=True)
+		return
+
 	# Commands
 	@commands.command(name='subreddits',
 					pass_context=True,
@@ -219,6 +231,7 @@ class AnimeCog(MyCog):
 			amount = amount
 		else:
 			amount = min(25, len([p for p in get_posts_from_db() if not p.nsfw]))
+		log.debug(amount)
 		pics = []
 		while len(pics) < amount:
 			pic = get_post_from_db()
@@ -236,10 +249,10 @@ class AnimeCog(MyCog):
 	async def ecchi_pic(self, ctx, amount: typing.Optional[int] = 1):
 		if amount < 1:
 			amount = 1
-		elif 1 <= amount <= 25:
-			amount = amount
-		else:
-			amount = min(25, len([p for p in get_posts_from_db() if p.nsfw]))
+		if amount > 25:
+			amount = 25
+		amount = min(amount, len([p for p in get_posts_from_db() if p.nsfw]))
+		log.debug(amount)
 		pics = []
 		while len(pics) < amount:
 			pic = get_post_from_db(1)
