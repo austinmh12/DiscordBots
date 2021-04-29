@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.5'
+version = '1.1.0'
 
 # Constants
 with open('../.env') as f:
@@ -162,7 +162,6 @@ class AnimeCog(MyCog):
 			log.error(f'{pic.id} is too large. Upload by hand.')
 		file.close()
 
-
 	# Commands
 	@commands.command(name='subreddits',
 					pass_context=True,
@@ -197,6 +196,38 @@ class AnimeCog(MyCog):
 	# NFSW check
 	async def ecchi_pic(self, ctx, amount: typing.Optional[int] = 1):
 		...
+
+	@commands.command(name='registerchannel',
+					pass_context=True,
+					description='Registers a channel to receive SFW or NSFW pics',
+					breif='Registers channels',
+					aliases=['reg'])
+	async def register_channel(self, ctx, nsfw):
+		if nsfw not in ['sfw', 'nsfw']:
+			return await ctx.send('Must select _sfw_ or _nsfw_')
+		if ctx.channel.id in get_sfw_channels() and nsfw == 'sfw':
+			return await ctx.send('This channel is already registered for SFW pics.')
+		if ctx.channel.id in get_nsfw_channels() and nsfw == 'nsfw':
+			return await ctx.send('This channel is already registered for NSFW pics.')
+		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
+		await ctx.send(f'This channel is now {nsfw.upper()} registered!')
+		return add_channel(channel)
+
+	@commands.command(name='unregisterchannel',
+					pass_context=True,
+					description='Unregisters a channel to receive SFW or NSFW pics',
+					breif='Unregisters channels',
+					aliases=['ureg'])
+	async def unregister_channel(self, ctx, nsfw):
+		if nsfw not in ['sfw', 'nsfw']:
+			return await ctx.send('Must select _sfw_ or _nsfw_')
+		if ctx.channel.id not in get_sfw_channels() and nsfw == 'sfw':
+			return await ctx.send('This channel isn\'t registered for SFW pics.')
+		if ctx.channel.id not in get_nsfw_channels() and nsfw == 'nsfw':
+			return await ctx.send('This channel isn\'t registered for NSFW pics.')
+		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
+		await ctx.send(f'This channel is no longer {nsfw.upper()} registered')
+		return delete_channel(channel)
 
 	# Tasks
 	@tasks.loop(seconds=1800)
