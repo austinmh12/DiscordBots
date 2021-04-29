@@ -118,7 +118,7 @@ class AnimeCog(MyCog):
 
 	# Utilities
 	def need_to_download(self):
-		if dt.now().hour < 12:
+		if dt.now().hour < 20:
 			return False
 		if get_last_upload().date() < dt.now().date():
 			return True
