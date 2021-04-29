@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.2'
+version = '1.0.3'
 
 # Constants
 with open('../.env') as f:
@@ -87,10 +87,6 @@ class AnimeCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/anime.db'):
 			log.info('Initialising database.')
 			initialise_db()
-		self.anime_count = 0
-		self.ecchi_count = 0
-		self.anime_uploaded = 0
-		self.ecchi_uploaded = 0
 		self.get_anime_pics.start()
 
 	# Utilities
@@ -145,17 +141,12 @@ class AnimeCog(MyCog):
 			log.error(f'{pic.id} is too large. Upload by hand.')
 
 	# Commands
-	def reset_counts(self):
-		self.anime_count = 0
-		self.ecchi_count = 0
-		self.anime_uploaded = 0
-		self.ecchi_uploaded = 0
 
 	# Tasks
 	@tasks.loop(seconds=1800)
 	async def get_anime_pics(self):
 		if self.need_to_download():
-			self.reset_counts()
+			log.info('Downloading images')
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
 			posts = get_posts_from_db()
@@ -164,8 +155,11 @@ class AnimeCog(MyCog):
 				_posts = p.map_async(self.get_posts, subs).get()
 				for post_list in _posts:
 					posts.extend(post_list)
+				log.info('Got posts, downloading...')
 				img_posts = p.map_async(self.downloader, posts).get()
+				log.info('Downloaded, uploading...')
 				p.map_async(self.upload_pic, img_posts).get()
+				log.info('Uploaded.')
 			add_posts_to_db(img_posts)
 			update_last_upload()
 
