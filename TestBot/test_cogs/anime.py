@@ -225,7 +225,7 @@ class AnimeCog(MyCog):
 			if pic not in pics:
 				pics.append(pic)
 		for p in pics:
-			self.upload_pic_to_channel(p, ctx.channel)
+			await self.upload_pic_to_channel(p, ctx.channel)
 
 	@commands.command(name='ecchipic',
 					pass_context=True,
@@ -246,7 +246,7 @@ class AnimeCog(MyCog):
 			if pic not in pics:
 				pics.append(pic)
 		for p in pics:
-			self.upload_pic_to_channel(p, ctx.channel)
+			await self.upload_pic_to_channel(p, ctx.channel)
 
 	@commands.command(name='registerchannel',
 					pass_context=True,
