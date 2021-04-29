@@ -8,9 +8,10 @@ import requests as r
 import os.path
 from PIL import Image
 from io import BytesIO
+from dateutil import tz
 
 # Version
-version = '0.4.5'
+version = '0.4.7'
 
 # Constants
 with open('../.env') as f:
@@ -223,23 +224,20 @@ class YoutubeCog(MyCog):
 			if video_count > channel.video_count:
 				log.info(f'{channel.name} has a new video')
 				channel.get_latest_video()
-				# if not self.__is_startup:
-				msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
-				await yt_channel.send(f'New {channel.name} video! {msg}', embed=channel.video.page.embed)
+				if not self.__is_startup:
+					msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
+					await yt_channel.send(f'New {channel.name} video! {msg}', embed=channel.latest_video.page.embed)
 				channel.video_count = video_count
 				update_channel(channel)
 		for channel in deleted_channels:
 			self.channels.pop(self.channels.index(channel))
+		self.__is_startup = False
+		log.info('Done checking for videos')
 
 	@check_for_videos.before_loop
 	async def before_check_for_videos(self):
 		await self.bot.wait_until_ready()
 		log.info('Checking for new videos.')
-
-	@check_for_videos.after_loop
-	async def after_check_for_videos(self):
-		self.__is_startup = False
-		log.info('Done checking for videos')
 
 class Channel:
 	def __init__(self, id, name, thumbnail, video_count=0):
@@ -275,18 +273,6 @@ class Channel:
 		if video_item:
 			video = Video.from_item(video_item, self.colour, self.thumbnail)
 			self.latest_video = video
-
-	@property
-	def new_video_embed(self):
-		"""Returns an embed used for the 
-		"""
-		return Page(
-			f'New {self.name} Video!', 
-			self.url, 
-			colour=self.colour, 
-			thumbnail=self.thumbnail,
-			footer='This is an automated message based on video count.'
-		)
 
 	@property
 	def to_row(self):
@@ -326,7 +312,7 @@ class Video:
 			colour=self.colour, 
 			image=self.thumbnail,
 			thumbnail=self.icon,
-			footer=f'Uploaded at {self.uploaded}'
+			footer=f'Uploaded {self.uploaded}'
 		)
 
 	@classmethod
@@ -336,6 +322,7 @@ class Video:
 		description = item['snippet']['description']
 		if '\n' in description:
 			description = description.split('\n')[0]
-		thumbnail = item['snippet']['thumbnails']['default']['url']
-		uploaded = item['contentDetails']['videoPublishedAt']
+		thumbnail = item['snippet']['thumbnails']['standard']['url']
+		uploaded = dt.strptime(item['contentDetails']['videoPublishedAt'], '%Y-%m-%dT%H:%M:%SZ')
+		uploaded = (uploaded + tz.gettz('US/Eastern').utcoffset(dt.utcnow())).strftime('%b %d, %Y %I:%M %p')
 		return cls(id, title, description, thumbnail, uploaded, colour, icon)
