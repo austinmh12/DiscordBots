@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.2.0'
+version = '1.2.1'
 
 # Constants
 with open('../.env') as f:
@@ -155,8 +155,8 @@ class AnimeCog(MyCog):
 		file = pic.to_file()
 		channels = self.nsfw_channels if pic.nsfw else self.sfw_channels
 		try:
-			for channel in channels:
-				channel = await self.bot.fetch_channel(channel)
+			for ch in channels:
+				channel = await self.bot.fetch_channel(ch.id)
 				await channel.send(file=file)
 		except ImageToLargeException:
 			log.error(f'{pic.id} is too large. Upload by hand.')
@@ -175,7 +175,9 @@ class AnimeCog(MyCog):
 			for sub in sub_chunk:
 				desc += f'[{sub}](https://www.reddit.com/r/{sub})\n'
 			pages.append(Page('Subreddits', desc, colour=(255, 69, 0), icon='http://www.vectorico.com/download/social_media/Reddit-Icon.png'))
-		return await self.paginated_embed(ctx, pages)
+		if not pages:
+			return await self.paginated_embeds(ctx, [Page('Subreddits', 'No subreddits', colour=(255, 69, 0), icon='http://www.vectorico.com/download/social_media/Reddit-Icon.png')])
+		return await self.paginated_embeds(ctx, pages)
 
 	@commands.command(name='addsubreddits',
 					pass_context=True,
@@ -250,7 +252,7 @@ class AnimeCog(MyCog):
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
 			posts = get_posts_from_db()
-			with ThreadPool(1) as p:
+			with ThreadPool(16) as p:
 				log.info('Getting existing posts')
 				self.posts = get_posts_from_db()
 				posts = []
