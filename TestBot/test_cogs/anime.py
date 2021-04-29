@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.3.3'
+version = '1.3.4'
 
 # Constants
 with open('../.env') as f:
@@ -179,10 +179,10 @@ class AnimeCog(MyCog):
 	async def on_command_error(self, ctx, error):
 		log.debug(ctx.command)
 		if isinstance(error, commands.CheckFailure):
-			if ctx.command == 'animepic':
-				return await ctx.send('This channel is SFW registered')
-			if ctx.command == 'ecchipic':
-				return await ctx.send('This channel is NSFW registered')
+			if ctx.command.name == 'animepic':
+				return await ctx.send('This channel is not ***SFW*** registered')
+			if ctx.command.name == 'ecchipic':
+				return await ctx.send('This channel is not ***NSFW*** registered')
 		log.error(error, exc_info=True)
 		return
 
@@ -270,9 +270,9 @@ class AnimeCog(MyCog):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
 		if ctx.channel.id in [c.id for c in get_sfw_channels()] and nsfw == 'sfw':
-			return await ctx.send('This channel is already registered for SFW pics.')
+			return await ctx.send('This channel is already registered for ***SFW*** pics.')
 		if ctx.channel.id in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
-			return await ctx.send('This channel is already registered for NSFW pics.')
+			return await ctx.send('This channel is already registered for ***NSFW*** pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
 		await ctx.send(f'This channel is now {nsfw.upper()} registered!')
 		return add_channel(channel)
@@ -286,9 +286,9 @@ class AnimeCog(MyCog):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
 		if ctx.channel.id not in [c.id for c in get_sfw_channels()] and nsfw == 'sfw':
-			return await ctx.send('This channel isn\'t registered for SFW pics.')
+			return await ctx.send('This channel isn\'t registered for ***SFW*** pics.')
 		if ctx.channel.id not in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
-			return await ctx.send('This channel isn\'t registered for NSFW pics.')
+			return await ctx.send('This channel isn\'t registered for ***NSFW*** pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
 		await ctx.send(f'This channel is no longer {nsfw.upper()} registered')
 		return delete_channel(channel)
