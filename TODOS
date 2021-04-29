@@ -17,14 +17,10 @@ TODOS
 			- Add guild ids to tables to make things server specific
 
 	Brendan
-		- Convert from individual bot to cog
-		- Bring this into the modern age.
+		Nothing
 
 	Youtube
-		- Convert from individual bot to cog
-		- Update Youtube API methods and info
-		- Convert from .json file to sqlite3 db file
-		- Create one task that gets the subscriptions from the database instead of one task per subscription
+		Nothing
 
 	DnD
 		Nothing
@@ -35,5 +31,5 @@ TODOS
 	Incremental
 		Nothing
 
-	TestBot
-		Start working on the monopoly cog
+	BoardGames
+		- Start working on the monopoly cog
