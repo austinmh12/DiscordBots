@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.1.0'
+version = '1.1.1'
 
 # Constants
 with open('../.env') as f:
@@ -202,7 +202,7 @@ class AnimeCog(MyCog):
 					description='Registers a channel to receive SFW or NSFW pics',
 					breif='Registers channels',
 					aliases=['reg'])
-	async def register_channel(self, ctx, nsfw):
+	async def register_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select _sfw_ or _nsfw_')
 		if ctx.channel.id in get_sfw_channels() and nsfw == 'sfw':
@@ -218,7 +218,7 @@ class AnimeCog(MyCog):
 					description='Unregisters a channel to receive SFW or NSFW pics',
 					breif='Unregisters channels',
 					aliases=['ureg'])
-	async def unregister_channel(self, ctx, nsfw):
+	async def unregister_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select _sfw_ or _nsfw_')
 		if ctx.channel.id not in get_sfw_channels() and nsfw == 'sfw':
