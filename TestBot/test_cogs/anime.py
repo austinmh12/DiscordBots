@@ -133,9 +133,10 @@ class AnimeCog(MyCog):
 		channel = self.nsfw_channel if pic.nsfw else self.sfw_channel
 		try:
 			await channel.send(file=file)
-			file.close()
 		except ImageToLargeException:
 			log.error(f'{pic.id} is too large. Upload by hand.')
+		file.close()
+		
 
 	# Commands
 
