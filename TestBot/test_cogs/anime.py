@@ -52,7 +52,7 @@ def get_last_upload():
 
 def update_last_upload():
 	sql('anime', 'delete from last_upload')
-	return sql('anime', 'insert into last_upload values (?)', (dt.now().strftime('%Y-%m-%d')))
+	return sql('anime', 'insert into last_upload values (?)', (dt.now().strftime('%Y-%m-%d'),))
 
 def get_posts_from_db():
 	df = sql('anime', 'select * from posts')
@@ -91,7 +91,7 @@ class AnimeCog(MyCog):
 
 	# Utilities
 	def need_to_download(self):
-		if dt.now().hour < 20:
+		if dt.now().hour < 12:
 			return False
 		if get_last_upload().date() < dt.now().date():
 			return True
@@ -150,7 +150,7 @@ class AnimeCog(MyCog):
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
 			posts = get_posts_from_db()
-			with ThreadPool(10, initializer=self.init_get_posts, initargs=[reddit, posts]) as p:
+			with ThreadPool(1, initializer=self.init_get_posts, initargs=[reddit, posts]) as p:
 				posts = []
 				log.info('Getting posts')
 				_posts = p.map_async(self.get_posts, subs).get()
