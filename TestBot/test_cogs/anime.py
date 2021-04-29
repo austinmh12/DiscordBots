@@ -152,15 +152,16 @@ class AnimeCog(MyCog):
 	async def upload_pic(self, pic):
 		if not pic:
 			return
-		file = pic.to_file()
 		channels = self.nsfw_channels if pic.nsfw else self.sfw_channels
 		try:
 			for ch in channels:
+				file = pic.to_file()
 				channel = await self.bot.fetch_channel(ch.id)
 				await channel.send(file=file)
+				file.close()
 		except ImageToLargeException:
 			log.error(f'{pic.id} is too large. Upload by hand.')
-		file.close()
+			file.close()
 
 	# Commands
 	@commands.command(name='subreddits',
