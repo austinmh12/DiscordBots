@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.3.1'
+version = '1.3.2'
 
 # Constants
 with open('../.env') as f:
