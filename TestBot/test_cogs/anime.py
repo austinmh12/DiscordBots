@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.1.1'
+version = '1.2.0'
 
 # Constants
 with open('../.env') as f:
@@ -166,10 +166,16 @@ class AnimeCog(MyCog):
 	@commands.command(name='subreddits',
 					pass_context=True,
 					description='List the subreddits',
-					breif='List the subreddits',
-					aliases=[''])
+					breif='List the subreddits')
 	async def subreddits(self, ctx):
-		...
+		subs = get_subreddits()
+		pages = []
+		for sub_chunk in chunk(subs, 15):
+			desc = ''
+			for sub in sub_chunk:
+				desc += f'[{sub}](https://www.reddit.com/r/{sub})\n'
+			pages.append(Page('Subreddits', desc, colour=(255, 69, 0), icon='http://www.vectorico.com/download/social_media/Reddit-Icon.png'))
+		return await self.paginated_embed(ctx, pages)
 
 	@commands.command(name='addsubreddits',
 					pass_context=True,
@@ -177,7 +183,14 @@ class AnimeCog(MyCog):
 					breif='Add subreddits to the list',
 					aliases=['asub'])
 	async def add_subreddits(self, ctx, *subs):
-		...
+		registered_subs = get_subreddits()
+		added = []
+		for sub in subs:
+			if sub not in registered_subs:
+				added.append(sub)
+				add_subreddit(sub)
+		msg = ', '.join([f'***{s}***' for s in added])
+		return await ctx.send(f'{msg} have been added')
 
 	@commands.command(name='animepic',
 					pass_context=True,
