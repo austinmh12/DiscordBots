@@ -48,7 +48,7 @@ def get_last_upload():
 	df = sql('anime', 'select * from last_upload limit 1')
 	if df.empty:
 		return dt(1999, 1, 1)
-	return dt.strptime(df.last_upload[0], '%Y-%m-%d')
+	return dt.strptime(df.date[0], '%Y-%m-%d')
 
 def update_last_upload():
 	sql('anime', 'delete from last_upload')
@@ -87,6 +87,7 @@ class AnimeCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/anime.db'):
 			log.info('Initialising database.')
 			initialise_db()
+		self.reddit = Reddit('bot1')
 		self.get_anime_pics.start()
 
 	# Utilities
@@ -97,18 +98,14 @@ class AnimeCog(MyCog):
 			return True
 		return False
 
-	def init_get_posts(self, reddit, posts):
-		self.get_posts.reddit = reddit
-		self.get_posts.posts = posts
-
 	def get_posts(self, sub):
-		posts = get_posts.reddit.subreddit(sub).hot(limit=50)
-		existing_post_ids = [p.id for p in get_posts.posts]
+		posts = self.reddit.subreddit(sub).hot(limit=50)
+		existing_post_ids = [p.id for p in self.posts]
 		return [p for p in posts if p.id not in existing_post_ids]
 
 	def downloader(self, post):
 		try:
-			resp.get(post.url)
+			resp = r.get(post.url)
 		except r.exceptions.MissingSchema:
 			log.error(f'Missing Schema: {post.permalink}')
 			return
@@ -150,9 +147,11 @@ class AnimeCog(MyCog):
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
 			posts = get_posts_from_db()
-			with ThreadPool(1, initializer=self.init_get_posts, initargs=[reddit, posts]) as p:
+			with ThreadPool(1) as p:
+				log.info('Getting existing posts')
+				self.posts = get_posts_from_db()
 				posts = []
-				log.info('Getting posts')
+				log.info('Getting new posts')
 				_posts = p.map_async(self.get_posts, subs).get()
 				for post_list in _posts:
 					posts.extend(post_list)
