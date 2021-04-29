@@ -280,7 +280,7 @@ class AnimeCog(MyCog):
 		if ctx.channel.id in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
 			return await ctx.send('This channel is already registered for ***NSFW*** pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
-		await ctx.send(f'This channel is now {nsfw.upper()} registered!')
+		await ctx.send(f'This channel is now ***{nsfw.upper()}*** registered!')
 		return add_channel(channel)
 
 	@commands.command(name='unregisterchannel',
@@ -297,7 +297,7 @@ class AnimeCog(MyCog):
 		if ctx.channel.id not in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
 			return await ctx.send('This channel isn\'t registered for ***NSFW*** pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
-		await ctx.send(f'This channel is no longer {nsfw.upper()} registered')
+		await ctx.send(f'This channel is no longer ***{nsfw.upper()}*** registered')
 		return delete_channel(channel)
 
 	# Tasks
