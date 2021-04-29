@@ -273,7 +273,7 @@ class Channel:
 		resp = r.get(f'https://www.googleapis.com/youtube/v3/playlistItems?key={ENV["YTAPIKEY"]}&part=contentDetails,snippet&playlistId={self.upload_id}').json()
 		video_item = resp.get('items', [{}])[0]
 		if video_item:
-			video = Video.from_item(video_item, self.colour)
+			video = Video.from_item(video_item, self.colour, self.thumbnail)
 			self.latest_video = video
 
 	@property
@@ -307,13 +307,14 @@ class Channel:
 		return hash(self.id)
 
 class Video:
-	def __init__(self, id, title, description, thumbnail, uploaded, colour=(0, 0, 0)):
+	def __init__(self, id, title, description, thumbnail, uploaded, colour, icon):
 		self.id = id
 		self.title = title
 		self.description = description
 		self.thumbnail = thumbnail
 		self.uploaded = uploaded
 		self.colour = colour
+		self.icon = icon
 
 	@property
 	def page(self):
@@ -324,11 +325,12 @@ class Video:
 			f'[Watch here!](https://www.youtube.com/watch?v={self.id})\n\n{self.description}', 
 			colour=self.colour, 
 			image=self.thumbnail,
+			thumbnail=self.icon,
 			footer=f'Uploaded at {self.uploaded}'
 		)
 
 	@classmethod
-	def from_item(cls, item, colour):
+	def from_item(cls, item, colour, icon):
 		id = item['contentDetails']['videoId']
 		title = item['snippet']['title']
 		description = item['snippet']['description']
@@ -336,4 +338,4 @@ class Video:
 			description = description.split('\n')[0]
 		thumbnail = item['snippet']['thumbnails']['default']['url']
 		uploaded = item['contentDetails']['videoPublishedAt']
-		return cls(id, title, description, thumbnail, uploaded, colour)
+		return cls(id, title, description, thumbnail, uploaded, colour, icon)
