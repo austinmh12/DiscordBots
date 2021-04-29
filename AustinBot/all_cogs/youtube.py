@@ -219,9 +219,10 @@ class YoutubeCog(MyCog):
 				continue
 			video_count = channel.get_video_count()
 			if video_count > channel.video_count:
+				channel.get_latest_video()
 				if not self.__is_startup:
 					msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
-					await yt_channel.send(msg, embed=channel.new_video_embed.embed)
+					await yt_channel.send(f'New {channel.name} video! {msg}', embed=channel.video.page.embed)
 				channel.video_count = video_count
 				update_channel(channel)
 		for channel in deleted_channels:
@@ -243,6 +244,7 @@ class Channel:
 		self.url = f'https://www.youtube.com/channel/{self.id}/videos'
 		self.colour = self.gen_channel_colour()
 		self.video_count = video_count
+		self.latest_video = None
 
 	def gen_channel_colour(self):
 		resp = r.get(self.thumbnail)
@@ -253,9 +255,16 @@ class Channel:
 	def get_video_count(self):
 		"""Calls the YouTube API to get the videoCount statistic for the channel.
 		"""
-		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=statistics').json()
-		video_count = resp.get('items', [{}])[0].get('statistics', {}).get('videoCount', 0)
-		return int(video_count)
+		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=contentDetails').json()
+		video_count = resp.get('pageInfo', {}).get('totalResults', 0)
+		return video_count
+
+	def get_latest_video(self):
+		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=contentDetails').json()
+		video_item = resp.get('items', [{}])[0]
+		if video_item:
+			video = Video.from_item(video_item, self.colour)
+			self.latest_video = video
 
 	@property
 	def new_video_embed(self):
@@ -286,3 +295,35 @@ class Channel:
 
 	def __hash__(self):
 		return hash(self.id)
+
+class Video:
+	def __init__(self, id, title, description, thumbnail, uploaded, colour=(0, 0, 0)):
+		self.id = id
+		self.title = title
+		self.description = description
+		self.thumbnail = thumbnail
+		self.uploaded = uploaded
+		self.colour = colour
+
+	@property
+	def page(self):
+		"""Returns an embed used for the video
+		"""
+		return Page(
+			self.title, 
+			f'[Watch here!](https://www.youtube.com/watch?v={self.id})\n\n{self.description}', 
+			colour=self.colour, 
+			image=self.thumbnail,
+			footer=f'Uploaded at {self.uploaded}'
+		)
+
+	@classmethod
+	def from_item(cls, item, colour):
+		id = item['contentDetails']['videoId']
+		title = item['snippet']['title']
+		description = item['snippet']['description']
+		if '\n' in description:
+			description = description.split('\n')[0]
+		thumbnail = item['snippet']['thumbnails']['default']['url']
+		uploaded = item['contentDetails']['videoPublishedAt']
+		return cls(id, title, description, thumbnail, uploaded, colour)
