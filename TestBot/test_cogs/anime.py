@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.0'
+version = '1.0.1'
 
 # Constants
 with open('../.env') as f:
@@ -47,7 +47,7 @@ def delete_subreddit(name):
 def get_last_upload():
 	df = sql('anime', 'select * from last_upload limit 1')
 	if df.empty:
-		return dt(1999, 01, 01)
+		return dt(1999, 1, 1)
 	return dt.strptime(df.last_upload[0], '%Y-%m-%d')
 
 def update_last_upload():
