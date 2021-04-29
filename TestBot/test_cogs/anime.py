@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.1'
+version = '1.0.2'
 
 # Constants
 with open('../.env') as f:
@@ -133,7 +133,7 @@ class AnimeCog(MyCog):
 			log.error(f'Not an Image: {post.permalink}')
 			return
 
-	def upload_pic(self, pic):
+	async def upload_pic(self, pic):
 		if not pic:
 			return
 		file = pic.to_file()
