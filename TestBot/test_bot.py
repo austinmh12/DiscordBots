@@ -23,7 +23,7 @@ stream_handler.setFormatter(logging.Formatter('[%(asctime)s - %(name)s - %(level
 log.addHandler(stream_handler)
 
 
-SCRIPT_PATH = 'S:/OldPC/Python/Bots/discord_bots/TestBot/'
+SCRIPT_PATH = f'{ENV["WINPATH"]}/TestBot/'
 
 intents = discord.Intents.default()
 intents.members = True
