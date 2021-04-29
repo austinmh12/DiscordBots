@@ -205,9 +205,9 @@ class AnimeCog(MyCog):
 	async def register_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
-		if ctx.channel.id in get_sfw_channels() and nsfw == 'sfw':
+		if ctx.channel.id in [c.id for c in get_sfw_channels()] and nsfw == 'sfw':
 			return await ctx.send('This channel is already registered for SFW pics.')
-		if ctx.channel.id in get_nsfw_channels() and nsfw == 'nsfw':
+		if ctx.channel.id in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
 			return await ctx.send('This channel is already registered for NSFW pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
 		await ctx.send(f'This channel is now {nsfw.upper()} registered!')
@@ -221,9 +221,9 @@ class AnimeCog(MyCog):
 	async def unregister_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
-		if ctx.channel.id not in get_sfw_channels() and nsfw == 'sfw':
+		if ctx.channel.id not in [c.id for c in get_sfw_channels()] and nsfw == 'sfw':
 			return await ctx.send('This channel isn\'t registered for SFW pics.')
-		if ctx.channel.id not in get_nsfw_channels() and nsfw == 'nsfw':
+		if ctx.channel.id not in [c.id for c in get_nsfw_channels()] and nsfw == 'nsfw':
 			return await ctx.send('This channel isn\'t registered for NSFW pics.')
 		channel = Channel(ctx.channel.id, 1 if nsfw == 'nsfw' else 0)
 		await ctx.send(f'This channel is no longer {nsfw.upper()} registered')
