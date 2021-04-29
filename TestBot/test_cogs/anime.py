@@ -18,13 +18,19 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.4'
+version = '1.0.5'
 
 # Constants
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
 SFW_CHANNEL = 655509540548116480
 NSFW_CHANNEL = 837350102787555379
+
+def sfw_check(ctx):
+	return ctx.channel.id == SFW_CHANNEL
+
+def nsfw_check(ctx):
+	return ctx.channel.id == NSFW_CHANNEL
 
 # Functions
 def initialise_db():
@@ -136,9 +142,42 @@ class AnimeCog(MyCog):
 		except ImageToLargeException:
 			log.error(f'{pic.id} is too large. Upload by hand.')
 		file.close()
-		
+
 
 	# Commands
+	@commands.command(name='subreddits',
+					pass_context=True,
+					description='List the subreddits',
+					breif='List the subreddits',
+					aliases=[''])
+	async def subreddits(self, ctx):
+		...
+
+	@commands.command(name='addsubreddits',
+					pass_context=True,
+					description='Add subreddits to the list of source materials',
+					breif='Add subreddits to the list',
+					aliases=['asub'])
+	async def add_subreddits(self, ctx, *subs):
+		...
+
+	@commands.command(name='animepic',
+					pass_context=True,
+					description='Provides a SFW anime pic',
+					breif='SFW anime pic',
+					aliases=['sfw', 'ap'])
+	# SFW Check
+	async def anime_pic(self, ctx, amount: typing.Optional[int] = 1):
+		...
+
+	@commands.command(name='ecchipic',
+					pass_context=True,
+					description='Provides a NSFW anime pic',
+					breif='NSFW anime pic',
+					aliases=['nsfw', 'ep'])
+	# NFSW check
+	async def ecchi_pic(self, ctx, amount: typing.Optional[int] = 1):
+		...
 
 	# Tasks
 	@tasks.loop(seconds=1800)
