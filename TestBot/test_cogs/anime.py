@@ -1,21 +1,17 @@
 from . import sql, log, BASE_PATH, Page, MyCog, chunk
-import json
 from datetime import datetime as dt, timedelta as td
 from discord import File
 from discord.ext import commands, tasks
 from discord.errors import HTTPException as ImageToLargeException
 import asyncio
 import requests as r
-import os, sys
-from os.path import getmtime, isfile, join as pjoin
 from praw import Reddit
 from PIL import Image
 from io import BytesIO
-from time import sleep, perf_counter as pc
 from random import choice
+import os.path
 import typing
 from multiprocessing.pool import ThreadPool
-from multiprocessing import get_logger
 
 # Version
 version = '1.3.4'
