@@ -153,9 +153,11 @@ class AnimeCog(MyCog):
 		if not pic:
 			return
 		file = pic.to_file()
-		channel = self.nsfw_channel if pic.nsfw else self.sfw_channel
+		channels = self.nsfw_channels if pic.nsfw else self.sfw_channels
 		try:
-			await channel.send(file=file)
+			for channel in channels:
+				channel = await self.bot.fetch_channel(channel)
+				await channel.send(file=file)
 		except ImageToLargeException:
 			log.error(f'{pic.id} is too large. Upload by hand.')
 		file.close()
@@ -224,8 +226,8 @@ class AnimeCog(MyCog):
 	@get_anime_pics.before_loop
 	async def before_get_anime_pics(self):
 		await self.bot.wait_until_ready()
-		self.sfw_channel = await self.bot.fetch_channel(SFW_CHANNEL)
-		self.nsfw_channel = await self.bot.fetch_channel(NSFW_CHANNEL)
+		self.sfw_channels = get_sfw_channels()
+		self.nsfw_channels = get_nsfw_channels()
 
 class RedditPost:
 	def __init__(self, id, img_data, nsfw):
