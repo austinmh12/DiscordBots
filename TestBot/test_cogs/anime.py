@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.2.1'
+version = '1.3.0'
 
 # Constants
 with open('../.env') as f:
@@ -98,10 +98,10 @@ def delete_channel(channel):
 	sql('anime', 'delete from channels where id = ?', (channel.id,))
 
 def sfw_check(ctx):
-	return ctx.channel.id in get_sfw_channels()
+	return ctx.channel.id in [ch.id for ch in get_sfw_channels()]
 
 def nsfw_check(ctx):
-	return ctx.channel.id in get_nsfw_channels()
+	return ctx.channel.id in [ch.id for ch in get_nsfw_channels()]
 
 # Classes
 class AnimeCog(MyCog):
@@ -163,6 +163,17 @@ class AnimeCog(MyCog):
 			log.error(f'{pic.id} is too large. Upload by hand.')
 			file.close()
 
+	async def upload_pic_to_channel(self, pic, channel):
+		if not pic:
+			return
+		try:
+			file = pic.to_file()
+			await channel.send(file=file)
+			file.close()
+		except ImageToLargeException:
+			log.error(f'{pic.id} is too large. Upload by hand.')
+			file.close()
+
 	# Commands
 	@commands.command(name='subreddits',
 					pass_context=True,
@@ -200,18 +211,40 @@ class AnimeCog(MyCog):
 					description='Provides a SFW anime pic',
 					breif='SFW anime pic',
 					aliases=['sfw', 'ap'])
-	# SFW Check
+	@commands.check(sfw_check)
 	async def anime_pic(self, ctx, amount: typing.Optional[int] = 1):
-		...
+		if amount < 1:
+			amount = 1
+		elif 1 <= amount <= 25:
+			amount = amount
+		else:
+			amount = min(25, len([p for p in get_posts_from_db() if not p.nsfw]))
+		while len(pics) < amount:
+			pic = get_post_from_db()
+			if pic not in pics:
+				pics.append(pic)
+		for p in pics:
+			self.upload_pic_to_channel(p, ctx.channel)
 
 	@commands.command(name='ecchipic',
 					pass_context=True,
 					description='Provides a NSFW anime pic',
 					breif='NSFW anime pic',
 					aliases=['nsfw', 'ep'])
-	# NFSW check
+	@commands.check(nsfw_check)
 	async def ecchi_pic(self, ctx, amount: typing.Optional[int] = 1):
-		...
+		if amount < 1:
+			amount = 1
+		elif 1 <= amount <= 25:
+			amount = amount
+		else:
+			amount = min(25, len([p for p in get_posts_from_db() if p.nsfw]))
+		while len(pics) < amount:
+			pic = get_post_from_db(1)
+			if pic not in pics:
+				pics.append(pic)
+		for p in pics:
+			self.upload_pic_to_channel(p, ctx.channel)
 
 	@commands.command(name='registerchannel',
 					pass_context=True,
