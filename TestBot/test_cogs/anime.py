@@ -18,7 +18,7 @@ from multiprocessing.pool import ThreadPool
 from multiprocessing import get_logger
 
 # Version
-version = '1.0.3'
+version = '1.0.4'
 
 # Constants
 with open('../.env') as f:
@@ -158,8 +158,9 @@ class AnimeCog(MyCog):
 				log.info('Got posts, downloading...')
 				img_posts = p.map_async(self.downloader, posts).get()
 				log.info('Downloaded, uploading...')
-				p.map_async(self.upload_pic, img_posts).get()
-				log.info('Uploaded.')
+			for img_post in img_posts:
+				await self.upload_pic(img_post)
+			log.info('Uploaded.')
 			add_posts_to_db(img_posts)
 			update_last_upload()
 
@@ -180,7 +181,10 @@ class RedditPost:
 		return (self.id, self.img_data, self.nsfw)
 
 	def to_file(self):
-		return File(BytesIO(bytes.fromhex(self.img_data)))
+		im = Image.open(BytesIO(bytes.fromhex(self.img_data)))
+		ext = im.format
+		im.close()
+		return File(BytesIO(bytes.fromhex(self.img_data)), filename=f'{self.id}.{ext}')
 	
 	def __eq__(self, rp):
 		return self.id == rp.id
