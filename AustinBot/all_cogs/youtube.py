@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.4.2'
+version = '0.4.3'
 
 # Constants
 with open('../.env') as f:
@@ -86,6 +86,7 @@ class YoutubeCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/youtube.db'):
 			log.info('Initialising database.')
 			initialise_db()
+		self.__is_startup = True
 		self.channels = self.initialise_channels()
 		self.check_for_videos.start()
 
@@ -218,8 +219,9 @@ class YoutubeCog(MyCog):
 				continue
 			video_count = channel.get_video_count()
 			if video_count > channel.video_count:
-				msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
-				await yt_channel.send(msg, embed=channel.new_video_embed.embed)
+				if not self.__is_startup:
+					msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
+					await yt_channel.send(msg, embed=channel.new_video_embed.embed)
 				channel.video_count = video_count
 				update_channel(channel)
 		for channel in deleted_channels:
@@ -228,6 +230,10 @@ class YoutubeCog(MyCog):
 	@check_for_videos.before_loop
 	async def before_check_for_videos(self):
 		await self.bot.wait_until_ready()
+
+	@check_for_videos.after_loop
+	def after_check_for_videos(self):
+		self.__is_startup = False
 
 class Channel:
 	def __init__(self, id, name, thumbnail, video_count=0):
