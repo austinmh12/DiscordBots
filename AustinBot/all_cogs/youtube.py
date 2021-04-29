@@ -10,7 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 # Version
-version = '0.4.3'
+version = '0.4.5'
 
 # Constants
 with open('../.env') as f:
@@ -87,6 +87,7 @@ class YoutubeCog(MyCog):
 			log.info('Initialising database.')
 			initialise_db()
 		self.__is_startup = True
+		log.info('Getting existing channels')
 		self.channels = self.initialise_channels()
 		self.check_for_videos.start()
 
@@ -132,8 +133,8 @@ class YoutubeCog(MyCog):
 		await ctx.send(f'You are now subscribed to **{channel.name}**!')
 		add_subscription(ctx.author.id, channel)
 		channel.video_count = channel.get_video_count()
-		add_channel(channel)
 		if channel not in self.channels:
+			add_channel(channel)
 			self.channels.append(channel)
 
 	@commands.command(name='unsubscribe',
@@ -208,21 +209,23 @@ class YoutubeCog(MyCog):
 		value is higher than channel.video_count, set the channel.video_count to that and
 		then send the channel embed to the channel.
 		"""
-		log.info('Checking for new videos.')
 		yt_channel = await self.bot.fetch_channel(623291442726436884)
 		deleted_channels = []
 		for channel in self.channels:
+			log.info(f'Checking {channel.name}...')
 			subscribers = get_subscriptions_for_channel(channel)
 			if not subscribers:
+				log.warning(f'Deleteing {channel.name}, no subscribers')
 				delete_channel(channel)
 				deleted_channels.append(channel)
 				continue
 			video_count = channel.get_video_count()
 			if video_count > channel.video_count:
+				log.info(f'{channel.name} has a new video')
 				channel.get_latest_video()
-				if not self.__is_startup:
-					msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
-					await yt_channel.send(f'New {channel.name} video! {msg}', embed=channel.video.page.embed)
+				# if not self.__is_startup:
+				msg = ', '.join([f'<@{discord_id}>' for discord_id in subscribers])
+				await yt_channel.send(f'New {channel.name} video! {msg}', embed=channel.video.page.embed)
 				channel.video_count = video_count
 				update_channel(channel)
 		for channel in deleted_channels:
@@ -231,19 +234,21 @@ class YoutubeCog(MyCog):
 	@check_for_videos.before_loop
 	async def before_check_for_videos(self):
 		await self.bot.wait_until_ready()
+		log.info('Checking for new videos.')
 
 	@check_for_videos.after_loop
-	def after_check_for_videos(self):
+	async def after_check_for_videos(self):
 		self.__is_startup = False
+		log.info('Done checking for videos')
 
 class Channel:
 	def __init__(self, id, name, thumbnail, video_count=0):
 		self.id = id
 		self.name = name
 		self.thumbnail = thumbnail
-		self.url = f'https://www.youtube.com/channel/{self.id}/videos'
 		self.colour = self.gen_channel_colour()
 		self.video_count = video_count
+		self.upload_id = self.get_upload_id()
 		self.latest_video = None
 
 	def gen_channel_colour(self):
@@ -252,15 +257,20 @@ class Channel:
 		im.thumbnail((1, 1))
 		return im.getpixel((0, 0))
 
+	def get_upload_id(self):
+		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=contentDetails').json()
+		upload_id = resp.get('items', [{}])[0].get('contentDetails', {}).get('relatedPlaylists', {}).get('uploads', '')
+		return upload_id
+
 	def get_video_count(self):
 		"""Calls the YouTube API to get the videoCount statistic for the channel.
 		"""
-		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=contentDetails').json()
+		resp = r.get(f'https://www.googleapis.com/youtube/v3/playlistItems?key={ENV["YTAPIKEY"]}&part=contentDetails&playlistId={self.upload_id}').json()
 		video_count = resp.get('pageInfo', {}).get('totalResults', 0)
 		return video_count
 
 	def get_latest_video(self):
-		resp = r.get(f'https://www.googleapis.com/youtube/v3/channels?key={ENV["YTAPIKEY"]}&id={self.id}&part=contentDetails').json()
+		resp = r.get(f'https://www.googleapis.com/youtube/v3/playlistItems?key={ENV["YTAPIKEY"]}&part=contentDetails,snippet&playlistId={self.upload_id}').json()
 		video_item = resp.get('items', [{}])[0]
 		if video_item:
 			video = Video.from_item(video_item, self.colour)
