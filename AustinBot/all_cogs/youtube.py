@@ -12,7 +12,7 @@ from dateutil import tz
 import typing
 
 # Version
-version = '0.5.0'
+version = '0.5.1'
 
 # Constants
 with open('../.env') as f:
@@ -246,6 +246,7 @@ class YoutubeCog(MyCog):
 class Channel:
 	def __init__(self, id, name, thumbnail, video_count=0):
 		self.id = id
+		self.url = f'https://www.youtube.com/channel/{self.id}'
 		self.name = name
 		self.thumbnail = thumbnail
 		self.colour = self.gen_channel_colour()
