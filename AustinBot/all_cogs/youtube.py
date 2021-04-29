@@ -9,9 +9,10 @@ import os.path
 from PIL import Image
 from io import BytesIO
 from dateutil import tz
+import typing
 
 # Version
-version = '0.4.7'
+version = '0.5.0'
 
 # Constants
 with open('../.env') as f:
@@ -190,17 +191,20 @@ class YoutubeCog(MyCog):
 					brief='Subscribe to a youtube channel',
 					aliases=['subs'])
 	@commands.check(yt_check)
-	async def subscriptions(self, ctx):
+	async def subscriptions(self, ctx, user: typing.Optional[Member] = None):
 		"""Lists the user's subscriptions.
 		"""
-		subs = get_subscriptions_for_user(ctx.author.id)
+		discord_id = user.id if user else ctx.author.id
+		display_name = user.display_name if user else ctx.author.display_name
+		avatar_url = user.avatar_url if user else ctx.author.avatar_url
+		subs = get_subscriptions_for_user(discord_id)
 		subs.sort()
 		pages = []
 		for ch in chunk(subs, 15):
 			desc = ''
 			for channel in ch:
 				desc += f'[{channel.name}]({channel.url})\n'
-			pages.append(Page(f'{ctx.author.display_name}\'s Subscriptions', desc, colour=(232, 49, 39), icon=ctx.author.avatar_url))
+			pages.append(Page(f'{display_name}\'s Subscriptions', desc, colour=(232, 49, 39), icon=avatar_url))
 		return await self.paginated_embeds(ctx, pages)
 
 	# Tasks #
@@ -284,7 +288,7 @@ class Channel:
 		return cls(snippet['channelId'], snippet['title'], snippet['thumbnails']['default']['url'])
 
 	def __gt__(self, c):
-		return self.name > c.name
+		return self.name.lower() > c.name.lower()
 
 	def __eq__(self, c):
 		return self.id == c.id
