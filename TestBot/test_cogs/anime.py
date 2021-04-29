@@ -23,20 +23,13 @@ version = '1.0.5'
 # Constants
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
-SFW_CHANNEL = 655509540548116480
-NSFW_CHANNEL = 837350102787555379
-
-def sfw_check(ctx):
-	return ctx.channel.id == SFW_CHANNEL
-
-def nsfw_check(ctx):
-	return ctx.channel.id == NSFW_CHANNEL
 
 # Functions
 def initialise_db():
 	sql('anime', 'create table subreddits (name text)')
 	sql('anime', 'create table posts (id text, img_data text, nsfw integer)')
 	sql('anime', 'create table last_upload (date text)')
+	sql('anime', 'create table channels (id integer, nsfw integer)')
 
 def get_subreddits():
 	df = sql('anime', 'select * from subreddits')
@@ -85,6 +78,30 @@ def add_posts_to_db(posts):
 				sql_str += ' (?,?,?),'
 				vals.extend(rp.to_row)
 		sql('anime', sql_str[:-1], vals)
+
+def get_channels():
+	df = sql('anime', 'select * from channels')
+	if df.empty:
+		return []
+	return [Channel(**d) for d in df.to_dict('records')]
+
+def get_sfw_channels():
+	return [c for c in get_channels() if not c.nsfw]
+
+def get_nsfw_channels():
+	return [c for c in get_channels() if c.nsfw]
+
+def add_channel(channel):
+	sql('anime', 'insert into channels values (?,?)', channel.to_row)
+
+def delete_channel(channel):
+	sql('anime', 'delete from channels where id = ?', (channel.id,))
+
+def sfw_check(ctx):
+	return ctx.channel.id in get_sfw_channels()
+
+def nsfw_check(ctx):
+	return ctx.channel.id in get_nsfw_channels()
 
 # Classes
 class AnimeCog(MyCog):
@@ -228,3 +245,15 @@ class RedditPost:
 	
 	def __eq__(self, rp):
 		return self.id == rp.id
+
+class Channel:
+	def __init__(self, id, nsfw):
+		self.id = id
+		self.nsfw = nsfw
+
+	@property
+	def to_row(self):
+		return (self.id, self.nfsw)
+	
+	def __eq__(self, c):
+		return self.id == c.id
