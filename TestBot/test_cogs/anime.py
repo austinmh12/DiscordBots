@@ -146,12 +146,13 @@ class AnimeCog(MyCog):
 	@tasks.loop(seconds=1800)
 	async def get_anime_pics(self):
 		if self.need_to_download():
-			log.info('Downloading images')
+			log.info('Starting the downloading process')
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
 			posts = get_posts_from_db()
 			with ThreadPool(10, initializer=self.init_get_posts, initargs=[reddit, posts]) as p:
 				posts = []
+				log.info('Getting posts')
 				_posts = p.map_async(self.get_posts, subs).get()
 				for post_list in _posts:
 					posts.extend(post_list)
@@ -168,7 +169,6 @@ class AnimeCog(MyCog):
 		await self.bot.wait_until_ready()
 		self.sfw_channel = await self.bot.fetch_channel(SFW_CHANNEL)
 		self.nsfw_channel = await self.bot.fetch_channel(NSFW_CHANNEL)
-		log.info('Getting posts.')
 
 class RedditPost:
 	def __init__(self, id, img_data, nsfw):
