@@ -103,6 +103,9 @@ def sfw_check(ctx):
 def nsfw_check(ctx):
 	return ctx.channel.id in [ch.id for ch in get_nsfw_channels()]
 
+def admin_check(ctx):
+	return ctx.message.author.guild_permissions.administrator
+
 # Classes
 class AnimeCog(MyCog):
 	def __init__(self, bot):
@@ -183,6 +186,8 @@ class AnimeCog(MyCog):
 				return await ctx.send('This channel is not ***SFW*** registered')
 			if ctx.command.name == 'ecchipic':
 				return await ctx.send('This channel is not ***NSFW*** registered')
+			if ctx.command.name in ['registerchannel', 'unregisterchannel']:
+				return await ctx.send('Only an admin can use these')
 		log.error(error, exc_info=True)
 		return
 
@@ -266,6 +271,7 @@ class AnimeCog(MyCog):
 					description='Registers a channel to receive SFW or NSFW pics',
 					breif='Registers channels',
 					aliases=['reg'])
+	@commands.check(admin_check)
 	async def register_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
@@ -282,6 +288,7 @@ class AnimeCog(MyCog):
 					description='Unregisters a channel to receive SFW or NSFW pics',
 					breif='Unregisters channels',
 					aliases=['ureg'])
+	@commands.check(admin_check)
 	async def unregister_channel(self, ctx, nsfw: typing.Optional[str] = ''):
 		if nsfw not in ['sfw', 'nsfw']:
 			return await ctx.send('Must select ***sfw*** or ***nsfw***')
