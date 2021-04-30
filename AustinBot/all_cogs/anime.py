@@ -12,9 +12,10 @@ from random import choice
 import os.path
 import typing
 from multiprocessing.pool import ThreadPool
+from sqlite3 import InterfaceError
 
 # Version
-version = '1.3.4'
+version = '1.3.5'
 
 # Constants
 with open('../.env') as f:
@@ -62,7 +63,12 @@ def get_post_from_db(nsfw=0):
 	return choice([RedditPost(**d) for d in df.to_dict('records')])
 
 def add_post_to_db(post):
-	sql('anime', 'insert into posts values (?,?,?)', post.to_row)
+	try:
+		sql('anime', 'insert into posts values (?,?,?)', post.to_row)
+	except InterfaceError:
+		return
+	except MemoryError:
+		return
 
 def add_posts_to_db(posts):
 	chunks = chunk(posts, 249)
@@ -313,12 +319,14 @@ class AnimeCog(MyCog):
 				for post_list in _posts:
 					posts.extend(post_list)
 				log.info('Got posts, downloading...')
-				img_posts = p.map_async(self.downloader, posts).get()
+				img_posts = p.imap_unordered(self.downloader, posts)
 				log.info('Downloaded, uploading...')
-			for img_post in img_posts:
-				await self.upload_pic(img_post)
+				for img_post in img_posts:
+					if img_post:
+						await self.upload_pic(img_post)
+						add_post_to_db(img_post)
 			log.info('Uploaded.')
-			add_posts_to_db(img_posts)
+			# add_posts_to_db(img_posts)
 			update_last_upload()
 
 	@get_anime_pics.before_loop
