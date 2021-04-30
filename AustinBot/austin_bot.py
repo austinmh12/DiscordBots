@@ -9,7 +9,10 @@ import discord
 import logging
 import sys
 import typing
+from string import ascii_lowercase
 from all_cogs.brendan import BrendanCog
+from all_cogs.youtube import YoutubeCog
+from all_cogs.anime import AnimeCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -19,7 +22,7 @@ SCRIPT_PATH = f"{ENV['WINPATH']}/AustinBot" if sys.platform == 'win32' else f'{E
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler()
-stream_format = logging.Formatter('[%(asctime)s - %(levelname)s] %(message)s')
+stream_format = logging.Formatter('[%(asctime)s - %(name)s - %(levelname)s] %(message)s')
 stream_handler.setFormatter(stream_format)
 log.addHandler(stream_handler)
 
@@ -62,6 +65,31 @@ async def sheesha(ctx, e: typing.Optional[int] = 4, user: typing.Optional[Member
 		return await ctx.send(f'***SHEE{"e"*e}***eeesh <@{user.id}>')
 	return await ctx.send(f'***SHEE{"e"*e}***eeesh')
 
+@client.command(name='meme',
+				pass_context=True,
+				description='Replaces your message with big blue letters',
+				brief='Big blue letters')
+async def big_blue_letters(ctx, *message):
+	blue_words = []
+	message = ' '.join(message).lower()
+	await ctx.message.delete()
+	words = message.split(' ')
+	for word in words:
+		new_word = ''.join([f':regional_indicator_{letter}:' for letter in list(word) if letter in ascii_lowercase])
+		blue_words.append(new_word)
+	msgs = []
+	msg = ''
+	for word in blue_words:
+		tmp = f'{word}   '
+		if len(msg) + len(tmp) > 2000:
+			msgs.append(msg)
+			msg = ''
+		msg += tmp
+	msgs.append(msg)
+	for msg in msgs:
+		if msg:
+			await ctx.send(msg)
+
 @client.command()
 async def help(ctx, cog_name: typing.Optional[str] = 'PokeRoulette'):
 	cog = client.cogs.get(cog_name, None)
@@ -100,4 +128,6 @@ async def check_for_changes():
 
 client.loop.create_task(check_for_changes())
 client.add_cog(BrendanCog(client))
+client.add_cog(YoutubeCog(client))
+client.add_cog(AnimeCog(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)

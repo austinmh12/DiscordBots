@@ -1,23 +1,13 @@
-import logging
-import json
+from . import log
 from datetime import datetime as dt, timedelta as td
 from discord.ext import commands
-from discord import Member, Embed, Colour, File
+from discord import File
 import asyncio
 import requests as r
-import os, sys
-from os.path import getmtime
-from random import choice
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler()
-stream_format = logging.Formatter('[%(asctime)s - %(name)s - %(levelname)s] %(message)s')
-stream_handler.setFormatter(stream_format)
-log.addHandler(stream_handler)
+import os
 
 # Version
-version = '0.0.0'
+version = '0.0.1'
 
 # Constants
 brendans_channel = 587447130474414086
@@ -25,7 +15,7 @@ brendans_id = 311306843718942740
 
 # Utility Functions
 
-
+# Classes
 class BrendanCog(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -45,7 +35,7 @@ class BrendanCog(commands.Cog):
 			ext = atch.filename.split('.')[-1]
 			with open(f'tmp.{ext}', 'wb') as f:
 				f.write(resp.content)
-			file = discord.File(f'tmp.{ext}')
+			file = File(f'tmp.{ext}')
 		at_d_msg = f'<@{brendans_id}> ' + msg.content
 		await msg.delete()
 		if atch:
