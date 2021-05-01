@@ -327,7 +327,10 @@ class Video:
 		description = item['snippet']['description']
 		if '\n' in description:
 			description = description.split('\n')[0]
-		thumbnail = item['snippet']['thumbnails']['standard']['url']
+		try:
+			thumbnail = item['snippet']['thumbnails']['standard']['url']
+		except KeyError:
+			thumbnail = item['snippet']['thumbnails']['default']['url']
 		uploaded = dt.strptime(item['contentDetails']['videoPublishedAt'], '%Y-%m-%dT%H:%M:%SZ')
 		uploaded = (uploaded + tz.gettz('US/Eastern').utcoffset(dt.utcnow())).strftime('%b %d, %Y %I:%M %p')
 		return cls(id, title, description, thumbnail, uploaded, colour, icon)
