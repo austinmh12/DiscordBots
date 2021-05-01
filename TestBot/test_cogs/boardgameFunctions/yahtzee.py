@@ -34,6 +34,7 @@ yahtzee_card_positions = {
 class YahtzeeGame:
 	def __init__(self, players):
 		self.players = [YahtzeePlayer(p) for p in players]
+		self.current_player = None
 
 class YahtzeePlayer:
 	def __init__(self, id):
@@ -65,6 +66,8 @@ class YahtzeePlayer:
 			'total_top_bottom': -1,
 			'grand_total': -1
 		}
+		self.last_roll = []
+		self.held_dice = []
 
 	def update_board(self, row, value):
 		x, y = yahtzee_card_positions.get(row, (0, 0))

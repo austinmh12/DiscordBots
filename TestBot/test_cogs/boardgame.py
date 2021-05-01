@@ -17,3 +17,6 @@ version = '0.0.0'
 class BoardGameCog(MyCog):
 	def __init__(self, bot):
 		super().__init__(bot)
+		self.game = None
+
+	
