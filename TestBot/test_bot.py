@@ -11,7 +11,8 @@ from os.path import getmtime
 # from test_cogs.movie_poll import Movies
 # from test_cogs.attachments import AttachmentHandler
 # from test_cogs.pokeroulette import PokeRoulette
-from test_cogs.anime import AnimeCog
+# from test_cogs.anime import AnimeCog
+from test_cogs.boardgame import BoardGameCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -101,5 +102,6 @@ async def check_for_changes():
 client.loop.create_task(check_for_changes())
 # client.add_cog(Movies(client))
 # client.add_cog(PokeRoulette(client))
-client.add_cog(AnimeCog(client))
+# client.add_cog(AnimeCog(client))
+client.add_cog(BoardGameCog(client))
 client.run(ENV['TESTBOT'], bot=True)

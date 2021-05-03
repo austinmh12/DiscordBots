@@ -19,4 +19,12 @@ class BoardGameCog(MyCog):
 		super().__init__(bot)
 		self.game = None
 
-	
+	# Functions
+
+	# Commands
+	@commands.command(name='game',
+					pass_context=True,
+					description='Initiate a board game',
+					brief='Initiate a board game')
+	async def game_main(self, ctx, game_name):
+		...
