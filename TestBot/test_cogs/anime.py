@@ -314,10 +314,12 @@ class AnimeCog(MyCog):
 				for post_list in _posts:
 					posts.extend(post_list)
 				log.info('Got posts, downloading...')
-				img_posts = p.map_async(self.check_for_image, posts).get()
+				img_posts = p.imap_unordered(self.check_for_img, posts)
 				log.info('Downloaded, uploading...')
-			for img_post in img_posts:
-				await self.upload_pic(img_post)
+				for img_post in img_posts:
+					if img_post:
+						await self.upload_pic(img_post)
+						add_post_to_db(img_post)
 			log.info('Uploaded.')
 			add_posts_to_db(img_posts)
 			update_last_upload()
@@ -340,10 +342,10 @@ class RedditPost:
 
 	def to_file(self):
 		img_data = r.get(self.url)
-		im = Image.open(BytesIO(bytes.fromhex(img_data.content)))
+		im = Image.open(BytesIO(img_data.content))
 		ext = im.format
 		im.close()
-		return File(BytesIO(bytes.fromhex(img_data.content)), filename=f'{self.id}.{ext}')
+		return File(BytesIO(img_data.content), filename=f'{self.id}.{ext}')
 	
 	def __eq__(self, rp):
 		return self.id == rp.id

@@ -129,5 +129,5 @@ async def check_for_changes():
 client.loop.create_task(check_for_changes())
 client.add_cog(BrendanCog(client))
 client.add_cog(YoutubeCog(client))
-# client.add_cog(AnimeCog(client))
+client.add_cog(AnimeCog(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)

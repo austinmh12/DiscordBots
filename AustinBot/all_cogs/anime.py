@@ -15,7 +15,7 @@ from multiprocessing.pool import ThreadPool
 from sqlite3 import InterfaceError
 
 # Version
-version = '1.3.5'
+version = '1.3.6'
 
 # Constants
 with open('../.env') as f:
@@ -131,7 +131,7 @@ class AnimeCog(MyCog):
 		existing_post_ids = [p.id for p in self.posts]
 		return [p for p in posts if p.id not in existing_post_ids]
 
-	def downloader(self, post):
+	def check_for_img(self, post):
 		try:
 			resp = r.get(post.url)
 		except r.exceptions.MissingSchema:
@@ -144,9 +144,10 @@ class AnimeCog(MyCog):
 			log.error(f'Couldn\'t connect to {post.url}: {post.permalink}')
 			return
 		try:
-			Image.open(BytesIO(resp.content))
+			im = Image.open(BytesIO(resp.content))
+			im.close()
 			nsfw = 1 if post.over_18 else 0
-			return RedditPost(post.id, resp.content.hex(), nsfw)
+			return RedditPost(post.id, post.url, nsfw)
 		except OSError as e:
 			log.error(f'Not an Image: {post.permalink}')
 			return
@@ -319,14 +320,14 @@ class AnimeCog(MyCog):
 				for post_list in _posts:
 					posts.extend(post_list)
 				log.info('Got posts, downloading...')
-				img_posts = p.imap_unordered(self.downloader, posts)
+				img_posts = p.imap_unordered(self.check_for_img, posts)
 				log.info('Downloaded, uploading...')
 				for img_post in img_posts:
 					if img_post:
 						await self.upload_pic(img_post)
 						add_post_to_db(img_post)
 			log.info('Uploaded.')
-			# add_posts_to_db(img_posts)
+			add_posts_to_db(img_posts)
 			update_last_upload()
 
 	@get_anime_pics.before_loop
@@ -336,20 +337,21 @@ class AnimeCog(MyCog):
 		self.nsfw_channels = get_nsfw_channels()
 
 class RedditPost:
-	def __init__(self, id, img_data, nsfw):
+	def __init__(self, id, url, nsfw):
 		self.id = id
-		self.img_data = img_data
+		self.url = url
 		self.nsfw = nsfw
 
 	@property
 	def to_row(self):
-		return (self.id, self.img_data, self.nsfw)
+		return (self.id, self.url, self.nsfw)
 
 	def to_file(self):
-		im = Image.open(BytesIO(bytes.fromhex(self.img_data)))
+		img_data = r.get(self.url)
+		im = Image.open(BytesIO(img_data.content))
 		ext = im.format
 		im.close()
-		return File(BytesIO(bytes.fromhex(self.img_data)), filename=f'{self.id}.{ext}')
+		return File(BytesIO(img_data.content), filename=f'{self.id}.{ext}')
 	
 	def __eq__(self, rp):
 		return self.id == rp.id
