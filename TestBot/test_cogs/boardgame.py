@@ -15,11 +15,17 @@ version = '0.0.0'
 
 # Classes
 class BoardGameCog(MyCog):
-	available_games = ['Yahtzee']
+	available_games = ['yahtzee']
 
 	def __init__(self, bot):
 		super().__init__(bot)
-		self.game = None
+		self.yahtzee_game = None
+		self.iniatited_games = {
+			'yahtzee': {
+				'owner': None,
+				'players': []
+			}
+		}
 
 	# Functions
 
