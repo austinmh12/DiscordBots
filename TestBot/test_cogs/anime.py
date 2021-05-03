@@ -12,9 +12,10 @@ from random import choice
 import os.path
 import typing
 from multiprocessing.pool import ThreadPool
+from sqlite3 import InterfaceError
 
 # Version
-version = '1.3.5'
+version = '1.3.7'
 
 # Constants
 with open('../.env') as f:
@@ -23,7 +24,7 @@ with open('../.env') as f:
 # Functions
 def initialise_db():
 	sql('anime', 'create table subreddits (name text)')
-	sql('anime', 'create table posts (id text, url text, nsfw integer)')
+	sql('anime', 'create table posts (id text, img_data text, nsfw integer)')
 	sql('anime', 'create table last_upload (date text)')
 	sql('anime', 'create table channels (id integer, nsfw integer)')
 
@@ -62,7 +63,12 @@ def get_post_from_db(nsfw=0):
 	return choice([RedditPost(**d) for d in df.to_dict('records')])
 
 def add_post_to_db(post):
-	sql('anime', 'insert into posts values (?,?,?)', post.to_row)
+	try:
+		sql('anime', 'insert into posts values (?,?,?)', post.to_row)
+	except InterfaceError:
+		return
+	except MemoryError:
+		return
 
 def add_posts_to_db(posts):
 	chunks = chunk(posts, 249)
@@ -114,18 +120,22 @@ class AnimeCog(MyCog):
 
 	# Utilities
 	def need_to_download(self):
-		if dt.now().hour < 20:
+		if dt.now().hour < 11:
 			return False
 		if get_last_upload().date() < dt.now().date():
 			return True
 		return False
 
 	def get_posts(self, sub):
-		posts = self.reddit.subreddit(sub).hot(limit=50)
+		try:
+			posts = self.reddit.subreddit(sub).hot(limit=50)
+		except Exception as e:
+			log.error(str(e), exc_info=True)
+			log.error(sub)
 		existing_post_ids = [p.id for p in self.posts]
 		return [p for p in posts if p.id not in existing_post_ids]
 
-	def check_for_image(self, post):
+	def check_for_img(self, post):
 		try:
 			resp = r.get(post.url)
 		except r.exceptions.MissingSchema:
@@ -304,10 +314,9 @@ class AnimeCog(MyCog):
 			log.info('Starting the downloading process')
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
-			posts = get_posts_from_db()
+			self.posts = get_posts_from_db()
 			with ThreadPool(16) as p:
 				log.info('Getting existing posts')
-				self.posts = get_posts_from_db()
 				posts = []
 				log.info('Getting new posts')
 				_posts = p.map_async(self.get_posts, subs).get()

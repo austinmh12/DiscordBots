@@ -15,7 +15,7 @@ from multiprocessing.pool import ThreadPool
 from sqlite3 import InterfaceError
 
 # Version
-version = '1.3.6'
+version = '1.3.7'
 
 # Constants
 with open('../.env') as f:
@@ -24,7 +24,7 @@ with open('../.env') as f:
 # Functions
 def initialise_db():
 	sql('anime', 'create table subreddits (name text)')
-	sql('anime', 'create table posts (id text, img_data text, nsfw integer)')
+	sql('anime', 'create table posts (id text, url text, nsfw integer)')
 	sql('anime', 'create table last_upload (date text)')
 	sql('anime', 'create table channels (id integer, nsfw integer)')
 
@@ -310,10 +310,9 @@ class AnimeCog(MyCog):
 			log.info('Starting the downloading process')
 			reddit = Reddit('bot1')
 			subs = get_subreddits()
-			posts = get_posts_from_db()
+			self.posts = get_posts_from_db()
 			with ThreadPool(16) as p:
 				log.info('Getting existing posts')
-				self.posts = get_posts_from_db()
 				posts = []
 				log.info('Getting new posts')
 				_posts = p.map_async(self.get_posts, subs).get()
