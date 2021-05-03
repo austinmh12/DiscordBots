@@ -39,7 +39,7 @@ class YahtzeeGame:
 class YahtzeePlayer:
 	def __init__(self, id):
 		self.id = id
-		self.board = Image.open(f'{BASE_PATH}/rsc/yahtzee_board.jpg')
+		self.board = Image.open(f'{BASE_PATH}/rsc/yahtzee_base.jpg')
 		self.draw = ImageDraw.Draw(self.board)
 		self.values = {
 			'1s': -1,

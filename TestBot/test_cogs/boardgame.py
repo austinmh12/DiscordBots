@@ -5,9 +5,10 @@ import asyncio
 from PIL import Image, ImageDraw, ImageFont
 from random import randint
 import typing
+from .boardgameFunctions import yahtzee
 
 # Version
-version = '0.1.0'
+version = '0.2.0'
 
 # Constants
 
@@ -84,4 +85,10 @@ class BoardGameCog(MyCog):
 					description='Start a game that you initiated',
 					brief='Starts the game')
 	async def game_start(self, ctx):
-		...
+		user_id = ctx.author.id
+		for game, info in self.iniatited_games.items():
+			if info['owner'] == user_id:
+				if game == 'yahtzee':
+					self.yahtzee_game = yahtzee.YahtzeeGame(info['players'])
+					return await ctx.send('The game of Yahtzee has started')
+		return await ctx.send('You didn\'t initiate any games.')
