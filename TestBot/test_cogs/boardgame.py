@@ -9,7 +9,7 @@ from . import boardgameFunctions as BGF
 from .boardgameFunctions import yahtzee
 
 # Version
-version = '1.0.0'
+version = '1.0.1'
 
 # Constants
 
@@ -90,7 +90,7 @@ class BoardGameCog(MyCog):
 		yahtzee_info = self.iniatited_games['yahtzee']
 		if yahtzee_info['owner'] == ctx.author.id:
 			self.yahtzee_game = yahtzee.YahtzeeGame(yahtzee_info['players'])
-			return await ctx.send('The game of Yahtzee has started')
+			return await ctx.send(f'The game of Yahtzee has started\nIt is <@{self.yahtzee_game.current_player.id}>\'s turn!')
 		return await ctx.send('You didn\'t initiate a game of Yahtzee.')
 
 	@yahtzee_main.command(name='end',
