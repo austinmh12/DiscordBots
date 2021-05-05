@@ -9,7 +9,7 @@ from . import boardgameFunctions as BGF
 from .boardgameFunctions import yahtzee
 
 # Version
-version = '0.4.0'
+version = '0.5.0'
 
 # Constants
 
@@ -138,9 +138,32 @@ class BoardGameCog(MyCog):
 			msg = f'Your last roll was {" ".join([str(r) for r in self.yahtzee_game.current_player.last_roll])}\n'
 			msg += f'Your current held dice are {" ".join([str(r) for r in self.yahtzee_game.current_player.held_dice])}'
 			return await ctx.send(msg)
+		positions = list(positions)
+		positions.sort(reverse=True)
 		for position in positions:
 			if int(position) == 0:
 				break
 			self.yahtzee_game.current_player.held_dice.append(self.yahtzee_game.current_player.last_roll[int(position) - 1])
+			self.yahtzee_game.current_player.last_roll.pop(int(position) - 1)
 		self.yahtzee_game.current_player.held_this_turn = True
 		return await ctx.send(f'You hold {" ".join([str(r) for r in self.yahtzee_game.current_player.held_dice])}')
+
+	@yahtzee_main.command(name='score',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score(self, ctx, category: typing.Optional[str] = ''):
+		if not self.yahtzee_game:
+			return await ctx.send('There is no Yahtzee game ongoing.')
+		if ctx.author.id != self.yahtzee_game.current_player.id:
+			return await ctx.send('It is not your turn.')
+		if category not in self.yahtzee_game.current_player.unscored_categories:
+			f = self.yahtzee_game.current_player.get_board()
+			await ctx.send('Here is your score card:', file=f)
+			return f.close()
+		self.yahtzee_game.current_player.calculate_score(category)
+		f = self.yahtzee_game.current_player.get_board()
+		await ctx.send('Here is your score card', file=f)
+		f.close()
+		self.yahtzee_game.next_player()
+		return await ctx.send(f'It\'s now <@{self.yahtzee_game.current_player.id}>\'s turn!')
