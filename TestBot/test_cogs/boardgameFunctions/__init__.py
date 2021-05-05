@@ -15,7 +15,7 @@ def roll_dice(dice_str):
 	return ret
 
 def parse_dice_str(dice_str):
-	rolls = re.findall('(\d+)?d(4|6|8|12|20|100)', dice_str)
+	rolls = re.findall('(\d+)?d(1|4|6|8|12|20|100)', dice_str) # Added 1 for testing
 	ret = []
 	for amt, dice in rolls:
 		if not amt:

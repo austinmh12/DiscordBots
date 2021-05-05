@@ -9,7 +9,7 @@ from . import boardgameFunctions as BGF
 from .boardgameFunctions import yahtzee
 
 # Version
-version = '0.5.0'
+version = '1.0.0'
 
 # Constants
 
@@ -157,13 +157,107 @@ class BoardGameCog(MyCog):
 			return await ctx.send('There is no Yahtzee game ongoing.')
 		if ctx.author.id != self.yahtzee_game.current_player.id:
 			return await ctx.send('It is not your turn.')
-		if category not in self.yahtzee_game.current_player.unscored_categories:
+		if category not in yahtzee.top_categories and category not in yahtzee.bottom_categories:
 			f = self.yahtzee_game.current_player.get_board()
-			await ctx.send('Here is your score card:', file=f)
+			cats = ' '.join([f'***{c}***' for c in self.yahtzee_game.current_player.unscored_categories])
+			await ctx.send(f'These are the categories that you haven\'t used\n{cats}', file=f)
 			return f.close()
 		self.yahtzee_game.current_player.calculate_score(category)
 		f = self.yahtzee_game.current_player.get_board()
 		await ctx.send('Here is your score card', file=f)
 		f.close()
 		self.yahtzee_game.next_player()
+		if self.yahtzee_game.game_done:
+			return await ctx.send(f'Game over! <@{self.yahtzee_game.winner.id}> wins!')
 		return await ctx.send(f'It\'s now <@{self.yahtzee_game.current_player.id}>\'s turn!')
+
+	@yahtzee_main.command(name='1s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_1s(self, ctx):
+		return await self.yahtzee_score(ctx, '1s')
+
+	@yahtzee_main.command(name='2s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_2s(self, ctx):
+		return await self.yahtzee_score(ctx, '2s')
+
+	@yahtzee_main.command(name='3s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_3s(self, ctx):
+		return await self.yahtzee_score(ctx, '3s')
+
+	@yahtzee_main.command(name='4s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_4s(self, ctx):
+		return await self.yahtzee_score(ctx, '4s')
+
+	@yahtzee_main.command(name='5s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_5s(self, ctx):
+		return await self.yahtzee_score(ctx, '5s')
+
+	@yahtzee_main.command(name='6s',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_6s(self, ctx):
+		return await self.yahtzee_score(ctx, '6s')
+
+	@yahtzee_main.command(name='3kind',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_3kind(self, ctx):
+		return await self.yahtzee_score(ctx, '3kind')
+
+	@yahtzee_main.command(name='4kind',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_4kind(self, ctx):
+		return await self.yahtzee_score(ctx, '4kind')
+
+	@yahtzee_main.command(name='fullhouse',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_fullhouse(self, ctx):
+		return await self.yahtzee_score(ctx, 'fullhouse')
+
+	@yahtzee_main.command(name='small',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_small(self, ctx):
+		return await self.yahtzee_score(ctx, 'small')
+
+	@yahtzee_main.command(name='large',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_large(self, ctx):
+		return await self.yahtzee_score(ctx, 'large')
+
+	@yahtzee_main.command(name='yahtzee',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_yahtzee(self, ctx):
+		return await self.yahtzee_score(ctx, 'yahtzee')
+
+	@yahtzee_main.command(name='chance',
+					pass_context=True,
+					description='Calculates the score for the category chosen using your held dice.',
+					brief='Scores your held dice')
+	async def yahtzee_score_chance(self, ctx):
+		return await self.yahtzee_score(ctx, 'chance')
