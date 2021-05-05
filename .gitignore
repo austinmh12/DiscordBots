@@ -31,4 +31,8 @@ server.properties
 # Temporary values
 tmp.*
 
+# I don't need duplicate resources
 TestBot/test_cogs/rsc/
+
+# User Yahtzee boards
+*_board.jpg

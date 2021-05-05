@@ -13,7 +13,7 @@ from string import ascii_lowercase
 from all_cogs.brendan import BrendanCog
 from all_cogs.youtube import YoutubeCog
 from all_cogs.anime import AnimeCog
-from all_cogs.boardgames import BoardGameCog
+from all_cogs.boardgame import BoardGameCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
