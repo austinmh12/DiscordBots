@@ -13,6 +13,7 @@ from string import ascii_lowercase
 from all_cogs.brendan import BrendanCog
 from all_cogs.youtube import YoutubeCog
 from all_cogs.anime import AnimeCog
+from all_cogs.boardgames import BoardGameCog
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -130,4 +131,5 @@ client.loop.create_task(check_for_changes())
 client.add_cog(BrendanCog(client))
 client.add_cog(YoutubeCog(client))
 client.add_cog(AnimeCog(client))
+client.add_cog(BoardGameCog(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)
