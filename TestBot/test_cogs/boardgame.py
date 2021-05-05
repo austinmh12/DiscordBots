@@ -9,7 +9,7 @@ from . import boardgameFunctions as BGF
 from .boardgameFunctions import yahtzee
 
 # Version
-version = '0.2.0'
+version = '0.4.0'
 
 # Constants
 
@@ -104,3 +104,43 @@ class BoardGameCog(MyCog):
 			self.iniatited_games['yahtzee'] = {'owner': None, 'players': []}
 			return await ctx.send('The game of Yahtzee has been ended')
 		return await ctx.send('You didn\'t initiate this game.')
+
+	@yahtzee_main.command(name='roll',
+					pass_context=True,
+					description='Rolls the yahtzee dice',
+					brief='Rolls yahtzee dice')
+	async def yahtzee_roll(self, ctx):
+		if not self.yahtzee_game:
+			return await ctx.send('There is no Yahtzee game ongoing.')
+		if ctx.author.id != self.yahtzee_game.current_player.id:
+			return await ctx.send('It is not your turn.')
+		if self.yahtzee_game.current_player.remaining_rolls == 0:
+			return await ctx.send('You have no rolls left, use **.yahtzee score <category>**')
+		dice_str = f'{5 - len(self.yahtzee_game.current_player.held_dice)}d6'
+		roll_results = BGF.roll_dice(dice_str)
+		self.yahtzee_game.current_player.last_roll = roll_results
+		self.yahtzee_game.current_player.remaining_rolls -= 1
+		self.yahtzee_game.current_player.held_this_turn = False
+		return await ctx.send(f'You rolled:\n{" ".join([str(r) for r in roll_results])}')
+
+	@yahtzee_main.command(name='hold',
+					pass_context=True,
+					description='Holds yahtzee dice',
+					brief='Holds yahtzee dice')
+	async def yahtzee_hold(self, ctx, *positions):
+		if not self.yahtzee_game:
+			return await ctx.send('There is no Yahtzee game ongoing.')
+		if ctx.author.id != self.yahtzee_game.current_player.id:
+			return await ctx.send('It is not your turn.')
+		if self.yahtzee_game.current_player.held_this_turn:
+			return await ctx.send('You held dice this turn already, roll again with **.yahtzee roll**')
+		if not positions:
+			msg = f'Your last roll was {" ".join([str(r) for r in self.yahtzee_game.current_player.last_roll])}\n'
+			msg += f'Your current held dice are {" ".join([str(r) for r in self.yahtzee_game.current_player.held_dice])}'
+			return await ctx.send(msg)
+		for position in positions:
+			if int(position) == 0:
+				break
+			self.yahtzee_game.current_player.held_dice.append(self.yahtzee_game.current_player.last_roll[int(position) - 1])
+		self.yahtzee_game.current_player.held_this_turn = True
+		return await ctx.send(f'You hold {" ".join([str(r) for r in self.yahtzee_game.current_player.held_dice])}')
