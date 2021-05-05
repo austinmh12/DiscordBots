@@ -39,7 +39,7 @@ class YahtzeeGame:
 class YahtzeePlayer:
 	def __init__(self, id):
 		self.id = id
-		self.board = Image.open(f'{BASE_PATH}/rsc/yahtzee_base.jpg')
+		self.board = Image.open(f'{BASE_PATH}/rsc/yahtzee_base.jpg') # This might be bad with a lot of players
 		self.draw = ImageDraw.Draw(self.board)
 		self.values = {
 			'1s': -1,
@@ -68,6 +68,7 @@ class YahtzeePlayer:
 		}
 		self.last_roll = []
 		self.held_dice = []
+		self.remaining_rolls = 3
 
 	def update_board(self, row, value):
 		x, y = yahtzee_card_positions.get(row, (0, 0))
