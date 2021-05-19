@@ -72,7 +72,7 @@ def initialise_db():
 			,exp_mod integer
 		)'''
 	)
-	sql('rpg', '''create table players (
+	sql('rpg', '''create table equipment (
 			id integer
 			,name text
 			,rarity text
@@ -93,6 +93,25 @@ def initialise_db():
 		)'''
 	)
 	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text)')
+	sql('rpg', '''insert into professions values
+			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7)
+			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0)
+			,("Archer","DEX","",5,9,6,5,1,3,1,2,2,0)
+			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0)'''
+	)
+	sql('rpg', '''insert into equipment values
+			(1,"Starter Sword","Common","Sword",1,0,0,0,0,0,0,"",0,1,3,"STR",0.05)
+			,(2,"Starter Shortbow","Common","Shortbow",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.05)
+			,(3,"Starter Wand","Common","Wand",1,0,0,0,0,0,0,"",0,1,3,"INT",0.05)
+			,(4,"Starter Dagger","Common","Dagger",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.1)
+			,(5,"Dented Platmail","Common","Chest",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(6,"Dented Platelegs","Common","Legs",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(7,"Cracked Kite Shield","Common","Shield",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(8,"Ripped Leather Vest","Common","Chest",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
+			,(9,"Ripped Leather Pants","Common","Legs",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
+			,(10,"Tattered Cloth Shirt","Common","Chest",1,0,0,0,0,0,0,"Light",1,0,0,"",0)
+			,(11,"Tattered Cloth Pants","Common","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)'''
+	)
 
 # Classes
 class RPGCog(MyCog):
