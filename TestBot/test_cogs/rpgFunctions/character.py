@@ -63,10 +63,13 @@ class Character:
 		self.ring2 = ring2			# get_equipment_by_id(ring2)
 		self.weapon = weapon		# get_equipment_by_id(weapon)
 		self.off_hand = off_hand	# get_equipment_by_id(off_hand)
-		self.current_con = current_con # calculate this from profession and level
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()
+
+		# Not counted in updates
+		self.stats = stats 				# calculate from profession and level
+		self.current_con = current_con 	# calculate from profession and level
 
 		# Migrations
 
