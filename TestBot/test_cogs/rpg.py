@@ -1,4 +1,4 @@
-from . import log, BASE_PATH, Page, MyCog, chunk
+from . import log, BASE_PATH, Page, MyCog, chunk, sql
 from discord import File
 from discord.ext import commands, tasks
 import asyncio
@@ -6,10 +6,10 @@ from random import randint
 import typing
 import os.path
 
-from rpgFunction import character
-from rpgFunction import profession
-from rpgFunction import player
-from rpgFunction import equipment
+from .rpgFunctions import character
+from .rpgFunctions import profession
+from .rpgFunctions import player
+from .rpgFunctions import equipment
 
 # Version
 version = '0.0.0'
@@ -129,10 +129,10 @@ class RPGCog(MyCog):
 	def get_or_add_player_from_ctx(self, ctx):
 		id = ctx.author.id
 		guild_id = ctx.author.guild.id
-		player = player.get_player(id, guild_id)
-		if not player:
+		p = player.get_player(id, guild_id)
+		if not p:
 			return player.add_player(id, guild_id)
-		return player
+		return p
 
 	# Listeners
 

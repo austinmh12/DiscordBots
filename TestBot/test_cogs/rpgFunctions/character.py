@@ -18,7 +18,7 @@ def get_character(player_id, player_guild_id, name):
 	...
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row())
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player_id, player_guild_id, name):
 	...
@@ -144,7 +144,7 @@ class Character:
 		d = self.profession.base_dex + (self.level * self.profession.dex_mod)
 		i = self.profession.base_int + (self.level * self.profession.int_mod)
 		c = self.profession.base_con + (self.level * self.profession.con_mod)
-		return {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
+		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
 
 	@property
 	def pages(self):

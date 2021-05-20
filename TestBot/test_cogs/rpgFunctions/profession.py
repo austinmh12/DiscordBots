@@ -9,9 +9,9 @@ all_professions = [
 	'archer',
 	'rogue'
 ]
-light_professions = ['archer', 'wizard']
-medium_professions = ['rogue']
-heavy_professions = ['warrior']
+light_professions = ['Archer', 'Wizard']
+medium_professions = ['Rogue']
+heavy_professions = ['Warrior']
 
 #############
 # Functions #
@@ -21,7 +21,7 @@ def get_professions():
 	return [Profession(**d) for d in df.to_dict('records')]
 
 def get_profession(name):
-	df = sql('rpg', 'select * from professions where name = ?', (name,))
+	df = sql('rpg', 'select * from professions where lower(name) = ?', (name.lower(),))
 	if df.empty:
 		return None
 	return Profession(**df.to_dict('records')[0])
