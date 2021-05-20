@@ -194,6 +194,6 @@ class RPGCog(MyCog):
 		character.add_character(char)
 		p.current_character = char
 		p.update()
-		return await ctx.send(embed=char.embed)
+		return await self.paginated_embeds(ctx, char.pages)
 
 	# Tasks

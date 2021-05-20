@@ -1,4 +1,4 @@
-from .. import sql, log, BASE_PATH, chunk
+from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
 from . import *
 from .equipment import Equipment, get_equipment
@@ -145,3 +145,51 @@ class Character:
 		i = self.profession.base_int + (self.level * self.profession.int_mod)
 		c = self.profession.base_con + (self.level * self.profession.con_mod)
 		return {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
+
+	@property
+	def pages(self):
+		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
+		splash_desc += f'**Gold:** {self.gold}\n'
+		if self.helmet:
+			splash_desc += f'**Helmet:** {self.helmet.name}\n'
+		else:
+			splash_desc += '**Helmet:** \n'
+		if self.chest:
+			splash_desc += f'**Chest:** {self.chest.name}\n'
+		else:
+			splash_desc += '**Chest:** \n'
+		if self.legs:
+			splash_desc += f'**Legs:** {self.legs.name}\n'
+		else:
+			splash_desc += '**Legs:** \n'
+		if self.boots:
+			splash_desc += f'**Boots:** {self.boots.name}\n'
+		else:
+			splash_desc += '**Boots:** \n'
+		if self.gloves:
+			splash_desc += f'**Gloves:** {self.gloves.name}\n'
+		else:
+			splash_desc += '**Gloves:** \n'
+		if self.amulet:
+			splash_desc += f'**Amulet:** {self.amulet.name}\n'
+		else:
+			splash_desc += '**Amulet:** \n'
+		if self.ring1:
+			splash_desc += f'**Ring1:** {self.ring1.name}\n'
+		else:
+			splash_desc += '**Ring1:** \n'
+		if self.ring2:
+			splash_desc += f'**Ring2:** {self.ring2.name}\n'
+		else:
+			splash_desc += '**Ring2:** \n'
+		if self.weapon:
+			splash_desc += f'**Weapon:** {self.weapon.name}\n'
+		else:
+			splash_desc += '**Weapon:** \n'
+		if self.off_hand:
+			splash_desc += f'**Off Hand:** {self.off_hand.name}\n'
+		else:
+			splash_desc += '**Off Hand:**'
+		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
+
+		return [splash_page]
