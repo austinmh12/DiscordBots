@@ -9,6 +9,8 @@ from .. import sql, log, BASE_PATH, chunk
 # Functions #
 #############
 def get_equipment(id):
+	if id is None:
+		id = 0
 	df = sql('rpg', 'select * from equipment where id = ?', (id,))
 	if df.empty:
 		return None
