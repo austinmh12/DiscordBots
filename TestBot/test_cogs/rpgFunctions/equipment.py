@@ -9,7 +9,15 @@ from .. import sql, log, BASE_PATH, chunk
 # Functions #
 #############
 def get_equipment(id):
-	...
+	df = sql('rpg', 'select * from equipment where id = ?', (id,))
+	if df.empty:
+		return None
+	if df['min_damage'] > 0:
+		return Weapon(**df.to_dict('records')[0])
+	elif df['defense'] > 0:
+		return Armour(**df.to_dict('records')[0])
+	else:
+		return Jewelry(**df.to_dict('records')[0])
 
 def add_equipment(equipment):
 	...
