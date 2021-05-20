@@ -9,10 +9,14 @@ from .. import sql, log, BASE_PATH, chunk
 # Functions #
 #############
 def get_professions():
-	...
+	df = sql('rpg', 'select * from professions')
+	return [Profession(**d) for d in df.to_dict('records')]
 
 def get_profession(name):
-	...
+	df = sql('rpg', 'select * from professions where name = ?', (name,))
+	if df.empty:
+		return None
+	return Profession(**df.to_dict('records')[0])
 
 ###########
 # Classes #
