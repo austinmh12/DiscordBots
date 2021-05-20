@@ -3,7 +3,15 @@ from .. import sql, log, BASE_PATH, chunk
 #############
 # Constants #
 #############
-
+all_professions = [
+	'warrior',
+	'wizard',
+	'archer',
+	'rogue'
+]
+light_professions = ['archer', 'wizard']
+medium_professions = ['rogue']
+heavy_professions = ['warrior']
 
 #############
 # Functions #
