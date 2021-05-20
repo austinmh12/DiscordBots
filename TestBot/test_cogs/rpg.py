@@ -134,6 +134,21 @@ class RPGCog(MyCog):
 			return player.add_player(id, guild_id)
 		return p
 
+	async def get_or_ask_user_for_character(self, ctx, player, name):
+
+		def is_same_user_channel(msg):
+			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
+		
+		if not name:
+			await ctx.send('Which character?')
+			await self.me(ctx)
+			try:
+				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+			except asyncio.TimeoutError:
+				return await ctx.send('You ran out of time.')
+			name = reply.content
+		return character.get_character(player, name)
+
 	# Listeners
 
 	# Commands
@@ -230,7 +245,13 @@ class RPGCog(MyCog):
 					brief='Swap your current character',
 					aliases=['swap'])
 	async def swap_character(self, ctx, name: typing.Optional[str] = ''):
-		...
+		p = self.get_or_add_player_from_ctx(ctx)
+		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		if not char:
+			return await ctx.send(f'You don\'t have a character with the name {name}')
+		p.current_character = char
+		p.update()
+		return await self.paginated_embeds(ctx, char.pages)
 
 	@commands.command(name='deletecharacter',
 					pass_context=True,
@@ -238,7 +259,27 @@ class RPGCog(MyCog):
 					brief='Swap your current character',
 					aliases=['delchar', 'dc'])
 	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
-		...
+		p = self.get_or_add_player_from_ctx(ctx)
+
+		def is_same_user_channel(msg):
+			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
+
+		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		if not char:
+			return await ctx.send(f'You don\'t have a character with the name {name}')
+		await ctx.send(f'Are you sure you want to delete {char.name}? (y/n)')
+		try:
+			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+		except asyncio.TimeoutError:
+			return await ctx.send('You ran out of time.')
+		if reply.content.lower() == 'y':
+			if char == p.current_character:
+				p.current_character = ''
+				p.update()
+			character.delete_character(p, char.name)
+			return await ctx.send(f'{char.name} has been deleted.')
+		else:
+			return await ctx.send(f'You will keep {existing_char.name}')
 
 	@commands.command(name='getcharacter',
 					pass_context=True,
@@ -246,6 +287,19 @@ class RPGCog(MyCog):
 					brief='Swap your current character',
 					aliases=['getchar', 'gc'])
 	async def get_character(self, ctx, name: typing.Optional[str] = ''):
+		p = self.get_or_add_player_from_ctx(ctx)
+		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		if not char:
+			return await ctx.send(f'You don\'t have a character with the name {name}')
+		return await self.paginated_embeds(ctx, char.pages)
+
+	## Professions
+	@commands.command(name='viewprofessions',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['viewprofs', 'vp'])
+	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
 		...
 
 	# Tasks

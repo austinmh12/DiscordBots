@@ -38,4 +38,4 @@ class Player:
 		return get_player(id, guild_id)
 
 	def update(self):
-		sql('rpg', 'update players set current_character = ?', (self.current_character.name,))
+		sql('rpg', 'update players set current_character = ?', (self.current_character.name if self.current_character else '',))
