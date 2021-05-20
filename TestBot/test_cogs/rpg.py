@@ -6,6 +6,11 @@ from random import randint
 import typing
 import os.path
 
+from rpgFunction import character
+from rpgFunction import profession
+from rpgFunction import player
+from rpgFunction import equipment
+
 # Version
 version = '0.0.0'
 
@@ -37,7 +42,6 @@ def initialise_db():
 			,profession text
 			,level integer
 			,exp integer
-			,exp_to_next_level integer
 			,gold integer
 			,helmet integer
 			,chest integer
@@ -120,3 +124,74 @@ class RPGCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/rpg.db'):
 			log.info('Initialising database.')
 			initialise_db()
+
+	# Utilities
+	def get_or_add_player_from_ctx(self, ctx):
+		id = ctx.author.id
+		guild_id = ctx.author.guild.id
+		player = player.get_player(id, guild_id)
+		if not player:
+			return player.add_player(id, guild_id)
+		return player
+
+	# Listeners
+
+	# Commands
+	@commands.command(name='createcharacter',
+					pass_context=True,
+					description='Create a character to start your journey',
+					brief='Create a character',
+					aliases=['cc', 'create'])
+	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
+		player = self.get_or_add_player_from_ctx(ctx)
+
+		def is_same_user_channel(msg):
+			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
+
+		if not name:
+			await ctx.send('What is your character\'s name?')
+			try:
+				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+			except asyncio.TimeoutError:
+				return await ctx.send('You ran out of time.')
+			name = reply.content
+		while prof.lower() not in profession.all_professions:
+			await ctx.send('What is your desired profession?')
+			try:
+				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+			except asyncio.TimeoutError:
+				return await ctx.send('You ran out of time.')
+			prof = reply.content
+		prof = profession.get_profession(prof)
+		if prof.name in profession.light_professions:
+			starting_chest = equipment.get_equipment(10)
+			starting_legs = equipment.get_equipment(11)
+		elif prof.name in profession.medium_professions:
+			starting_chest = equipment.get_equipment(8)
+			starting_legs = equipment.get_equipment(9)
+		else:
+			starting_chest = equipment.get_equipment(5)
+			starting_legs = equipment.get_equipment(6)
+		char = character.Character(
+			player.id, 
+			player.guild_id, 
+			name, 
+			prof, 
+			1, # level
+			0, # exp
+			0, # gold
+			None, # helmet
+			starting_chest, # chest
+			starting_legs, # legs
+			None, # boots
+			None, # gloves
+			None, # amulet
+			None, # ring1
+			None, # ring2
+			prof.starting_weapon,
+			prof.starting_off_hand
+		)
+		character.add_character(char)
+		return await ctx.send(embed=char.embed)
+
+	# Tasks
