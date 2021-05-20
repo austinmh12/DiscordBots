@@ -71,7 +71,6 @@ def initialise_db():
 			,dex_mod integer
 			,int_mod integer
 			,con_mod integer
-			,loot_table text
 			,base_exp integer
 			,exp_mod integer
 		)'''
@@ -117,9 +116,9 @@ def initialise_db():
 			,(11,"Tattered Cloth Pants","Common","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)'''
 	)
 	sql('rpg', '''insert into monsters values
-			('Goblin','STR','',1,3,0.02,1,1,1,1,1,1,1,1,'{"gold":5,"item_chance":0.1,"max_item_count":2,"items":{"sword":{"rarities":["common"],"min_level":1,"max_level":3},"chest":{"rarities":["common"],"min_level":1,"max_level":3},"boots":{"rarities":["common"],"min_level":1,"max_level":3}},"unique_items":[]}',2,2)
-			,('Rat','DEX','',1,2,0.05,1,2,1,1,1,1,1,1,'{"gold":3,"item_chance":0.2,"max_item_count":1,"items":{"dagger":{"rarities":["common"],"min_level":1,"max_level":3},"helmet":{"rarities":["common"],"min_level":1,"max_level":3}},"unique_items":[]}',1,2)
-			,('Spider','DEX','',1,3,0.01,1,1,1,1,1,2,1,1,'{"gold":4,"item_chance":0.3,"max_item_count":2,"items":{"longsword":{"rarities":["common"],"min_level":1,"max_level":3},"shortbow":{"rarities":["common"],"min_level":1,"max_level":3},"gloves":{"rarities":["common"],"min_level":1,"max_level":3},"wand":{"rarities":["common"],"min_level":1,"max_level":3}},"unique_items":[]}',2,1)'''
+			('Goblin','STR','',1,3,0.02,1,1,1,1,1,1,1,1,2,2)
+			,('Rat','DEX','',1,2,0.05,1,2,1,1,1,1,1,1,1,2)
+			,('Spider','DEX','',1,3,0.01,1,1,1,1,1,2,1,1,2,1)'''
 	)
 
 # Classes
