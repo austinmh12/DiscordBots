@@ -1,4 +1,5 @@
-from .. import sql, log, BASE_PATH, chunk
+from .. import sql, log, BASE_PATH, chunk, Page
+from .equipment import Equipment, get_equipment
 
 #############
 # Constants #
@@ -56,5 +57,16 @@ class Profession:
 		self.dex_mod = dex_mod
 		self.int_mod = int_mod
 		self.con_mod = con_mod
-		self.starting_weapon = starting_weapon
-		self.starting_off_hand = starting_off_hand
+		self.starting_weapon = starting_weapon if isinstance(starting_weapon, Equipment) else get_equipment(starting_weapon)
+		self.starting_off_hand = starting_off_hand if isinstance(starting_off_hand, Equipment) else get_equipment(starting_off_hand)
+
+	@property
+	def page(self):
+		desc = f'**Primary Stat:** {self.primary_stat}\n'
+		desc += f'**Secondary Stat:** {self.secondary_stat}\n'
+		desc += f'**STR:** {self.base_str:02d} | **DEX:** {self.base_dex:02d}\n'
+		desc += f'**INT:** {self.base_int:02d} | **CON:** {self.base_con:02d}\n\n'
+		desc += f'**Starting Weapon:** {self.starting_weapon.name}\n'
+		if self.starting_off_hand:
+			desc += f'**Starting Off Hand:** {self.starting_off_hand.name}'
+		return Page(self.name, desc, colour=(150, 150, 150))

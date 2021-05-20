@@ -300,6 +300,10 @@ class RPGCog(MyCog):
 					brief='Swap your current character',
 					aliases=['viewprofs', 'vp'])
 	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
-		...
+		profs = {p.name: p for p in profession.get_professions()}
+		prof = profs.get(name, None)
+		if not prof:
+			return await self.paginated_embeds(ctx, [p.page for p in profs.values()])
+		return await self.paginated_embeds(ctx, prof.page)
 
 	# Tasks
