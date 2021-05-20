@@ -148,6 +148,7 @@ class Character:
 
 	@property
 	def pages(self):
+		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
 		splash_desc += f'**Gold:** {self.gold}\n'
 		if self.helmet:
@@ -191,5 +192,9 @@ class Character:
 		else:
 			splash_desc += '**Off Hand:**'
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
+
+		# Stats page
+
+		# Equipment details
 
 		return [splash_page]
