@@ -35,3 +35,6 @@ class Player:
 	@classmethod
 	def from_ids(cls, id, guild_id):
 		return get_player(id, guild_id)
+
+	def update(self):
+		sql('rpg'. 'update players set current_character = ?', (self.current_character.name))

@@ -192,6 +192,8 @@ class RPGCog(MyCog):
 			prof.starting_off_hand
 		)
 		character.add_character(char)
+		p.current_character = char
+		p.update()
 		return await ctx.send(embed=char.embed)
 
 	# Tasks
