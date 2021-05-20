@@ -2,6 +2,7 @@ from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
 from . import *
 from .equipment import Equipment, get_equipment
+from .profession import Profession, get_profession
 
 #############
 # Constants #
@@ -50,12 +51,13 @@ class Character:
 				ring1,
 				ring2,
 				weapon,
-				off_hand
+				off_hand,
+				current_con = 0
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
 		self.name = name
-		self.profession = profession # get_profession(profession)
+		self.profession = profession if isinstance(profession, Profession) else get_profession(profession)
 		self.level = level
 		self.exp = exp
 		self.get_next_level_exp()
@@ -70,8 +72,8 @@ class Character:
 		self.ring2 = ring2 if isinstance(ring2, Equipment) else get_equipment(ring2)
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
-		self.calculate_stats() 				# calculate from profession and level
-		self.current_con = self.stats['CON'] 	# calculate from profession and level
+		self.calculate_stats()
+		self.current_con = self.stats['CON'] if not current_con else current_con
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()

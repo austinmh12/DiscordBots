@@ -1,4 +1,5 @@
 from .. import sql, log, BASE_PATH, chunk
+from .character import Character, get_character
 
 #############
 # Constants #
@@ -30,7 +31,7 @@ class Player:
 	):
 		self.id = id
 		self.guild_id = guild_id
-		self.current_character = current_character
+		self.current_character = current_character if isinstance(current_character, Character) else get_character(self, current_character)
 
 	@classmethod
 	def from_ids(cls, id, guild_id):

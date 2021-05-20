@@ -137,6 +137,7 @@ class RPGCog(MyCog):
 	# Listeners
 
 	# Commands
+	## Characters
 	@commands.command(name='createcharacter',
 					pass_context=True,
 					description='Create a character to start your journey',
@@ -144,6 +145,7 @@ class RPGCog(MyCog):
 					aliases=['cc', 'create'])
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
+		marked_for_deletion = False
 
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
@@ -155,6 +157,17 @@ class RPGCog(MyCog):
 			except asyncio.TimeoutError:
 				return await ctx.send('You ran out of time.')
 			name = reply.content
+		existing_char = character.get_character(p, name)
+		if existing_char:
+			await ctx.send(f'You have a character named {existing_char.name}, do you want to overwrite them? (y/n)')
+			try:
+				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+			except asyncio.TimeoutError:
+				return await ctx.send('You ran out of time.')
+			if reply.content.lower() == 'y':
+				marked_for_deletion = True
+			else:
+				return await ctx.send(f'You will keep {existing_char.name}')
 		while prof.lower() not in profession.all_professions:
 			await ctx.send('What is your desired profession?')
 			try:
@@ -191,9 +204,48 @@ class RPGCog(MyCog):
 			prof.starting_weapon,
 			prof.starting_off_hand
 		)
+		if existing_char and marked_for_deletion:
+			character.delete_character(p, existing_char.name)
 		character.add_character(char)
 		p.current_character = char
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
+
+	@commands.command(name='me',
+					pass_context=True,
+					description='Shows your characters',
+					brief='Shows your characters')
+	async def me(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		chars = character.get_characters(p)
+		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
+		desc += '__All characters__\n'
+		desc += '\n'.join([f'**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
+		return await self.paginated_embeds(ctx, page)
+
+	@commands.command(name='swapcharacter',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['swap'])
+	async def swap_character(self, ctx, name: typing.Optional[str] = ''):
+		...
+
+	@commands.command(name='deletecharacter',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['delchar', 'dc'])
+	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
+		...
+
+	@commands.command(name='getcharacter',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['getchar', 'gc'])
+	async def get_character(self, ctx, name: typing.Optional[str] = ''):
+		...
 
 	# Tasks
