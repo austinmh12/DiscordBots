@@ -143,7 +143,7 @@ class RPGCog(MyCog):
 					brief='Create a character',
 					aliases=['cc', 'create'])
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
-		player = self.get_or_add_player_from_ctx(ctx)
+		p = self.get_or_add_player_from_ctx(ctx)
 
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
@@ -173,8 +173,8 @@ class RPGCog(MyCog):
 			starting_chest = equipment.get_equipment(5)
 			starting_legs = equipment.get_equipment(6)
 		char = character.Character(
-			player.id, 
-			player.guild_id, 
+			p.id, 
+			p.guild_id, 
 			name, 
 			prof, 
 			1, # level
