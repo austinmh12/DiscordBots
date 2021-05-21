@@ -11,10 +11,16 @@ from . import *
 # Functions #
 #############
 def get_monsters():
-	...
+	df = sql('rpg', 'select * from monsters')
+	if df.empty:
+		return []
+	return [Monster(**d) for d in df.to_dict('records')]
 
 def get_monster(name):
-	...
+	df = sql('rpg', 'select * from monsters where name = ?', (name,))
+	if df.empty:
+		return None
+	return Monster(**df.to_dict('records')[0])
 
 ###########
 # Classes #
@@ -56,4 +62,8 @@ class Monster:
 		self.exp_mod = exp_mod
 
 	def generate_stats(self, level):
-		...
+		s = self.profession.base_str + (self.level * self.profession.str_mod)
+		d = self.profession.base_dex + (self.level * self.profession.dex_mod)
+		i = self.profession.base_int + (self.level * self.profession.int_mod)
+		c = self.profession.base_con + (self.level * self.profession.con_mod)
+		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
