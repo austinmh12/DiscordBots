@@ -62,8 +62,8 @@ class Monster:
 		self.exp_mod = exp_mod
 
 	def generate_stats(self, level):
-		s = self.profession.base_str + (self.level * self.profession.str_mod)
-		d = self.profession.base_dex + (self.level * self.profession.dex_mod)
-		i = self.profession.base_int + (self.level * self.profession.int_mod)
-		c = self.profession.base_con + (self.level * self.profession.con_mod)
+		s = self.base_str + (level * self.str_mod)
+		d = self.base_dex + (level * self.dex_mod)
+		i = self.base_int + (level * self.int_mod)
+		c = self.base_con + (level * self.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
