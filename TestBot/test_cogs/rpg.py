@@ -95,7 +95,7 @@ def initialise_db():
 			,crit_chance integer
 		)'''
 	)
-	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text)')
+	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text, loot_table text)')
 	sql('rpg', '''insert into professions values
 			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7)
 			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0)
@@ -119,6 +119,10 @@ def initialise_db():
 			('Goblin','STR','',1,3,0.02,1,1,1,1,1,1,1,1,2,2)
 			,('Rat','DEX','',1,2,0.05,1,2,1,1,1,1,1,1,1,2)
 			,('Spider','DEX','',1,3,0.01,1,1,1,1,1,2,1,1,2,1)'''
+	)
+	sql('rpg', '''insert into areas values
+		('Area 1',2,'{"Goblin":{"min_level":1,"max_level":2},"Spider":{"min_level":1,"max_level":3},"Rat":{"min_level":1,"max_level":3}}','{"gold":5,"item_chance":0.1,"max_item_count":2,"items":{"sword":{"rarities":["common"],"min_level":1,"max_level":3},"chest":{"rarities":["common"],"min_level":1,"max_level":3},"boots":{"rarities":["common"],"min_level":1,"max_level":3},"dagger":{"rarities":["common"],"min_level":1,"max_level":3},"helmet":{"rarities":["common"],"min_level":1,"max_level":3},"longsword":{"rarities":["common"],"min_level":1,"max_level":3},"shortbow":{"rarities":["common"],"min_level":1,"max_level":3},"gloves":{"rarities":["common"],"min_level":1,"max_level":3},"wand":{"rarities":["common"],"min_level":1,"max_level":3}},"unique_items":[]}')
+		,('Area 2',5,'{"Goblin":{"min_level":3,"max_level":8},"Spider":{"min_level":2,"max_level":6},"Rat":{"min_level":2,"max_level":6}}','{"gold":15,"item_chance":0.15,"max_item_count":2,"items":{"sword":{"rarities":["common"],"min_level":2,"max_level":6},"chest":{"rarities":["common"],"min_level":2,"max_level":6},"boots":{"rarities":["common"],"min_level":2,"max_level":6},"dagger":{"rarities":["common"],"min_level":2,"max_level":6},"helmet":{"rarities":["common"],"min_level":2,"max_level":6},"longsword":{"rarities":["common"],"min_level":2,"max_level":6},"shortbow":{"rarities":["common"],"min_level":2,"max_level":6},"gloves":{"rarities":["common"],"min_level":2,"max_level":6},"wand":{"rarities":["common"],"min_level":2,"max_level":6}},"unique_items":[]}')'''
 	)
 
 # Classes
