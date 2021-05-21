@@ -171,7 +171,7 @@ class Character:
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
-		splash_desc += f'**Gold:** {self.gold}\n'
+		splash_desc += f'**Gold:** {self.gold}\n\n'
 		if self.helmet:
 			splash_desc += f'**Helmet:** {self.helmet.name}\n'
 		else:
