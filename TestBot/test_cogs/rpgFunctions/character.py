@@ -173,10 +173,11 @@ class Character:
 		i = 0
 		c = 0
 		for e in self.equipment:
-			s += e.str_bonus
-			d += e.dex_bonus
-			i += e.int_bonus
-			c += e.con_bonus
+			if e:
+				s += e.str_bonus
+				d += e.dex_bonus
+				i += e.int_bonus
+				c += e.con_bonus
 		self.stats['STR'] += s
 		self.stats['DEX'] += d
 		self.stats['INT'] += i
