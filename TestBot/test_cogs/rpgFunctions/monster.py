@@ -67,3 +67,16 @@ class Monster:
 		i = self.base_int + (level * self.int_mod)
 		c = self.base_con + (level * self.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
+
+	@property
+	def defense(self):
+		return 80 / (80 + self.stats['STR'])
+	
+	@property
+	def damage(self):
+		dmg = randint(self.min_damage, self.max_damage)
+		dmg += floor(self.stats.get(self.primary_stat, 0) / 10)
+		dmg += floor(self.stats.get(self.secondary_stat, 0) / 20)
+		if random() < self.crit_chance:
+			dmg *= 1.5
+		return dmg
