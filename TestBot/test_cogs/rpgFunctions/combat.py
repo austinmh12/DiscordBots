@@ -55,7 +55,7 @@ class Combat:
 		emb = Embed(
 			title='Combat',
 			description=self.desc,
-			colour=Colour.from_rbg(150, 150, 150)
+			colour=Colour.from_rgb(150, 150, 150)
 		)
 		emb.add_field(name=self.character.name, value=f'HP: {self.character.current_con}', inline=True)
 		emb.add_field(name=f'{self.enemy.name} (Lvl {self.enemy.level})', value=f'HP: {self.enemy.current_con}', inline=True)
