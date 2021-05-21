@@ -3,6 +3,7 @@ from random import randint, random, choice
 from . import *
 from .equipment import Equipment, get_equipment
 from .profession import Profession, get_profession
+from .area import Area, get_area
 
 #############
 # Constants #
@@ -25,7 +26,7 @@ def get_character(player, name):
 	return Character(**df.to_dict('records')[0])
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
@@ -52,7 +53,8 @@ class Character:
 				ring2,
 				weapon,
 				off_hand,
-				current_con = 0
+				current_con = 0,
+				current_area = ''
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
@@ -74,6 +76,7 @@ class Character:
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] if not current_con else current_con
+		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()
@@ -100,7 +103,8 @@ class Character:
 			self.ring2.id if self.ring2 else 0,
 			self.weapon.id if self.weapon else 0,
 			self.off_hand.id if self.off_hand else 0,
-			self.current_con
+			self.current_con,
+			self.current_area if self.current_area else ''
 		)
 
 	def to_dict(self):
@@ -122,7 +126,8 @@ class Character:
 			'ring2,': self.ring2,
 			'weapon,': self.weapon,
 			'off_hand,': self.off_hand,
-			'current_con': self.current_con
+			'current_con': self.current_con,
+			'current_area': self.current_area
 		}
 	
 	def update(self):
@@ -158,6 +163,7 @@ class Character:
 	def pages(self):
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
+		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n'
 		if self.helmet:
 			splash_desc += f'**Helmet:** {self.helmet.name}\n'

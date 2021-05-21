@@ -10,6 +10,7 @@ from .rpgFunctions import character
 from .rpgFunctions import profession
 from .rpgFunctions import player
 from .rpgFunctions import equipment
+from .rpgFunctions import area
 
 # Version
 version = '0.0.0'
@@ -54,6 +55,7 @@ def initialise_db():
 			,weapon integer
 			,off_hand integer
 			,current_con integer
+			,current_area text
 		)'''
 	)
 	sql('rpg', '''create table monsters (
@@ -313,5 +315,18 @@ class RPGCog(MyCog):
 		if not prof:
 			return await self.paginated_embeds(ctx, [p.page for p in profs.values()])
 		return await self.paginated_embeds(ctx, prof.page)
+
+	## Areas
+	@commands.command(name='viewareas',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['va', 'areas'])
+	async def view_areas(self, ctx, name: typing.Optional[str] = ''):
+		areas = {a.name: a for a in area.get_areas()}
+		a = areas.get(name, None)
+		if not a:
+			return await self.paginated_embeds(ctx, [a.page for a in areas.values()])
+		return await self.paginated_embeds(ctx, a.page)
 
 	# Tasks

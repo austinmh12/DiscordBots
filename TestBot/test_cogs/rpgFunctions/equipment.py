@@ -24,6 +24,9 @@ def get_equipment(id):
 def add_equipment(equipment):
 	...
 
+def generate_random_equipment(type, rarity, level):
+	...
+
 ###########
 # Classes #
 ###########

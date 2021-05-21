@@ -51,3 +51,15 @@ class Area:
 				item = generate_random_equipment(item_type, rarity, level)
 				items.append(items)
 		return items
+
+	@property
+	def page(self):
+		desc = f'**Recommended Level:** {self.recommended_level}\n\n'
+		desc += '__**Monsters**__\n'
+		for m, m_inf in self.monsters.items():
+			desc += f'{m} ({m_inf["min_level"]} - {m_inf["max_level"]})\n'
+		desc += '\n__**Items**__\n'
+		for i, i_inf in self.loot_table['items'].items():
+			desc += f'{i.capitalize()} ({i_inf["min_level"]} - {i_inf["max_level"]})\n'
+		return Page(self.name, desc, colour=(150, 150, 150))
+	
