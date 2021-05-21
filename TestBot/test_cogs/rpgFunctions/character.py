@@ -270,8 +270,8 @@ class Character:
 	def damage(self):
 		dmg = randint(self.weapon.min_damage, self.weapon.max_damage)
 		dmg += floor(self.stats[self.weapon.stat] / 10)
-		dmg += floor(self.stats.get(self.primary_stat, 0) / 10)
-		dmg += floor(self.stats.get(self.secondary_stat, 0) / 20)
+		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
+		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
 		dmg += self.armour_attack
 		if random() < self.crit_chance:
 			dmg *= 1.5
