@@ -136,7 +136,14 @@ class Character:
 		col_val = []
 		for k in current.keys():
 			if current[k] != self.loaded[k]:
-				col_val.append((k, current[k]))
+				if isinstance(current[k], Equipment):
+					col_val.append((k, current[k].id))
+				elif isinstance(current[k], Area):
+					col_val.append((k, current[k].name))
+				elif isinstance(current[k], Profession):
+					col_val.append((k, current[k].name))
+				else:
+					col_val.append((k, current[k]))
 		sql_str += ', '.join([f'{col} = ?' for col, _ in col_val])
 		sql_str += ' where player_id = ? and player_guild_id = ? and name = ?'
 		vals = [v for _, v in col_val]
