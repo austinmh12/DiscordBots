@@ -17,8 +17,8 @@ from .rpgFunctions import combat
 version = '0.0.0'
 
 # Constants
-attack_emoji = 845386457543737404
-run_emoji = 845387053680295936
+attack_emoji = '\u2694\ufe0f'
+run_emoji = '\U0001f45f'
 
 # Functions
 def initialise_db():
@@ -384,7 +384,7 @@ class RPGCog(MyCog):
 
 		def is_combat_icon(m):
 			return all([
-				(m.emoji.id == attack_emoji or m.emoji.name == run_emoji),
+				(m.emoji.name == attack_emoji or m.emoji.name == run_emoji),
 				m.member.id != self.bot.user.id,
 				m.message_id == msg.id,
 				m.member == ctx.author
@@ -392,11 +392,11 @@ class RPGCog(MyCog):
 
 		while not cb.winner:
 			try:
-				react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=600)
+				react = await self.bot.wait_for('raw_reaction_add', check=is_combat_icon, timeout=600)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
 				break
-			if react.emoji.id == attack_emoji:
+			if react.emoji.name == attack_emoji:
 				await msg.remove_reaction(attack_emoji, react.member)
 				cb.character_combat('Attack')
 			else:
