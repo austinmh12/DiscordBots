@@ -67,6 +67,7 @@ class Monster:
 		i = self.base_int + (level * self.int_mod)
 		c = self.base_con + (level * self.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
+		self.current_con = c
 
 	@property
 	def defense(self):
