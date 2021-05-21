@@ -159,6 +159,23 @@ class RPGCog(MyCog):
 			name = reply.content
 		return character.get_character(player, name)
 
+	async def get_or_ask_user_for_area(self, ctx, name):
+
+		def is_same_user_channel(msg):
+			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
+		
+		if not name:
+			await ctx.send('Which area?')
+			areas = area.get_areas()
+			p = Page('Areas', '\n'.join([f'**{a.name}** - Rec. Lvl: {a.recommended_level}' for a in areas]), colour=(150, 150, 150))
+			await ctx.send(embed=p.embed)
+			try:
+				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+			except asyncio.TimeoutError:
+				return await ctx.send('You ran out of time.')
+			name = reply.content
+		return area.get_area(name)
+
 	# Listeners
 
 	# Commands
@@ -328,5 +345,23 @@ class RPGCog(MyCog):
 		if not a:
 			return await self.paginated_embeds(ctx, [a.page for a in areas.values()])
 		return await self.paginated_embeds(ctx, a.page)
+
+	@commands.command(name='moveareas',
+					pass_context=True,
+					description='Swap your current character',
+					brief='Swap your current character',
+					aliases=['ma', 'move'])
+	async def move_areas(self, ctx, name: typing.Optional[str] = ''):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to move areas')
+		log.debug('asking for area')
+		ar = await self.get_or_ask_user_for_area(ctx, name)
+		log.debug('asked for area')
+		if not ar:
+			return await ctx.send('That area does not exist')
+		p.current_character.current_area = ar
+		p.current_character.update()
+		return await ctx.send(f'You moved to **{ar.name}**')
 
 	# Tasks
