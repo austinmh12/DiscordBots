@@ -255,12 +255,12 @@ class Character:
 	@property
 	def armour_defense(self):
 		base = sum([e.defense for e in self.equipment if isinstance(e, Armour)])
-		base += sum([e.def_bonus for e in self.equipment])
+		base += sum([e.def_bonus for e in self.equipment if e])
 		return base
 
 	@property
 	def armour_attack(self):
-		return sum([e.atk_bonus for e in self.equipment])	
+		return sum([e.atk_bonus for e in self.equipment if e])	
 
 	@property
 	def defense(self):
@@ -273,6 +273,6 @@ class Character:
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
 		dmg += self.armour_attack
-		if random() < self.crit_chance:
+		if random() < self.weapon.crit_chance:
 			dmg *= 1.5
 		return dmg
