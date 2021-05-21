@@ -1,7 +1,7 @@
 from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
 from . import *
-from .equipment import Equipment, get_equipment
+from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment
 from .profession import Profession, get_profession
 from .area import Area, get_area
 
@@ -165,6 +165,37 @@ class Character:
 		i = self.profession.base_int + (self.level * self.profession.int_mod)
 		c = self.profession.base_con + (self.level * self.profession.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
+		self.get_armour_bonuses()
+
+	def get_armour_bonuses(self):
+		s = 0
+		d = 0
+		i = 0
+		c = 0
+		for e in self.equipment:
+			s += e.str_bonus
+			d += e.dex_bonus
+			i += e.int_bonus
+			c += e.con_bonus
+		self.stats['STR'] += s
+		self.stats['DEX'] += d
+		self.stats['INT'] += i
+		self.stats['CON'] += c
+
+	@property
+	def equipment(self):
+		return (
+			self.helmet,
+			self.chest,
+			self.legs,
+			self.boots,
+			self.gloves,
+			self.amulet,
+			self.ring1,
+			self.ring2,
+			self.weapon,
+			self.off_hand
+		)	
 
 	@property
 	def pages(self):
@@ -219,3 +250,28 @@ class Character:
 		# Equipment details
 
 		return [splash_page]
+
+	@property
+	def armour_defense(self):
+		base = sum([e.defense for e in self.equipment if isinstance(e, Armour)])
+		base += sum([e.def_bonus for e in self.equipment])
+		return base
+
+	@property
+	def armour_attack(self):
+		return sum([e.atk_bonus for e in self.equipment])	
+
+	@property
+	def defense(self):
+		return 80 / (80 + self.stats['STR'] + self.armour_defense)
+	
+	@property
+	def damage(self):
+		dmg = randint(self.weapon.min_damage, self.weapon.max_damage)
+		dmg += floor(self.stats[self.weapon.stat] / 10)
+		dmg += floor(self.stats.get(self.primary_stat, 0) / 10)
+		dmg += floor(self.stats.get(self.secondary_stat, 0) / 20)
+		dmg += self.armour_attack
+		if random() < self.crit_chance:
+			dmg *= 1.5
+		return dmg
