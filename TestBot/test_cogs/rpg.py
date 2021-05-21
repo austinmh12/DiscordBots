@@ -11,11 +11,14 @@ from .rpgFunctions import profession
 from .rpgFunctions import player
 from .rpgFunctions import equipment
 from .rpgFunctions import area
+from .rpgFunctions import combat
 
 # Version
 version = '0.0.0'
 
 # Constants
+attack_emoji = 845386457543737404
+run_emoji = 845387053680295936
 
 # Functions
 def initialise_db():
@@ -355,9 +358,7 @@ class RPGCog(MyCog):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to move areas')
-		log.debug('asking for area')
 		ar = await self.get_or_ask_user_for_area(ctx, name)
-		log.debug('asked for area')
 		if not ar:
 			return await ctx.send('That area does not exist')
 		p.current_character.current_area = ar
@@ -371,7 +372,45 @@ class RPGCog(MyCog):
 					brief='Find a battle',
 					aliases=['fb'])
 	async def find_battle(self, ctx):
-		...
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to battle')
+		if p.current_character.current_area is None:
+			return await ctx.send('You need to be in an area before you can battle')
+		cb = combat.Combat(p.current_character)
+		msg = await ctx.send(embed=cb.embed)
+		await msg.add_reaction(attack_emoji)
+		await msg.add_reaction(run_emoji)
+
+		def is_combat_icon(m):
+			return all([
+				(m.emoji.id == attack_emoji or m.emoji.name == run_emoji),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		while not cb.winner:
+			try:
+				react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=600)
+			except asyncio.TimeoutError:
+				log.debug('Timeout, breaking')
+				break
+			if react.emoji.id == attack_emoji:
+				await msg.remove_reaction(attack_emoji, react.member)
+				cb.character_combat('Attack')
+			else:
+				await msg.remove_reaction(run_emoji, react.member)
+				cb.character_combat('Pass')
+			await msg.edit(embed=cb.embed)
+
+		if cb.winner == p.current_character:
+			# Exp reward
+			# loot reward
+			return await ctx.send('You win')
+		else:
+			# Cooldown until you're revived?
+			return await ctx.send('You lose')
 
 	## Equipment/Inventory
 
