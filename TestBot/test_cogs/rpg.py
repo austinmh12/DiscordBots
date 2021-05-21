@@ -282,8 +282,8 @@ class RPGCog(MyCog):
 
 	@commands.command(name='deletecharacter',
 					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
+					description='Delete one of your characters',
+					brief='Delete a character',
 					aliases=['delchar', 'dc'])
 	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
@@ -310,8 +310,8 @@ class RPGCog(MyCog):
 
 	@commands.command(name='getcharacter',
 					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
+					description='Get information about one of your characters',
+					brief='Get character info',
 					aliases=['getchar', 'gc'])
 	async def get_character(self, ctx, name: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
@@ -323,8 +323,8 @@ class RPGCog(MyCog):
 	## Professions
 	@commands.command(name='viewprofessions',
 					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
+					description='View all available professions for characters',
+					brief='View professions',
 					aliases=['viewprofs', 'vp'])
 	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
 		profs = {p.name: p for p in profession.get_professions()}
@@ -336,8 +336,8 @@ class RPGCog(MyCog):
 	## Areas
 	@commands.command(name='viewareas',
 					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
+					description='View all the areas you can travel to',
+					brief='View areas',
 					aliases=['va', 'areas'])
 	async def view_areas(self, ctx, name: typing.Optional[str] = ''):
 		areas = {a.name: a for a in area.get_areas()}
@@ -348,8 +348,8 @@ class RPGCog(MyCog):
 
 	@commands.command(name='moveareas',
 					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
+					description='Move your current character to a different area',
+					brief='Move areas',
 					aliases=['ma', 'move'])
 	async def move_areas(self, ctx, name: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
@@ -363,5 +363,16 @@ class RPGCog(MyCog):
 		p.current_character.current_area = ar
 		p.current_character.update()
 		return await ctx.send(f'You moved to **{ar.name}**')
+
+	## Combat
+	@commands.command(name='findbattle',
+					pass_context=True,
+					description='Find a monster to battle in the current area',
+					brief='Find a battle',
+					aliases=['fb'])
+	async def find_battle(self, ctx):
+		...
+
+	## Equipment/Inventory
 
 	# Tasks
