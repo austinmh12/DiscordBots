@@ -140,6 +140,7 @@ class RPGCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/rpg.db'):
 			log.info('Initialising database.')
 			initialise_db()
+		self.heal_all_characters.start()
 
 	# Utilities
 	def get_or_add_player_from_ctx(self, ctx):
@@ -429,6 +430,7 @@ class RPGCog(MyCog):
 	## Health
 	@tasks.loop(seconds=600)
 	async def heal_all_characters(self):
+		log.info('Healing all characters')
 		characters = character.get_all_characters()
 		for char in characters:
 			if 0 <= (dt.now() - char._death_timer).total_seconds() <= 600:
