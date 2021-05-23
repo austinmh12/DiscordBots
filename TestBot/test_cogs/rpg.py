@@ -1,4 +1,4 @@
-from . import log, BASE_PATH, Page, MyCog, chunk, sql
+from . import log, BASE_PATH, Page, MyCog, chunk, sql, format_remaining_time
 from discord import File
 from discord.ext import commands, tasks
 import asyncio
@@ -194,6 +194,8 @@ class RPGCog(MyCog):
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
 		marked_for_deletion = False
+		if len(character.get_characters(p)) >= 3:
+			return await ctx.send('You can only have 3 characters')
 
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
@@ -381,7 +383,7 @@ class RPGCog(MyCog):
 		if p.current_character.current_area is None:
 			return await ctx.send('You need to be in an area before you can battle')
 		if p.current_character.current_con <= 0:
-			return await ctx.send(f'You are dead for another {format_remaining_time(p.current_character._death_timer)}')
+			return await ctx.send(f'You are dead for another **{format_remaining_time(p.current_character._death_timer)}**')
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
