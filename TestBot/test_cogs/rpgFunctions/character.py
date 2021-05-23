@@ -124,7 +124,7 @@ class Character:
 			self.weapon.id if self.weapon else 0,
 			self.off_hand.id if self.off_hand else 0,
 			self.current_con,
-			self.current_area if self.current_area else '',
+			self.current_area.name if self.current_area else '',
 			self.death_timer,
 			self.inventory
 		)
