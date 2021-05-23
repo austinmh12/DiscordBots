@@ -1,5 +1,6 @@
 from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
+from datetime import datetime as dt, timedelta as td
 from . import *
 from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment
 from .profession import Profession, get_profession
@@ -77,11 +78,21 @@ class Character:
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] if not current_con else current_con
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
+		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
+		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()
 
 		# Migrations
+
+	@property
+	def death_timer(self):
+		return dt.strftime(self.death_timer, '%Y-%m-%d %H:%M:%S')
+
+	@property
+	def inventory(self):
+		return [i.id for i in self._inventory]
 
 	@property
 	def to_row(self):
@@ -129,6 +140,10 @@ class Character:
 			'current_con': self.current_con,
 			'current_area': self.current_area
 		}
+
+	def parse_inventory(self, inv):
+		inventory = json.loads(inv)
+		return [get_equipment(i) for i in inventory]
 	
 	def update(self):
 		current = self.to_dict()
