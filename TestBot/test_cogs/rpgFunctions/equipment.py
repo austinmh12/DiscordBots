@@ -52,7 +52,6 @@ rarity_magic_properties = {
 #############
 def get_next_equipment_id():
 	df = sql('rpg', 'select id from equipment')
-	log.debug(max(df.id))
 	return max(df.id) + 1
 
 def get_equipment(id):

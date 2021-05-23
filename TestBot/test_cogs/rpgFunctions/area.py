@@ -52,7 +52,6 @@ class Area:
 				level = randint(item_info['min_level'], item_info['max_level'])
 				item = generate_random_equipment(item_type, rarity, level)
 				items.append(item)
-				log.debug(f'{item.id} {item.name} {item.level} {item.rarity}')
 		ret['items'] = items
 		return ret
 
