@@ -5,6 +5,7 @@ import asyncio
 from random import randint
 import typing
 import os.path
+from datetime import datetime as dt, timedelta as td
 
 from .rpgFunctions import character
 from .rpgFunctions import profession
@@ -409,14 +410,13 @@ class RPGCog(MyCog):
 		if cb.winner == p.current_character:
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
+			p.current_character._inventory.extend(cb.loot['items'])
 			if lvlup:
 				await ctx.send(f'You leveled up to {p.current_character.level}')
-			# loot reward
-			p.current_character.update()
-			return await ctx.send('You win')
 		else:
-			# Cooldown until you're revived? 1hr :)
+			p.current_character._death_timer = dt.now() + td(hours=1)
 			return await ctx.send('You lose')
+		return p.current_character.update()
 
 	## Equipment/Inventory
 
