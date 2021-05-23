@@ -1,6 +1,7 @@
 from .. import sql, log, BASE_PATH, chunk, Page
 from . import *
 from discord import Embed, Colour
+from random import randint
 
 #############
 # Constants #
@@ -18,7 +19,8 @@ from discord import Embed, Colour
 class Combat:
 	def __init__(self, character):
 		self.character = character
-		self.enemy = self.character.current_area.get_random_monster()
+		self.area = self.character.current_area
+		self.enemy = self.area.get_random_monster()
 		self.desc = f'**{self.character.name}** v. **{self.enemy.name}** (Lvl {self.enemy.level})\n{self.character.name}\'s turn first'
 		self.winner = None
 
@@ -37,6 +39,12 @@ class Combat:
 			self.enemy_combat()
 		else:
 			self.desc += f'\n**{self.enemy.name}** has died!'
+			self.exp = self.enemy.base_exp + (self.enemy.level * self.enemy.exp_mod)
+			self.loot = self.area.get_random_loot()
+			self.desc += f'\nYou gained {self.exp} EXP and {self.loot["gold"]} gold.'
+			if self.loot['items']:
+				self.desc += '\nYou also got:\n'
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['items']])
 			self.winner = self.character
 
 	def enemy_combat(self):

@@ -405,11 +405,15 @@ class RPGCog(MyCog):
 			await msg.edit(embed=cb.embed)
 
 		if cb.winner == p.current_character:
-			# Exp reward
+			lvlup = p.current_character.add_exp(cb.exp)
+			p.current_character.gold += cb.loot['gold']
+			if lvlup:
+				await ctx.send(f'You leveled up to {p.current_character.level}')
 			# loot reward
+			p.current_character.update()
 			return await ctx.send('You win')
 		else:
-			# Cooldown until you're revived?
+			# Cooldown until you're revived? 1hr :)
 			return await ctx.send('You lose')
 
 	## Equipment/Inventory

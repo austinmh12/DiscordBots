@@ -87,7 +87,7 @@ def generate_random_equipment(type, rarity, level):
 			weapon_dict['stat'] = 'INT'
 		else:
 			weapon_dict['stat'] = 'CON'
-		return Weapon(id, f'{rarity} {type}', rarity, type, level, **magic_properties, **weapon_dict)
+		return Weapon(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties, **weapon_dict)
 	elif type in armour_types:
 		armour_dict = {}
 		weight = choice(['Heavy', 'Medium', 'Light'])
@@ -98,9 +98,9 @@ def generate_random_equipment(type, rarity, level):
 			armour_dict['defense'] = randint(level, ceil(level * 1.35))
 		else:
 			armour_dict['defense'] = randint(level, ceil(level * 1.5))
-		return Armour(id, f'{rarity} {weight} {type}', rarity, type, level, **magic_properties, **armour_dict)
+		return Armour(id=id, name=f'{rarity} {weight} {type}', rarity=rarity, type=type, level=level, **magic_properties, **armour_dict)
 	else:
-		return Jewelry(id, f'{rarity} {type}', rarity, type, level, **magic_properties)
+		return Jewelry(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties)
 
 def generate_random_magic_properties(rarity, level):
 	properties = ['str_bonus', 'dex_bonus', 'int_bonus', 'con_bonus', 'def_bonus', 'atk_bonus']
