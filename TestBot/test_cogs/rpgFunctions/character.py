@@ -1,6 +1,7 @@
 from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
 from datetime import datetime as dt, timedelta as td
+import json
 from . import *
 from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment
 from .profession import Profession, get_profession
@@ -90,11 +91,11 @@ class Character:
 
 	@property
 	def death_timer(self):
-		return dt.strftime(self.death_timer, '%Y-%m-%d %H:%M:%S')
+		return dt.strftime(self._death_timer, '%Y-%m-%d %H:%M:%S')
 
 	@property
 	def inventory(self):
-		return [i.id for i in self._inventory]
+		return json.dumps([i.id for i in self._inventory])
 
 	@property
 	def to_row(self):
