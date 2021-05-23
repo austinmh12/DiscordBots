@@ -27,7 +27,7 @@ def get_character(player, name):
 	return Character(**df.to_dict('records')[0])
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
@@ -55,7 +55,9 @@ class Character:
 				weapon,
 				off_hand,
 				current_con = 0,
-				current_area = ''
+				current_area = 'Area1',
+				death_timer = '1999-01-01 00:00:00',
+				inventory = '[]'
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
@@ -115,7 +117,9 @@ class Character:
 			self.weapon.id if self.weapon else 0,
 			self.off_hand.id if self.off_hand else 0,
 			self.current_con,
-			self.current_area if self.current_area else ''
+			self.current_area if self.current_area else '',
+			self.death_timer,
+			self.inventory
 		)
 
 	def to_dict(self):
@@ -138,7 +142,9 @@ class Character:
 			'weapon': self.weapon,
 			'off_hand': self.off_hand,
 			'current_con': self.current_con,
-			'current_area': self.current_area
+			'current_area': self.current_area,
+			'death_timer': self.death_timer,
+			'inventory': self.inventory
 		}
 
 	def parse_inventory(self, inv):

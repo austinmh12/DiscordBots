@@ -59,6 +59,8 @@ def initialise_db():
 			,off_hand integer
 			,current_con integer
 			,current_area text
+			,death_timer text
+			,inventory text
 		)'''
 	)
 	sql('rpg', '''create table monsters (
