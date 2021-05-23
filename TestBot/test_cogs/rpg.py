@@ -380,6 +380,8 @@ class RPGCog(MyCog):
 			return await ctx.send('You need a character to battle')
 		if p.current_character.current_area is None:
 			return await ctx.send('You need to be in an area before you can battle')
+		if p.current_character.current_con <= 0:
+			return await ctx.send(f'You are dead for another {format_remaining_time(p.current_character._death_timer)}')
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
@@ -407,6 +409,8 @@ class RPGCog(MyCog):
 				cb.character_combat('Pass')
 			await msg.edit(embed=cb.embed)
 
+		await msg.remove_reaction(attack_emoji, self.bot.user)
+		await msg.remove_reaction(attack_emoji, self.bot.user)
 		if cb.winner == p.current_character:
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
@@ -415,7 +419,6 @@ class RPGCog(MyCog):
 				await ctx.send(f'You leveled up to {p.current_character.level}')
 		else:
 			p.current_character._death_timer = dt.now() + td(hours=1)
-			return await ctx.send('You lose')
 		return p.current_character.update()
 
 	## Equipment/Inventory
