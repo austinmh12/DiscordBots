@@ -186,8 +186,8 @@ class Character:
 	def add_exp(self, exp):
 		start = self.level
 		while exp > 0:
-			exp_to_level = self.exp_to_next_level
-			if self.exp + exp >= exp_to_level:
+			exp_to_level = self.exp_to_next_level - self.exp
+			if exp >= exp_to_level:
 				self.exp += exp_to_level
 				self.level += 1
 				exp -= exp_to_level
