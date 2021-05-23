@@ -109,23 +109,23 @@ class Character:
 
 	def to_dict(self):
 		return {
-			'player_id,': self.player_id,
-			'player_guild_id,': self.player_guild_id,
-			'name,': self.name,
-			'profession,': self.profession,
-			'level,': self.level,
-			'exp,': self.exp,
-			'gold,': self.gold,
-			'helmet,': self.helmet,
-			'chest,': self.chest,
-			'legs,': self.legs,
-			'boots,': self.boots,
-			'gloves,': self.gloves,
-			'amulet,': self.amulet,
-			'ring1,': self.ring1,
-			'ring2,': self.ring2,
-			'weapon,': self.weapon,
-			'off_hand,': self.off_hand,
+			'player_id': self.player_id,
+			'player_guild_id': self.player_guild_id,
+			'name': self.name,
+			'profession': self.profession,
+			'level': self.level,
+			'exp': self.exp,
+			'gold': self.gold,
+			'helmet': self.helmet,
+			'chest': self.chest,
+			'legs': self.legs,
+			'boots': self.boots,
+			'gloves': self.gloves,
+			'amulet': self.amulet,
+			'ring1': self.ring1,
+			'ring2': self.ring2,
+			'weapon': self.weapon,
+			'off_hand': self.off_hand,
 			'current_con': self.current_con,
 			'current_area': self.current_area
 		}
@@ -148,6 +148,7 @@ class Character:
 		sql_str += ' where player_id = ? and player_guild_id = ? and name = ?'
 		vals = [v for _, v in col_val]
 		vals.extend([self.player_id, self.player_guild_id, self.name])
+		log.debug(sql_str)
 		if not col_val:
 			return
 		return sql('rpg', sql_str, vals)
@@ -182,6 +183,19 @@ class Character:
 		self.stats['DEX'] += d
 		self.stats['INT'] += i
 		self.stats['CON'] += c
+
+	def add_exp(self, exp):
+		start = self.level
+		while exp > 0:
+			exp_to_level = self.exp_to_next_level
+			if exp >= exp_to_level:
+				self.exp += exp_to_level
+				self.level += 1
+				exp -= exp_to_level
+			else:
+				self.exp += exp
+				exp = 0
+		return self.level > start
 
 	@property
 	def equipment(self):
