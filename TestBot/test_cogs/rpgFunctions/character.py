@@ -189,12 +189,17 @@ class Character:
 			exp_to_level = self.exp_to_next_level - self.exp
 			if exp >= exp_to_level:
 				self.exp += exp_to_level
-				self.level += 1
+				self.level_up()
 				exp -= exp_to_level
 			else:
 				self.exp += exp
 				exp = 0
+			log.debug(f'{exp_to_level} {exp}')
 		return self.level > start
+
+	def level_up(self):
+		self.level += 1
+		self.get_next_level_exp()
 
 	@property
 	def equipment(self):
