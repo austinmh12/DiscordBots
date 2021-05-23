@@ -194,12 +194,13 @@ class Character:
 			else:
 				self.exp += exp
 				exp = 0
-			log.debug(f'{exp_to_level} {exp}')
 		return self.level > start
 
 	def level_up(self):
 		self.level += 1
 		self.get_next_level_exp()
+		self.calculate_stats()
+		self.current_con = self.stats['CON']
 
 	@property
 	def equipment(self):
