@@ -410,7 +410,7 @@ class RPGCog(MyCog):
 			await msg.edit(embed=cb.embed)
 
 		await msg.remove_reaction(attack_emoji, self.bot.user)
-		await msg.remove_reaction(attack_emoji, self.bot.user)
+		await msg.remove_reaction(run_emoji, self.bot.user)
 		if cb.winner == p.current_character:
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
@@ -424,3 +424,13 @@ class RPGCog(MyCog):
 	## Equipment/Inventory
 
 	# Tasks
+	## Health
+	@tasks.loop(seconds=600)
+	async def heal_all_characters(self):
+		characters = character.get_all_characters()
+		for char in characters:
+			if 0 <= (dt.now() - char._death_timer).total_seconds() <= 600:
+				char.current_con = char.stats['CON']
+			if char.stats['CON'] != char.current_con:
+				char.current_con += 1
+			char.update()

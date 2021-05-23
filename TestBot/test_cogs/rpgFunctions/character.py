@@ -15,6 +15,12 @@ from .area import Area, get_area
 #############
 # Functions #
 #############
+def get_all_characters():
+	df = sql('rpg', 'select * from characters')
+	if df.empty:
+		return []
+	return [Character(**d) for d in df.to_dict('records')]
+
 def get_characters(player):
 	df = sql('rpg', 'select * from characters where player_id = ? and player_guild_id = ?', (player.id, player.guild_id))
 	if df.empty:
