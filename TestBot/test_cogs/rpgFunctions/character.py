@@ -148,7 +148,6 @@ class Character:
 		sql_str += ' where player_id = ? and player_guild_id = ? and name = ?'
 		vals = [v for _, v in col_val]
 		vals.extend([self.player_id, self.player_guild_id, self.name])
-		log.debug(sql_str)
 		if not col_val:
 			return
 		return sql('rpg', sql_str, vals)
@@ -188,7 +187,7 @@ class Character:
 		start = self.level
 		while exp > 0:
 			exp_to_level = self.exp_to_next_level
-			if exp >= exp_to_level:
+			if self.exp + exp >= exp_to_level:
 				self.exp += exp_to_level
 				self.level += 1
 				exp -= exp_to_level
