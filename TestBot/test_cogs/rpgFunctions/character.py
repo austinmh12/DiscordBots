@@ -390,7 +390,7 @@ class Character:
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
 		if self.stats['CON'] != self.current_con:
-			self.current_con += floor(self.stats['CON'] / 10)
+			self.current_con += ceil(self.stats['CON'] / 10)
 			if self.current_con > self.stats['CON']:
 				self.current_con = self.stats['CON']
 		self.update()
