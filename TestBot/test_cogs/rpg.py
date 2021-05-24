@@ -478,7 +478,7 @@ class RPGCog(MyCog):
 				else:
 					if len(pages) == 0:
 						return await msg.edit(content='You have no items', embed=None)
-				idx = (idx - 1) % len(pages)
+				idx = idx % len(pages)
 				await msg.remove_reaction(equip_emoji, react.member)
 			elif react.emoji.name == sell_emoji:
 				sold = p.current_character._inventory.pop(idx)
@@ -488,7 +488,7 @@ class RPGCog(MyCog):
 				p.current_character.update()
 				if len(pages) == 0:
 					return await msg.edit(content='You have no items', embed=None)
-				idx = (idx - 1) % len(pages)
+				idx = idx % len(pages)
 				await msg.remove_reaction(sell_emoji, react.member)
 			else:
 				idx = (idx - 1) % len(pages)
