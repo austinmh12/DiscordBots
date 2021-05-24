@@ -98,6 +98,7 @@ class Character:
 		## v2.0.0
 		### Inventory
 		if isinstance(self._inventory, list):
+			log.info('Migrating inventory')
 			self._inventory = {'equipment': self._inventory, 'consumables': []}
 
 	@property
@@ -106,6 +107,8 @@ class Character:
 
 	@property
 	def inventory(self):
+		if isinstance(self._inventory, list):
+			return json.dumps([i.id for i in self._inventory])
 		ret = {
 			'equipment': [e.id for e in self._inventory['equipment']], 
 			'consumables': [c.id for c in self._inventory['consumables']]
