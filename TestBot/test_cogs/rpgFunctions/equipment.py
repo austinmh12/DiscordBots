@@ -47,9 +47,9 @@ rarity_magic_properties = {
 	'Mythic': 5
 }
 rarity_price_bonus = {
-	'Trash': 0,
-	'Common': 10,
-	'Uncommon': 25,
+	'Trash': 1,
+	'Common': 5,
+	'Uncommon': 20,
 	'Rare': 100,
 	'Legendary': 250,
 	'Mythic': 1000
