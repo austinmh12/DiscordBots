@@ -47,9 +47,14 @@ class Combat:
 			self.exp = self.enemy.base_exp + (self.enemy.level * self.enemy.exp_mod)
 			self.loot = self.area.get_random_loot()
 			self.desc += f'\nYou gained {self.exp} EXP and {self.loot["gold"]} gold.'
-			if self.loot['items']:
-				self.desc += '\nYou also got:\n'
-				self.desc += '\n'.join([f'{i.name}' for i in self.loot['items']])
+			if self.loot['equipment'] or self.loot['consumables']:
+				self.desc += '\nYou also got:'
+			if self.loot['equipment']:
+				self.desc += '\n'
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['equipment']])
+			if self.loot['consumables']:
+				self.desc += '\n'
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['equipment']])
 			self.winner = self.character
 			self.colour = (0, 196, 18)
 
