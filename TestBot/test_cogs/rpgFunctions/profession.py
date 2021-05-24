@@ -44,7 +44,8 @@ class Profession:
 				int_mod,
 				con_mod,
 				starting_weapon,
-				starting_off_hand
+				starting_off_hand,
+				weight
 	):
 		self.name = name
 		self.primary_stat = primary_stat
@@ -59,6 +60,7 @@ class Profession:
 		self.con_mod = con_mod
 		self.starting_weapon = starting_weapon if isinstance(starting_weapon, Equipment) else get_equipment(starting_weapon)
 		self.starting_off_hand = starting_off_hand if isinstance(starting_off_hand, Equipment) else get_equipment(starting_off_hand)
+		self.weight = weight
 
 	@property
 	def page(self):
@@ -69,4 +71,5 @@ class Profession:
 		desc += f'**Starting Weapon:** {self.starting_weapon.name}\n'
 		if self.starting_off_hand:
 			desc += f'**Starting Off Hand:** {self.starting_off_hand.name}'
+		desc += f'\n\n**Weight Class:** {self.weight}'
 		return Page(self.name, desc, colour=(150, 150, 150))
