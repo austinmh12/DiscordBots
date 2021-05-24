@@ -3,7 +3,7 @@ from random import randint, random, choice
 from datetime import datetime as dt, timedelta as td
 import json
 from . import *
-from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment
+from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon_types
 from .profession import Profession, get_profession
 from .area import Area, get_area
 
@@ -229,6 +229,28 @@ class Character:
 		self.get_next_level_exp()
 		self.calculate_stats()
 		self.current_con = self.stats['CON']
+
+	def equip(self, equipment):
+		if equipment.type == 'Helmet':
+			self.helmet = equipment
+		elif equipment.type == 'Chest':
+			self.chest = equipment
+		elif equipment.type == 'Legs':
+			self.legs = equipment
+		elif equipment.type == 'Boots':
+			self.boots = equipment
+		elif equipment.type == 'Gloves':
+			self.gloves = equipment
+		elif equipment.type == 'Amulet':
+			self.amulet = equipment
+		elif equipment.type == 'Ring':
+			self.ring1 = equipment
+		elif equipment.type in weapon_types:
+			self.weapon = equipment
+		else:
+			self.off_hand = equipment
+		self.update()
+		self.calculate_stats()
 
 	@property
 	def equipment(self):
