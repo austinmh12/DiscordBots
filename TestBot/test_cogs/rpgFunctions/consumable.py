@@ -72,7 +72,17 @@ class RestorationPotion(Consumable):
 			'',
 			0
 		)
+
+	@property
+	def price(self):
+		return self.restored * 5
 	
+	@property
+	def page(self):
+		desc = f'Restores {self.restored} {self.type}\n\n'
+		desc += f'**Sell Price:** {self.price} :coin:'
+		return Page(self.name, desc, colour=(255, 45, 45) if self.type == 'Health' else (22, 0, 240))
+
 class StatPotion(Consumable):
 	def __init__(self, stat, bonus, **kwargs):
 		super().__init__(**kwargs)
@@ -89,3 +99,13 @@ class StatPotion(Consumable):
 			self.stat,
 			self.bonus
 		)
+
+	@property
+	def price(self):
+		return self.bonus * 12
+	
+	@property
+	def page(self):
+		desc = f'Buffs {self.stat} by {self.bonus} for **1hr** (_does not stack_)\n\n'
+		desc += f'**Sell Price:** {self.price} :coin:'
+		return Page(self.name, desc, colour=(0, 218, 240))
