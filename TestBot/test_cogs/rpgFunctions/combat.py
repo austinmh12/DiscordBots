@@ -68,7 +68,7 @@ class Combat:
 				enemy_dmg = self.enemy.damage
 				dmg_done = floor(enemy_dmg * self.character.defense)
 				self.character.current_con -= dmg_done
-				self.desc += f'\n**{self.enemy.name}** did {dmg_done} damage to the **{self.character.name}**!'
+				self.desc += f'\n**{self.enemy.name}** did {dmg_done} damage to **{self.character.name}**!'
 		if self.alive(self.character):
 			return
 		else:
