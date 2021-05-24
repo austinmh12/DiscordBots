@@ -461,7 +461,7 @@ class RPGCog(MyCog):
 					pass_context=True,
 					description='View your equipment',
 					brief='Inventory',
-					aliases=['inv'])
+					aliases=['eq'])
 	async def _equipment(self, ctx):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
