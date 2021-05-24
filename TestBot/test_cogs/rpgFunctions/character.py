@@ -262,6 +262,38 @@ class Character:
 		self.calculate_stats()
 		return prev_equip
 
+	def unequip(self, slot):
+		if slot == 'helmet':
+			prev_equip = self.helmet
+			self.helmet = None
+		elif slot == 'chest':
+			prev_equip = self.chest
+			self.chest = None
+		elif slot == 'legs':
+			prev_equip = self.legs
+			self.legs = None
+		elif slot == 'boots':
+			prev_equip = self.boots
+			self.boots = None
+		elif slot == 'gloves':
+			prev_equip = self.gloves
+			self.gloves = None
+		elif slot == 'amulet':
+			prev_equip = self.amulet
+			self.amulet = None
+		elif slot == 'ring1':
+			prev_equip = self.ring1
+			self.ring1 = None
+		elif slot == 'weapon':
+			prev_equip = self.weapon
+			self.weapon = None
+		else:
+			prev_equip = self.off_hand
+			self.off_hand = None
+		self.update()
+		self.calculate_stats()
+		return prev_equip
+
 	@property
 	def equipment(self):
 		return (

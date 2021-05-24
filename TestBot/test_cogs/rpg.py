@@ -492,7 +492,7 @@ class RPGCog(MyCog):
 					pass_context=True,
 					description='Unequip an item',
 					brief='Unequip items',
-					aliases=['inv'])
+					aliases=['uneq'])
 	async def unequip(self, ctx, slot):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
