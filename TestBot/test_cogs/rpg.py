@@ -531,8 +531,4 @@ class RPGCog(MyCog):
 		log.info('Healing all characters')
 		characters = character.get_all_characters()
 		for char in characters:
-			if 0 <= (dt.now() - char._death_timer).total_seconds() <= 600:
-				char.current_con = char.stats['CON']
-			if char.stats['CON'] != char.current_con:
-				char.current_con += 1
-			char.update()
+			char.heal()

@@ -385,3 +385,12 @@ class Character:
 		if random() < self.weapon.crit_chance:
 			dmg *= 1.5
 		return dmg
+
+	def heal(self):
+		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
+			self.current_con = self.stats['CON']
+		if self.stats['CON'] != self.current_con:
+			self.current_con += floor(self.stats['CON'] / 10)
+			if self.current_con > self.stats['CON']:
+				self.current_con = self.stats['CON']
+		self.update()
