@@ -339,7 +339,7 @@ class Character:
 			splash_desc += f'**Amulet:** {self.amulet.name}\n'
 		else:
 			splash_desc += '**Amulet:** \n'
-		if self.ring1:
+		if self.ring:
 			splash_desc += f'**Ring:** {self.ring.name}\n'
 		else:
 			splash_desc += '**Ring:** \n'
