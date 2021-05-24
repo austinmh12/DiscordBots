@@ -81,6 +81,9 @@ def get_equipment(id):
 def add_equipment(equipment):
 	sql('rpg', 'insert into equipment values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', equipment.to_row)
 
+def delete_equipment(equipment):
+	sql('rpg', 'delete from equipment where id = ?', (equipment.id,))
+
 def generate_random_equipment(type, rarity, level):
 	id = get_next_equipment_id()
 	magic_properties = generate_random_magic_properties(rarity, level)
