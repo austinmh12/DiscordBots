@@ -113,17 +113,17 @@ def initialise_db():
 			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0)'''
 	)
 	sql('rpg', '''insert into equipment values
-			(1,"Starter Sword","Common","Sword",1,0,0,0,0,0,0,"",0,1,3,"STR",0.05)
-			,(2,"Starter Shortbow","Common","Shortbow",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.05)
-			,(3,"Starter Wand","Common","Wand",1,0,0,0,0,0,0,"",0,1,3,"INT",0.05)
-			,(4,"Starter Dagger","Common","Dagger",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.1)
-			,(5,"Dented Platmail","Common","Chest",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
-			,(6,"Dented Platelegs","Common","Legs",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
-			,(7,"Cracked Kite Shield","Common","Shield",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
-			,(8,"Ripped Leather Vest","Common","Chest",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
-			,(9,"Ripped Leather Pants","Common","Legs",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
-			,(10,"Tattered Cloth Shirt","Common","Chest",1,0,0,0,0,0,0,"Light",1,0,0,"",0)
-			,(11,"Tattered Cloth Pants","Common","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)'''
+			(1,"Starter Sword","Trash","Sword",1,0,0,0,0,0,0,"",0,1,3,"STR",0.05)
+			,(2,"Starter Shortbow","Trash","Shortbow",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.05)
+			,(3,"Starter Wand","Trash","Wand",1,0,0,0,0,0,0,"",0,1,3,"INT",0.05)
+			,(4,"Starter Dagger","Trash","Dagger",1,0,0,0,0,0,0,"",0,1,3,"DEX",0.1)
+			,(5,"Dented Platmail","Trash","Chest",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(6,"Dented Platelegs","Trash","Legs",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(7,"Cracked Kite Shield","Trash","Shield",1,0,0,0,0,0,0,"Heavy",3,0,0,"",0)
+			,(8,"Ripped Leather Vest","Trash","Chest",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
+			,(9,"Ripped Leather Pants","Trash","Legs",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
+			,(10,"Tattered Cloth Shirt","Trash","Chest",1,0,0,0,0,0,0,"Light",1,0,0,"",0)
+			,(11,"Tattered Cloth Pants","Trash","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)'''
 	)
 	sql('rpg', '''insert into monsters values
 			('Goblin','STR','',1,3,0.02,1,1,1,1,1,1,1,1,2,2)
@@ -482,6 +482,7 @@ class RPGCog(MyCog):
 				await msg.remove_reaction(equip_emoji, react.member)
 			elif react.emoji.name == sell_emoji:
 				sold = p.current_character._inventory.pop(idx)
+				equipment.delete_equipment(sold)
 				pages.pop(idx)
 				p.current_character.gold += sold.price
 				p.current_character.update()
