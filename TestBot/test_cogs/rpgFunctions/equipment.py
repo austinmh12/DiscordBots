@@ -46,6 +46,14 @@ rarity_magic_properties = {
 	'Legendary': 4,
 	'Mythic': 5
 }
+rarity_price_bonus = {
+	'Trash': 0,
+	'Common': 10,
+	'Uncommon': 25,
+	'Rare': 100,
+	'Legendary': 250,
+	'Mythic': 1000
+}
 
 up_indicator = ':small_red_triangle:'
 down_indicator = ':small_red_triangle_down:'
@@ -176,6 +184,10 @@ class Weapon(Equipment):
 		)
 
 	@property
+	def price(self):
+		return self.equipment_rating + rarity_price_bonus[self.rarity] * self.level
+
+	@property
 	def avg_dmg(self):
 		return (self.min_damage + self.max_damage) / 2
 
@@ -235,6 +247,10 @@ class Armour(Equipment):
 			'',
 			0
 		)
+
+	@property
+	def price(self):
+		return self.level * rarity_price_bonus[self.rarity] * (1 + self.equipment_rating)
 
 	@property
 	def equipment_rating(self):
@@ -302,6 +318,10 @@ class Jewelry(Equipment):
 			'',
 			0
 		)
+
+	@property
+	def price(self):
+		return self.level * rarity_price_bonus[self.rarity]
 
 	def stat_page(self, character):
 		desc = f'**Sell Price:**'
