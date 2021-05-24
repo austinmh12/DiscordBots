@@ -479,7 +479,10 @@ class RPGCog(MyCog):
 					idx = (idx - 1) % len(pages)
 				await msg.remove_reaction(equip_emoji, react.member)
 			elif react.emoji.name == sell_emoji:
-				...
+				sold = p.current_character._inventory.pop(idx)
+				pages.pop(idx)
+				idx = (idx - 1) % len(pages)
+				p.current_character.gold += sold.price
 				await msg.remove_reaction(sell_emoji, react.member)
 			else:
 				idx = (idx - 1) % len(pages)

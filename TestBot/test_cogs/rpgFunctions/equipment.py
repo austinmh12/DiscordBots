@@ -188,7 +188,7 @@ class Weapon(Equipment):
 
 	@property
 	def price(self):
-		return self.equipment_rating + rarity_price_bonus[self.rarity] * self.level
+		return floor(self.equipment_rating + rarity_price_bonus[self.rarity] * self.level)
 
 	@property
 	def avg_dmg(self):
@@ -253,7 +253,7 @@ class Armour(Equipment):
 
 	@property
 	def price(self):
-		return self.level * rarity_price_bonus[self.rarity] * (1 + self.equipment_rating)
+		return floor(self.level * rarity_price_bonus[self.rarity] * (1 + self.equipment_rating))
 
 	@property
 	def equipment_rating(self):
@@ -324,7 +324,7 @@ class Jewelry(Equipment):
 
 	@property
 	def price(self):
-		return self.level * rarity_price_bonus[self.rarity]
+		return floor(self.level * rarity_price_bonus[self.rarity])
 
 	def stat_page(self, character):
 		desc = f'**Sell Price:**'
