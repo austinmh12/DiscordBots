@@ -448,7 +448,8 @@ class RPGCog(MyCog):
 		if cb.winner == p.current_character:
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
-			p.current_character._inventory.extend(cb.loot['items'])
+			p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
+			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
 			if lvlup:
 				await ctx.send(f'You leveled up to {p.current_character.level}')
 		else:
