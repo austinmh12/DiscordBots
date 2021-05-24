@@ -27,10 +27,11 @@ def get_spell(name):
 # Classes #
 ###########
 class Spell:
-	def __init__(self, name, profession, level, min_damage, max_damage, stat):
+	def __init__(self, name, profession, level, min_damage, max_damage, stat, cost):
 		self.name = name
 		self.profession = profession
 		self.level = level
 		self.min_damage = min_damage
 		self.max_damage = max_damage
 		self.stat = stat
+		self.cost = cost
