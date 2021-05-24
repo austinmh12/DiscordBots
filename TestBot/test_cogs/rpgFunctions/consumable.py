@@ -73,7 +73,6 @@ class RestorationPotion(Consumable):
 			0
 		)
 	
-
 class StatPotion(Consumable):
 	def __init__(self, stat, bonus, **kwargs):
 		super().__init__(**kwargs)
