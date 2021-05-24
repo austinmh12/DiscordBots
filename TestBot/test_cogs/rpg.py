@@ -515,7 +515,7 @@ class RPGCog(MyCog):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an inventory')
-		if slot.lower() not in ['helmet', 'chest', 'legs', 'boots', 'gloves', 'amulet', 'ring1', 'weapon', 'offhand']:
+		if slot.lower() not in ['helmet', 'chest', 'legs', 'boots', 'gloves', 'amulet', 'ring', 'weapon', 'offhand']:
 			return await ctx.send('That\'s not a slot')
 		unequipped = p.current_character.unequip(slot.lower())
 		if unequipped:
