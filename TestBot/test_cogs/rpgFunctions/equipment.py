@@ -1,4 +1,4 @@
-from .. import sql, log, BASE_PATH, chunk
+from .. import sql, log, BASE_PATH, chunk, Page
 from . import *
 from random import randint, choice
 
@@ -46,6 +46,9 @@ rarity_magic_properties = {
 	'Legendary': 4,
 	'Mythic': 5
 }
+
+up_indicator = ':small_red_triangle:'
+down_indicator = ':small_red_triangle_down:'
 
 #############
 # Functions #
@@ -171,6 +174,39 @@ class Weapon(Equipment):
 			self.stat,
 			self.crit_chance
 		)
+
+	@property
+	def avg_dmg(self):
+		return (self.min_damage + self.max_damage) / 2
+
+	@property
+	def equipment_rating(self):
+		return (1 - self.crit_chance) * self.avg_dmg + self.crit_chance * 1.5 * self.avg_dmg
+
+	def compare_weapons(self, character):
+		rating = 1 - (character.weapon.equipment_rating / self.equipment_rating)
+		if rating < -.3:
+			return down_indicator * 3
+		elif -.3 <= rating < -.2:
+			return down_indicator * 2
+		elif -.2 <= rating < -.1:
+			return down_indicator
+		elif -.1 <= rating < .1:
+			return ''
+		elif .1 <= rating < .2:
+			return up_indicator
+		elif .2 <= rating < .3:
+			return up_indicator * 2
+		else:
+			return up_indicator * 3
+
+	def stat_page(self, character):
+		desc = f'**DPS:** {self.equipment_rating} {self.compare_weapons(character)}\n\n'
+		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
+		desc += f'**Crit Chance:** {self.crit_chance}\n'
+		desc += f'**Main Stat:** {self.stat}\n\n'
+		desc += f'**Sell Price:**'
+		return Page(self.name, desc, colour=(150, 150, 150))
 
 class Armour(Equipment):
 	def __init__(self, weight, defense, **kwargs):
