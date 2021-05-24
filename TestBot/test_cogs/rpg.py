@@ -64,6 +64,7 @@ def initialise_db():
 			,current_area text
 			,death_timer text
 			,inventory text
+			,current_mp integer
 		)'''
 	)
 	sql('rpg', '''create table monsters (
@@ -106,6 +107,8 @@ def initialise_db():
 		)'''
 	)
 	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text, loot_table text)')
+	sql('rpg', 'create table spells (name text, profession text, level integer, min_damage integer, max_damage integer, stat text, cost integer)')
+	sql('rpg', 'create table consumables (id integer, name text, type text, restored integer, stat text, bonus integer)')
 	sql('rpg', '''insert into professions values
 			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7,'Heavy')
 			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0,'Light')
