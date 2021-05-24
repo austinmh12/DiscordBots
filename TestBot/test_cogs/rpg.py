@@ -15,7 +15,7 @@ from .rpgFunctions import area
 from .rpgFunctions import combat
 
 # Version
-version = '1.0.0'
+version = '1.0.1'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -40,6 +40,7 @@ def initialise_db():
 			,con_mod integer
 			,starting_weapon integer
 			,starting_off_hand integer
+			,weight text
 		)'''
 	)
 	sql('rpg', '''create table characters (
@@ -106,10 +107,10 @@ def initialise_db():
 	)
 	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text, loot_table text)')
 	sql('rpg', '''insert into professions values
-			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7)
-			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0)
-			,("Archer","DEX","",5,9,6,5,1,3,1,2,2,0)
-			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0)'''
+			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7,'Heavy')
+			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0,'Light')
+			,("Archer","DEX","",5,9,6,5,1,3,1,2,2,0,'Light')
+			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0,'Medium')'''
 	)
 	sql('rpg', '''insert into equipment values
 			(1,"Starter Sword","Trash","Sword",1,0,0,0,0,0,0,"",0,1,3,"STR",0.05)
