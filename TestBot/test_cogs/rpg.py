@@ -492,9 +492,14 @@ class RPGCog(MyCog):
 				log.debug('Timeout, breaking')
 				break
 			if react.emoji.name == NEXT:
-				idx = (idx + 1) % len(pages)
 				await msg.remove_reaction(NEXT, react.member)
+				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == equip_emoji:
+				await msg.remove_reaction(equip_emoji, react.member)
+				if isinstance(p.current_character._inventory[idx], equipment.Armour):
+					if p.current_character.profession.weight != p.current_character._inventory[idx].weight:
+						await msg.edit(content='You can\'t equip this item')
+						continue
 				unequipped = p.current_character.equip(p.current_character._inventory[idx])
 				p.current_character._inventory.pop(idx)
 				pages.pop(idx)
@@ -505,8 +510,8 @@ class RPGCog(MyCog):
 					if len(pages) == 0:
 						return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
-				await msg.remove_reaction(equip_emoji, react.member)
 			elif react.emoji.name == sell_emoji:
+				await msg.remove_reaction(sell_emoji, react.member)
 				sold = p.current_character._inventory.pop(idx)
 				equipment.delete_equipment(sold)
 				pages.pop(idx)
@@ -515,13 +520,12 @@ class RPGCog(MyCog):
 				if len(pages) == 0:
 					return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
-				await msg.remove_reaction(sell_emoji, react.member)
 			else:
-				idx = (idx - 1) % len(pages)
 				await msg.remove_reaction(BACK, react.member)
+				idx = (idx - 1) % len(pages)
 			emb = pages[idx].embed
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
-			await msg.edit(embed=emb)
+			await msg.edit(content='', embed=emb)
 
 	@commands.command(name='unequip',
 					pass_context=True,
