@@ -433,7 +433,10 @@ class RPGCog(MyCog):
 				cb.character_combat('Attack')
 			else:
 				await msg.remove_reaction(run_emoji, react.member)
-				cb.character_combat('Pass')
+				await msg.remove_reaction(attack_emoji, self.bot.user)
+				await msg.remove_reaction(run_emoji, self.bot.user)
+				await msg.edit(content='You run from the battle', embed=None)
+				return p.current_character.update()
 			await msg.edit(embed=cb.embed)
 
 		await msg.remove_reaction(attack_emoji, self.bot.user)
