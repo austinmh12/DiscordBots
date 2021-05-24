@@ -311,10 +311,15 @@ class Character:
 
 	@property
 	def pages(self):
+		pages = []
+
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
+		splash_desc += '__**Stats**__\n'
+		splash_desc += f'**STR:** {self.stats["STR"]} | **DEX:** {self.stats["DEX"]}\n'
+		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n\n'
 		if self.helmet:
 			splash_desc += f'**Helmet:** {self.helmet.name}\n'
 		else:
@@ -356,12 +361,14 @@ class Character:
 		else:
 			splash_desc += '**Off Hand:**'
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
-
-		# Stats page
+		pages.append(splash_page)
 
 		# Equipment details
+		for e in self.equipment:
+			if e:
+				pages.append(e.stat_page(self))
 
-		return [splash_page]
+		return pages
 
 	@property
 	def armour_defense(self):

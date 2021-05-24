@@ -331,6 +331,17 @@ class RPGCog(MyCog):
 			return await ctx.send(f'You don\'t have a character with the name {name}')
 		return await self.paginated_embeds(ctx, char.pages)
 
+	@commands.command(name='currentcharacter',
+					pass_context=True,
+					description='Get information about your current character',
+					brief='Get current character info',
+					aliases=['curchar', 'cur'])
+	async def current_character(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if not p.current_character:
+			return await ctx.send('You don\'t have a character set')
+		return await self.paginated_embeds(ctx, p.current_character.pages)
+
 	## Professions
 	@commands.command(name='viewprofessions',
 					pass_context=True,
