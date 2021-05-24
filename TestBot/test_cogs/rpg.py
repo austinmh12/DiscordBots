@@ -385,8 +385,8 @@ class RPGCog(MyCog):
 			return await ctx.send('You need a character to battle')
 		if p.current_character.current_area is None:
 			return await ctx.send('You need to be in an area before you can battle')
-		if p.current_character.current_con <= 0:
-			return await ctx.send(f'You are dead for another **{format_remaining_time(p.current_character._death_timer)}**')
+		if p.current_character._death_timer > dt.now():
+			return await ctx.send(f'**{p.current_character.name}** is dead for another **{format_remaining_time(p.current_character._death_timer)}**')
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
