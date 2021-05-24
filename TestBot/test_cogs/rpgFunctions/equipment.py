@@ -164,6 +164,13 @@ class Equipment:
 		self.def_bonus = def_bonus
 		self.atk_bonus = atk_bonus
 
+	@property
+	def bonuses_details(self):
+		desc = f'**STR:** {self.str_bonus} | **DEX:** {self.dex_bonus}\n'
+		desc += f'**INT:** {self.int_bonus} | **CON:** {self.con_bonus}\n'
+		desc += f'**ATK:** {self.atk_bonus} | **DEF:** {self.def_bonus}\n\n'
+		return desc	
+
 class Weapon(Equipment):
 	def __init__(self, min_damage, max_damage, stat, crit_chance, **kwargs):
 		super().__init__(**kwargs)
@@ -228,6 +235,7 @@ class Weapon(Equipment):
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Crit Chance:** {self.crit_chance}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
+		desc += self.bonuses_details
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -299,8 +307,9 @@ class Armour(Equipment):
 			return up_indicator * 3
 
 	def stat_page(self, character):
-		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n\n'
+		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n'
 		desc += f'**Weight:** {self.weight}\n\n'
+		desc += self.bonuses_details
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -335,5 +344,6 @@ class Jewelry(Equipment):
 		return floor(self.level * rarity_price_bonus[self.rarity])
 
 	def stat_page(self, character):
+		desc += self.bonuses_details
 		desc = f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
