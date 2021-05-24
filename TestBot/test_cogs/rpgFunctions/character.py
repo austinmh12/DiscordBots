@@ -6,6 +6,7 @@ from . import *
 from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon_types
 from .profession import Profession, get_profession
 from .area import Area, get_area
+from .consumable import RestorationPotion, StatPotion, get_consumable
 
 #############
 # Constants #
@@ -60,10 +61,11 @@ class Character:
 				ring,
 				weapon,
 				off_hand,
-				current_con = 0,
+				current_con = -1,
 				current_area = 'Sewer',
 				death_timer = '1999-01-01 00:00:00',
-				inventory = '[]'
+				inventory = {'equipment': [], 'consumables': []},
+				current_mp = -1
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
@@ -83,7 +85,8 @@ class Character:
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
-		self.current_con = self.stats['CON'] if not current_con else current_con
+		self.current_con = self.stats['CON'] if 0 > current_con else current_con
+		self.current_mp = self.stats['INT'] if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
 		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
@@ -92,6 +95,10 @@ class Character:
 		self.loaded = self.to_dict().copy()
 
 		# Migrations
+		## v2.0.0
+		### Inventory
+		if isinstance(self._inventory, list):
+			self._inventory = {'equipment': self._inventory, 'consumables': []}
 
 	@property
 	def death_timer(self):
@@ -99,7 +106,11 @@ class Character:
 
 	@property
 	def inventory(self):
-		return json.dumps([i.id for i in self._inventory])
+		ret = {
+			'equipment': [e.id for e in self._inventory['equipment']], 
+			'consumables': [c.id for c in self._inventory['consumables']]
+		}
+		return json.dumps(ret)
 
 	@property
 	def to_row(self):
@@ -123,7 +134,8 @@ class Character:
 			self.current_con,
 			self.current_area.name if self.current_area else '',
 			self.death_timer,
-			self.inventory
+			self.inventory,
+			self.current_mp
 		)
 
 	def to_dict(self):
@@ -147,12 +159,19 @@ class Character:
 			'current_con': self.current_con,
 			'current_area': self.current_area,
 			'death_timer': self.death_timer,
-			'inventory': self.inventory
+			'inventory': self.inventory,
+			'current_mp': self.current_mp
 		}
 
 	def parse_inventory(self, inv):
 		inventory = json.loads(inv)
-		return [get_equipment(i) for i in inventory]
+		if isinstance(inventory, list):
+			return [get_equipment(i) for i in inventory]
+		else:
+			return {
+				'equipment': [get_equipment(e) for e in inventory['equipment']],
+				'consumables': [get_consumable(c) for c in inventory['consumables']]
+			}
 	
 	def update(self):
 		current = self.to_dict()
