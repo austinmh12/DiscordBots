@@ -58,9 +58,9 @@ class Consumable:
 		self.type = type
 
 class RestorationPotion(Consumable):
-	def __init__(self, hp_healed, **kwargs):
+	def __init__(self, restored, **kwargs):
 		super().__init__(**kwargs)
-		self.hp_healed = hp_healed
+		self.restored = restored
 
 	@property
 	def to_row(self):
@@ -68,7 +68,7 @@ class RestorationPotion(Consumable):
 			self.id,
 			self.name,
 			self.type,
-			self.hp_healed,
+			self.restored,
 			'',
 			0
 		)
