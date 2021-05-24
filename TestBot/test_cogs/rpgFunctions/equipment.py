@@ -220,7 +220,7 @@ class Weapon(Equipment):
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Crit Chance:** {self.crit_chance}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
-		desc += f'**Sell Price:**'
+		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=(150, 150, 150))
 
 class Armour(Equipment):
@@ -293,7 +293,7 @@ class Armour(Equipment):
 	def stat_page(self, character):
 		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n\n'
 		desc += f'**Weight:** {self.weight}\n\n'
-		desc += f'**Sell Price:**'
+		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=(150, 150, 150))
 
 class Jewelry(Equipment):
@@ -327,5 +327,5 @@ class Jewelry(Equipment):
 		return floor(self.level * rarity_price_bonus[self.rarity])
 
 	def stat_page(self, character):
-		desc = f'**Sell Price:**'
+		desc = f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=(150, 150, 150))
