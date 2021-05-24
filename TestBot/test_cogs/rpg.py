@@ -56,8 +56,7 @@ def initialise_db():
 			,boots integer
 			,gloves integer
 			,amulet integer
-			,ring1 integer
-			,ring2 integer
+			,ring integer
 			,weapon integer
 			,off_hand integer
 			,current_con integer
@@ -252,8 +251,7 @@ class RPGCog(MyCog):
 			None, # boots
 			None, # gloves
 			None, # amulet
-			None, # ring1
-			None, # ring2
+			None, # ring
 			prof.starting_weapon,
 			prof.starting_off_hand
 		)

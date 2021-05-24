@@ -34,7 +34,7 @@ def get_character(player, name):
 	return Character(**df.to_dict('records')[0])
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
@@ -57,8 +57,7 @@ class Character:
 				boots,
 				gloves,
 				amulet,
-				ring1,
-				ring2,
+				ring,
 				weapon,
 				off_hand,
 				current_con = 0,
@@ -80,8 +79,7 @@ class Character:
 		self.boots = boots if isinstance(boots, Equipment) else get_equipment(boots)
 		self.gloves = gloves if isinstance(gloves, Equipment) else get_equipment(gloves)
 		self.amulet = amulet if isinstance(amulet, Equipment) else get_equipment(amulet)
-		self.ring1 = ring1 if isinstance(ring1, Equipment) else get_equipment(ring1)
-		self.ring2 = ring2 if isinstance(ring2, Equipment) else get_equipment(ring2)
+		self.ring = ring if isinstance(ring, Equipment) else get_equipment(ring)
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
@@ -119,8 +117,7 @@ class Character:
 			self.boots.id if self.boots else 0,
 			self.gloves.id if self.gloves else 0,
 			self.amulet.id if self.amulet else 0,
-			self.ring1.id if self.ring1 else 0,
-			self.ring2.id if self.ring2 else 0,
+			self.ring.id if self.ring else 0,
 			self.weapon.id if self.weapon else 0,
 			self.off_hand.id if self.off_hand else 0,
 			self.current_con,
@@ -144,8 +141,7 @@ class Character:
 			'boots': self.boots,
 			'gloves': self.gloves,
 			'amulet': self.amulet,
-			'ring1': self.ring1,
-			'ring2': self.ring2,
+			'ring': self.ring,
 			'weapon': self.weapon,
 			'off_hand': self.off_hand,
 			'current_con': self.current_con,
@@ -250,8 +246,8 @@ class Character:
 			prev_equip = self.amulet
 			self.amulet = equipment
 		elif equipment.type == 'Ring':
-			prev_equip = self.ring1
-			self.ring1 = equipment
+			prev_equip = self.ring
+			self.ring = equipment
 		elif equipment.type in weapon_types:
 			prev_equip = self.weapon
 			self.weapon = equipment
@@ -281,8 +277,8 @@ class Character:
 		elif slot == 'amulet':
 			prev_equip = self.amulet
 			self.amulet = None
-		elif slot == 'ring1':
-			prev_equip = self.ring1
+		elif slot == 'ring':
+			prev_equip = self.ring
 			self.ring1 = None
 		elif slot == 'weapon':
 			prev_equip = self.weapon
@@ -303,8 +299,7 @@ class Character:
 			self.boots,
 			self.gloves,
 			self.amulet,
-			self.ring1,
-			self.ring2,
+			self.ring,
 			self.weapon,
 			self.off_hand
 		)	
@@ -345,13 +340,9 @@ class Character:
 		else:
 			splash_desc += '**Amulet:** \n'
 		if self.ring1:
-			splash_desc += f'**Ring1:** {self.ring1.name}\n'
+			splash_desc += f'**Ring:** {self.ring.name}\n'
 		else:
-			splash_desc += '**Ring1:** \n'
-		if self.ring2:
-			splash_desc += f'**Ring2:** {self.ring2.name}\n'
-		else:
-			splash_desc += '**Ring2:** \n'
+			splash_desc += '**Ring:** \n'
 		if self.weapon:
 			splash_desc += f'**Weapon:** {self.weapon.name}\n'
 		else:
