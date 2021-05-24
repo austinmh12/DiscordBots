@@ -457,19 +457,19 @@ class RPGCog(MyCog):
 		return p.current_character.update()
 
 	## Equipment/Inventory
-	@commands.command(name='inventory',
+	@commands.command(name='equipment',
 					pass_context=True,
-					description='View your inventory',
+					description='View your equipment',
 					brief='Inventory',
 					aliases=['inv'])
-	async def inventory(self, ctx):
+	async def _equipment(self, ctx):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
-			return await ctx.send('You need a character to view an inventory')
+			return await ctx.send('You need a character to view an equipment')
 		# Do something similar to the paginated_embeds, but with a forward, back, equip, and sell icons
-		if not p.current_character._inventory:
-			return await ctx.send('You have no items')
-		pages = [e.stat_page(p.current_character) for e in p.current_character._inventory]
+		if not p.current_character._inventory['equipment']:
+			return await ctx.send('You have no equipment')
+		pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
 		idx = 0
 		emb = pages[idx].embed
 		if len(pages) > 1:
@@ -500,23 +500,23 @@ class RPGCog(MyCog):
 				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == equip_emoji:
 				await msg.remove_reaction(equip_emoji, react.member)
-				if isinstance(p.current_character._inventory[idx], equipment.Armour):
-					if p.current_character.profession.weight != p.current_character._inventory[idx].weight:
+				if isinstance(p.current_character._inventory['equipment'][idx], equipment.Armour):
+					if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
 						await msg.edit(content='You can\'t equip this item')
 						continue
-				unequipped = p.current_character.equip(p.current_character._inventory[idx])
-				p.current_character._inventory.pop(idx)
+				unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx])
+				p.current_character._inventory['equipment'].pop(idx)
 				pages.pop(idx)
 				if unequipped:
-					p.current_character._inventory.append(unequipped)
-					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory]
+					p.current_character._inventory['equipment'].append(unequipped)
+					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
 						return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
 			elif react.emoji.name == sell_emoji:
 				await msg.remove_reaction(sell_emoji, react.member)
-				sold = p.current_character._inventory.pop(idx)
+				sold = p.current_character._inventory['equipment'].pop(idx)
 				equipment.delete_equipment(sold)
 				pages.pop(idx)
 				p.current_character.gold += sold.price
@@ -544,7 +544,7 @@ class RPGCog(MyCog):
 			return await ctx.send('That\'s not a slot')
 		unequipped = p.current_character.unequip(slot.lower())
 		if unequipped:
-			p.current_character._inventory.append(unequipped)
+			p.current_character._inventory['equipment'].append(unequipped)
 			return await ctx.send(f'You unequipped **{unequipped.name}**')
 		else:
 			return await ctx.send('You have nothing equipped in that slot.')
