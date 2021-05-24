@@ -54,6 +54,14 @@ rarity_price_bonus = {
 	'Legendary': 250,
 	'Mythic': 1000
 }
+rarity_colour = {
+	'Trash': (100, 100, 100),
+	'Common': (235, 235, 235),
+	'Uncommon': (0, 189, 57),
+	'Rare': (0, 92, 179),
+	'Legendary': (254, 238, 0),
+	'Mythic': (151, 0, 166)
+}
 
 up_indicator = ':small_red_triangle:'
 down_indicator = ':small_red_triangle_down:'
@@ -216,12 +224,12 @@ class Weapon(Equipment):
 			return up_indicator * 3
 
 	def stat_page(self, character):
-		desc = f'**DPS:** {self.equipment_rating} {self.compare_weapons(character)}\n\n'
+		desc = f'**DPS:** {round(self.equipment_rating, 2)} {self.compare_weapons(character)}\n\n'
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Crit Chance:** {self.crit_chance}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
 		desc += f'**Sell Price:** {self.price} :coin:'
-		return Page(self.name, desc, colour=(150, 150, 150))
+		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
 class Armour(Equipment):
 	def __init__(self, weight, defense, **kwargs):
@@ -294,7 +302,7 @@ class Armour(Equipment):
 		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n\n'
 		desc += f'**Weight:** {self.weight}\n\n'
 		desc += f'**Sell Price:** {self.price} :coin:'
-		return Page(self.name, desc, colour=(150, 150, 150))
+		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
 class Jewelry(Equipment):
 	def __init__(self, **kwargs):
@@ -328,4 +336,4 @@ class Jewelry(Equipment):
 
 	def stat_page(self, character):
 		desc = f'**Sell Price:** {self.price} :coin:'
-		return Page(self.name, desc, colour=(150, 150, 150))
+		return Page(self.name, desc, colour=rarity_colour[self.rarity])
