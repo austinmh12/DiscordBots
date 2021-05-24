@@ -232,25 +232,35 @@ class Character:
 
 	def equip(self, equipment):
 		if equipment.type == 'Helmet':
+			prev_equip = self.helmet
 			self.helmet = equipment
 		elif equipment.type == 'Chest':
+			prev_equip = self.chest
 			self.chest = equipment
 		elif equipment.type == 'Legs':
+			prev_equip = self.legs
 			self.legs = equipment
 		elif equipment.type == 'Boots':
+			prev_equip = self.boots
 			self.boots = equipment
 		elif equipment.type == 'Gloves':
+			prev_equip = self.gloves
 			self.gloves = equipment
 		elif equipment.type == 'Amulet':
+			prev_equip = self.amulet
 			self.amulet = equipment
 		elif equipment.type == 'Ring':
+			prev_equip = self.ring1
 			self.ring1 = equipment
 		elif equipment.type in weapon_types:
+			prev_equip = self.weapon
 			self.weapon = equipment
 		else:
+			prev_equip = self.off_hand
 			self.off_hand = equipment
 		self.update()
 		self.calculate_stats()
+		return prev_equip
 
 	@property
 	def equipment(self):

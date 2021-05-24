@@ -253,6 +253,8 @@ class Armour(Equipment):
 			equipment = character.gloves
 		else:
 			equipment = character.off_hand
+		if not equipment:
+			return up_indicator * 3
 		rating = 1 - (equipment.equipment_rating / self.equipment_rating)
 		if rating < -.3:
 			return down_indicator * 3

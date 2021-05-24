@@ -1,4 +1,4 @@
-from . import log, BASE_PATH, Page, MyCog, chunk, sql, format_remaining_time
+from . import log, BASE_PATH, Page, MyCog, chunk, sql, format_remaining_time, BACK, NEXT
 from discord import File
 from discord.ext import commands, tasks
 import asyncio
@@ -20,6 +20,8 @@ version = '0.0.0'
 # Constants
 attack_emoji = '\u2694\ufe0f'
 run_emoji = '\U0001f45f'
+equip_emoji = '\u2705'
+sell_emoji = '\U0001fa99'
 
 # Functions
 def initialise_db():
@@ -425,6 +427,84 @@ class RPGCog(MyCog):
 		return p.current_character.update()
 
 	## Equipment/Inventory
+	@commands.command(name='inventory',
+					pass_context=True,
+					description='View your inventory',
+					brief='Inventory',
+					aliases=['inv'])
+	async def inventory(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to view an inventory')
+		# Do something similar to the paginated_embeds, but with a forward, back, equip, and sell icons
+		if not p.current_character._inventory:
+			return await ctx.send('You have no items')
+		pages = [e.stat_page(p.current_character) for e in p.current_character._inventory]
+		idx = 0
+		emb = pages[idx].embed
+		if len(pages) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+		msg = await ctx.send(embed=emb)
+		await msg.add_reaction(equip_emoji)
+		await msg.add_reaction(sell_emoji)
+		if len(pages) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+		def is_inventory_icon(m):
+			return all([
+				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == equip_emoji or m.emoji.name == sell_emoji),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		while True:
+			try:
+				react = await self.bot.wait_for('raw_reaction_add', check=is_inventory_icon, timeout=60)
+			except asyncio.TimeoutError:
+				log.debug('Timeout, breaking')
+				break
+			if react.emoji.name == NEXT:
+				idx = (idx + 1) % len(pages)
+				await msg.remove_reaction(NEXT, react.member)
+			elif react.emoji.name == equip_emoji:
+				unequipped = p.current_character.equip(p.current_character._inventory[idx])
+				p.current_character._inventory.pop(idx)
+				pages.pop(idx)
+				if unequipped:
+					p.current_character._inventory.append(unequipped)
+					pages.append(unequipped.stat_page(p.current_character))
+				else:
+					idx = (idx - 1) % len(pages)
+				await msg.remove_reaction(equip_emoji, react.member)
+			elif react.emoji.name == sell_emoji:
+				...
+				await msg.remove_reaction(sell_emoji, react.member)
+			else:
+				idx = (idx - 1) % len(pages)
+				await msg.remove_reaction(BACK, react.member)
+			emb = pages[idx].embed
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+			await msg.edit(embed=emb)
+
+	@commands.command(name='unequip',
+					pass_context=True,
+					description='Unequip an item',
+					brief='Unequip items',
+					aliases=['inv'])
+	async def unequip(self, ctx, slot):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to view an inventory')
+		if slot.lower() not in ['helmet', 'chest', 'legs', 'boots', 'gloves', 'amulet', 'ring1', 'weapon', 'offhand']:
+			return await ctx.send('That\'s not a slot')
+		unequipped = p.current_character.unequip(slot.lower())
+		if unequipped:
+			p.current_character._inventory.append(unequipped)
+			return await ctx.send(f'You unequipped **{unequipped.name}**')
+		else:
+			return await ctx.send('You have nothing equipped in that slot.')
 
 	# Tasks
 	## Health
