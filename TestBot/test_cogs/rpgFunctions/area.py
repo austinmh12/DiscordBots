@@ -3,6 +3,7 @@ from random import randint, random, choice
 import json
 from .monster import get_monster
 from .equipment import generate_random_equipment
+from .consumable import generate_consumable
 
 #############
 # Constants #
@@ -43,7 +44,7 @@ class Area:
 	def get_random_loot(self):
 		ret = {}
 		ret['gold'] = randint(1, self.loot_table['gold'])
-		items = []
+		equipment = []
 		for _ in range(self.loot_table['max_item_count']):
 			if random() < self.loot_table['item_chance']:
 				item_type = choice(list(self.loot_table['items'].keys()))
@@ -51,8 +52,17 @@ class Area:
 				rarity = choice(item_info['rarities'])
 				level = randint(item_info['min_level'], item_info['max_level'])
 				item = generate_random_equipment(item_type, rarity, level)
-				items.append(item)
-		ret['items'] = items
+				equipment.append(item)
+		consumables = []
+		for _ in range(self.loot_table['max_item_count'] - len(items)):
+			if random() < self.loot_table['item_chance']:
+				item_type = choice(list(self.loot_table['consumables'].keys()))
+				item_info = self.loot_table['consumables'][item_type]
+				level = randint(item_info['min_level'], item_info['max_level'])
+				item = generate_consumable(item_type, level)
+				consumables.append(item)
+		ret['equipment'] = equipment
+		ret['consumables'] = consumables
 		return ret
 
 	@property
