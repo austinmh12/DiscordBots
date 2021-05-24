@@ -474,7 +474,7 @@ class RPGCog(MyCog):
 				pages.pop(idx)
 				if unequipped:
 					p.current_character._inventory.append(unequipped)
-					pages.append(unequipped.stat_page(p.current_character))
+					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory]
 				else:
 					idx = (idx - 1) % len(pages)
 				await msg.remove_reaction(equip_emoji, react.member)
