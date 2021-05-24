@@ -236,6 +236,45 @@ class Armour(Equipment):
 			0
 		)
 
+	@property
+	def equipment_rating(self):
+		return 80 / (80 + self.defense)
+
+	def compare_armour(self, character):
+		if self.type == 'Helmet':
+			equipment = character.helmet
+		elif self.type == 'Chest':
+			equipment = character.chest
+		elif self.type == 'Legs':
+			equipment = character.legs
+		elif self.type == 'Boots':
+			equipment = character.boots
+		elif self.type == 'Gloves':
+			equipment = character.gloves
+		else:
+			equipment = character.off_hand
+		rating = 1 - (equipment.equipment_rating / self.equipment_rating)
+		if rating < -.3:
+			return down_indicator * 3
+		elif -.3 <= rating < -.2:
+			return down_indicator * 2
+		elif -.2 <= rating < -.1:
+			return down_indicator
+		elif -.1 <= rating < .1:
+			return ''
+		elif .1 <= rating < .2:
+			return up_indicator
+		elif .2 <= rating < .3:
+			return up_indicator * 2
+		else:
+			return up_indicator * 3
+
+	def stat_page(self, character):
+		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n\n'
+		desc += f'**Weight:** {self.weight}\n\n'
+		desc += f'**Sell Price:**'
+		return Page(self.name, desc, colour=(150, 150, 150))
+
 class Jewelry(Equipment):
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
@@ -261,3 +300,7 @@ class Jewelry(Equipment):
 			'',
 			0
 		)
+
+	def stat_page(self, character):
+		desc = f'**Sell Price:**'
+		return Page(self.name, desc, colour=(150, 150, 150))
