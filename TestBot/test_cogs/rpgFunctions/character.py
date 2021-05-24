@@ -61,7 +61,7 @@ class Character:
 				weapon,
 				off_hand,
 				current_con = 0,
-				current_area = 'Area1',
+				current_area = 'Sewer',
 				death_timer = '1999-01-01 00:00:00',
 				inventory = '[]'
 	):
