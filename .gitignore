@@ -5,8 +5,9 @@ __pycache__/
 # Environments
 .env
 
-# Databases
+# Databases/SQL
 *.db
+*.sql
 
 # Stat Sheets
 *.csv
