@@ -90,6 +90,8 @@ def add_equipment(equipment):
 	sql('rpg', 'insert into equipment values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', equipment.to_row)
 
 def delete_equipment(equipment):
+	if equipment.id <= 11:
+		return
 	sql('rpg', 'delete from equipment where id = ?', (equipment.id,))
 
 def generate_random_equipment(type, rarity, level):
