@@ -575,8 +575,8 @@ class RPGCog(MyCog):
 				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == 'potion':
 				await msg.remove_reaction(potion_emoji, react.member)
-				consumed = p.current_character.drink(p.current_character._inventory['consumables'][idx])
-				p.current_character._inventory['consumables'].pop(idx)
+				p.current_character.drink(p.current_character._inventory['consumables'][idx])
+				consumed = p.current_character._inventory['consumables'].pop(idx)
 				pages.pop(idx)
 				if len(pages) == 0:
 					return await msg.edit(content='You have no consumables', embed=None)

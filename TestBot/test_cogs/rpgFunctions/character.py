@@ -312,6 +312,19 @@ class Character:
 		self.calculate_stats()
 		return prev_equip
 
+	def drink(self, potion):
+		if isinstance(potion, RestorationPotion):
+			if potion.type == 'Health':
+				self.current_con += potion.restored
+				if self.current_con > self.stats['CON']:
+					self.current_con = self.stats['CON']
+			else:
+				self.current_mp += potion.restored
+				if self.current_mp > self.stats['INT']:
+					self.current_mp = self.stats['INT']
+
+		self.update()
+
 	@property
 	def equipment(self):
 		return (
