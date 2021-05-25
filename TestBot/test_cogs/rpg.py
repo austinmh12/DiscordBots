@@ -20,8 +20,10 @@ version = '1.0.1'
 # Constants
 attack_emoji = '\u2694\ufe0f'
 run_emoji = '\U0001f45f'
-equip_emoji = '\u2705'
+# equip_emoji = '\u2705'
+equip_emoji = '<:equip:846532309632286720>'
 sell_emoji = '\U0001fa99'
+potion_emoji = '<:potion:846535026753011772>'
 
 # Functions
 def initialise_db():
@@ -460,7 +462,7 @@ class RPGCog(MyCog):
 	@commands.command(name='equipment',
 					pass_context=True,
 					description='View your equipment',
-					brief='Inventory',
+					brief='Equipment',
 					aliases=['eq'])
 	async def _equipment(self, ctx):
 		p = self.get_or_add_player_from_ctx(ctx)
@@ -481,9 +483,9 @@ class RPGCog(MyCog):
 			await msg.add_reaction(BACK)
 			await msg.add_reaction(NEXT)
 
-		def is_inventory_icon(m):
+		def is_equipment_icon(m):
 			return all([
-				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == equip_emoji or m.emoji.name == sell_emoji),
+				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == 'equip' or m.emoji.name == sell_emoji),
 				m.member.id != self.bot.user.id,
 				m.message_id == msg.id,
 				m.member == ctx.author
@@ -491,14 +493,14 @@ class RPGCog(MyCog):
 
 		while True:
 			try:
-				react = await self.bot.wait_for('raw_reaction_add', check=is_inventory_icon, timeout=60)
+				react = await self.bot.wait_for('raw_reaction_add', check=is_equipment_icon, timeout=60)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
 				break
 			if react.emoji.name == NEXT:
 				await msg.remove_reaction(NEXT, react.member)
 				idx = (idx + 1) % len(pages)
-			elif react.emoji.name == equip_emoji:
+			elif react.emoji.name == 'equip':
 				await msg.remove_reaction(equip_emoji, react.member)
 				if isinstance(p.current_character._inventory['equipment'][idx], equipment.Armour):
 					if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
@@ -523,6 +525,71 @@ class RPGCog(MyCog):
 				p.current_character.update()
 				if len(pages) == 0:
 					return await msg.edit(content='You have no items', embed=None)
+				idx = idx % len(pages)
+			else:
+				await msg.remove_reaction(BACK, react.member)
+				idx = (idx - 1) % len(pages)
+			emb = pages[idx].embed
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+			await msg.edit(content='', embed=emb)
+
+	@commands.command(name='consumables',
+					pass_context=True,
+					description='View your consumables',
+					brief='Consumables',
+					aliases=['con'])
+	async def _consumables(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to view an consumables')
+		if not p.current_character._inventory['consumables']:
+			return await ctx.send('You have no consumables')
+		pages = [c.page for c in p.current_character._inventory['consumables']]
+		idx = 0
+		emb = pages[idx].embed
+		if len(pages) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+		msg = await ctx.send(embed=emb)
+		await msg.add_reaction(potion_emoji)
+		await msg.add_reaction(sell_emoji)
+		if len(pages) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+		def is_consumable_icon(m):
+			return all([
+				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == 'potion' or m.emoji.name == sell_emoji),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		while True:
+			try:
+				react = await self.bot.wait_for('raw_reaction_add', check=is_equipment_icon, timeout=60)
+			except asyncio.TimeoutError:
+				log.debug('Timeout, breaking')
+				break
+			if react.emoji.name == NEXT:
+				await msg.remove_reaction(NEXT, react.member)
+				idx = (idx + 1) % len(pages)
+			elif react.emoji.name == 'potion':
+				await msg.remove_reaction(potion_emoji, react.member)
+				consumed = p.current_character.drink(p.current_character._inventory['consumables'][idx])
+				p.current_character._inventory['consumables'].pop(idx)
+				pages.pop(idx)
+				if len(pages) == 0:
+					return await msg.edit(content='You have no consumables', embed=None)
+				idx = idx % len(pages)
+			elif react.emoji.name == sell_emoji:
+				await msg.remove_reaction(sell_emoji, react.member)
+				sold = p.current_character._inventory['consumables'].pop(idx)
+				consumable.delete_consumable(sold)
+				pages.pop(idx)
+				p.current_character.gold += sold.price
+				p.current_character.update()
+				if len(pages) == 0:
+					return await msg.edit(content='You have no consumables', embed=None)
 				idx = idx % len(pages)
 			else:
 				await msg.remove_reaction(BACK, react.member)
