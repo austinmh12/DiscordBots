@@ -47,7 +47,7 @@ class Spell:
 		return (self.min_damage + self.max_damage) / 2
 
 	@property	
-	def stat_page(self):
+	def page(self):
 		desc = f'**DPS:** {round(self.avg_dmg, 2)}\n\n'
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
