@@ -352,42 +352,15 @@ class Character:
 		splash_desc += f'**STR:** {self.stats["STR"]} | **DEX:** {self.stats["DEX"]}\n'
 		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n'
 		splash_desc += f'**ATK:** {self.atk_rating} | **DEF:** {self.armour_defense}\n\n'
-		if self.helmet:
-			splash_desc += f'**Helmet:** {self.helmet.name}\n'
-		else:
-			splash_desc += '**Helmet:** \n'
-		if self.chest:
-			splash_desc += f'**Chest:** {self.chest.name}\n'
-		else:
-			splash_desc += '**Chest:** \n'
-		if self.legs:
-			splash_desc += f'**Legs:** {self.legs.name}\n'
-		else:
-			splash_desc += '**Legs:** \n'
-		if self.boots:
-			splash_desc += f'**Boots:** {self.boots.name}\n'
-		else:
-			splash_desc += '**Boots:** \n'
-		if self.gloves:
-			splash_desc += f'**Gloves:** {self.gloves.name}\n'
-		else:
-			splash_desc += '**Gloves:** \n'
-		if self.amulet:
-			splash_desc += f'**Amulet:** {self.amulet.name}\n'
-		else:
-			splash_desc += '**Amulet:** \n'
-		if self.ring:
-			splash_desc += f'**Ring:** {self.ring.name}\n'
-		else:
-			splash_desc += '**Ring:** \n'
-		if self.weapon:
-			splash_desc += f'**Weapon:** {self.weapon.name}\n'
-		else:
-			splash_desc += '**Weapon:** \n'
-		if self.off_hand:
-			splash_desc += f'**Off Hand:** {self.off_hand.name}\n'
-		else:
-			splash_desc += '**Off Hand:**'
+		splash_desc += f'**Helmet:** {self.helmet.name if self.helmet else ""}\n'
+		splash_desc += f'**Chest:** {self.chest.name if self.chest else ""}\n'
+		splash_desc += f'**Legs:** {self.legs.name if self.legs else ""}\n'
+		splash_desc += f'**Boots:** {self.boots.name if self.boots else ""}\n'
+		splash_desc += f'**Gloves:** {self.gloves.name if self.gloves else ""}\n'
+		splash_desc += f'**Amulet:** {self.amulet.name if self.amulet else ""}\n'
+		splash_desc += f'**Ring:** {self.ring.name if self.ring else ""}\n'
+		splash_desc += f'**Weapon:** {self.weapon.name if self.weapon else ""}\n'
+		splash_desc += f'**Off Hand:** {self.off_hand.name if self.off_hand else ""}\n'
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
 		pages.append(splash_page)
 
