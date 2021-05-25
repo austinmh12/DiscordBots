@@ -215,8 +215,12 @@ class Weapon(Equipment):
 	def equipment_rating(self):
 		return (1 - self.crit_chance) * self.avg_dmg + self.crit_chance * 1.5 * self.avg_dmg
 
+	def equipment_rating_with_character_stats(self, character):
+		average_damage = self.avg_dmg + floor(character.stats[self.stat] / 10)
+		return (1 - self.crit_chance) * average_damage + self.crit_chance * 1.5 * average_damage
+
 	def compare_weapons(self, character):
-		rating = 1 - (character.weapon.equipment_rating / self.equipment_rating)
+		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
 		if rating < -.3:
 			return down_indicator * 3
 		elif -.3 <= rating < -.2:
@@ -278,6 +282,8 @@ class Armour(Equipment):
 		return 80 / (80 + self.defense)
 
 	def compare_armour(self, character):
+		if self.weight != character.profession.weight:
+			return ':x:'
 		if self.type == 'Helmet':
 			equipment = character.helmet
 		elif self.type == 'Chest':
