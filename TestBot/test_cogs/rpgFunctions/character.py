@@ -368,7 +368,7 @@ class Character:
 		splash_desc += '__**Stats**__\n'
 		splash_desc += f'**STR:** {self.stats["STR"]} | **DEX:** {self.stats["DEX"]}\n'
 		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n'
-		splash_desc += f'**ATK:** {self.atk_rating} | **DEF:** {self.armour_defense}\n\n'
+		splash_desc += f'**ATK:** {round(self.atk_rating, 2)} | **DEF:** {self.armour_defense}\n\n'
 		splash_desc += f'**Helmet:** {self.helmet.name if self.helmet else ""}\n'
 		splash_desc += f'**Chest:** {self.chest.name if self.chest else ""}\n'
 		splash_desc += f'**Legs:** {self.legs.name if self.legs else ""}\n'
