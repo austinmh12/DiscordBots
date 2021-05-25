@@ -32,6 +32,8 @@ spell2_emoji = '<:spell2:846733211036155935>'
 spell3_emoji = '<:spell3:846733218605826049>'
 spell4_emoji = '<:spell4:846733227620040714>'
 spell_emojis = [spell1_emoji, spell2_emoji, spell3_emoji, spell4_emoji]
+main_hand = '\U0001f5e1\ufe0f'
+off_hand = '\U0001f6e1\ufe0f'
 
 # Functions
 def initialise_db():
@@ -670,7 +672,15 @@ class RPGCog(MyCog):
 
 		def is_equipment_icon(m):
 			return all([
-				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == 'equip' or m.emoji.name == sell_emoji),
+				(m.emoji.name in [BACK, NEXT, 'equip', sell_emoji]),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		def is_main_off_hand_icon(m):
+			return all([
+				(m.emoji.name in [main_hand, off_hand]),
 				m.member.id != self.bot.user.id,
 				m.message_id == msg.id,
 				m.member == ctx.author
@@ -681,6 +691,7 @@ class RPGCog(MyCog):
 				react = await self.bot.wait_for('raw_reaction_add', check=is_equipment_icon, timeout=60)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
+				await msg.clear_reactions()
 				break
 			if react.emoji.name == NEXT:
 				await msg.remove_reaction(NEXT, react.member)
@@ -691,7 +702,27 @@ class RPGCog(MyCog):
 					if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
 						await msg.edit(content='You can\'t equip this item')
 						continue
-				unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx])
+				if p.current_character._inventory['equipment'][idx].type in equipment.one_handed_weapons:
+					await msg.clear_reactions()
+					await msg.edit(content='Main or Off-Hand?')
+					await msg.add_reaction(main_hand)
+					await msg.add_reaction(off_hand)
+					try:
+						react = await self.bot.wait_for('raw_reaction_add', check=is_main_off_hand_icon, timeout=60)
+					except asyncio.TimeoutError:
+						log.debug('Timeout, breaking')
+						await msg.clear_reactions()
+						await msg.add_reaction(equip_emoji)
+						await msg.add_reaction(sell_emoji)
+						await msg.add_reaction(BACK)
+						await msg.add_reaction(NEXT)
+						continue
+					if react.emoji.name == main_hand:
+						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
+					else:
+						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
+				else:
+					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx])
 				p.current_character._inventory['equipment'].pop(idx)
 				pages.pop(idx)
 				if unequipped:
@@ -699,8 +730,14 @@ class RPGCog(MyCog):
 					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
+						await msg.clear_reactions()
 						return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
+				await msg.clear_reactions()
+				await msg.add_reaction(equip_emoji)
+				await msg.add_reaction(sell_emoji)
+				await msg.add_reaction(BACK)
+				await msg.add_reaction(NEXT)
 			elif react.emoji.name == sell_emoji:
 				await msg.remove_reaction(sell_emoji, react.member)
 				sold = p.current_character._inventory['equipment'].pop(idx)

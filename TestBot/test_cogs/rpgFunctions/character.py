@@ -261,7 +261,7 @@ class Character:
 		self.calculate_stats()
 		self.current_con = self.stats['CON']
 
-	def equip(self, equipment):
+	def equip(self, equipment, slot=''):
 		if equipment.type == 'Helmet':
 			prev_equip = self.helmet
 			self.helmet = equipment
@@ -284,8 +284,12 @@ class Character:
 			prev_equip = self.ring
 			self.ring = equipment
 		elif equipment.type in weapon_types:
-			prev_equip = self.weapon
-			self.weapon = equipment
+			if slot == 'main':
+				prev_equip = self.weapon
+				self.weapon = equipment
+			else:
+				prev_equip = self.off_hand
+				self.off_hand = equipment
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
