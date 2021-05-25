@@ -52,3 +52,6 @@ class Spell:
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
 		return Page(self.name, desc, colour=(22, 0, 240))
+
+	def __eq__(self, s):
+		return self.name == s.name and self.profession == s.profession

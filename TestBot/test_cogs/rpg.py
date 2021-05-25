@@ -13,6 +13,8 @@ from .rpgFunctions import player
 from .rpgFunctions import equipment
 from .rpgFunctions import area
 from .rpgFunctions import combat
+from .rpgFunctions import consumable
+from .rpgFunctions import spell
 
 # Version
 version = '1.0.1'
@@ -24,6 +26,11 @@ run_emoji = '\U0001f45f'
 equip_emoji = '<:equip:846532309632286720>'
 sell_emoji = '\U0001fa99'
 potion_emoji = '<:potion:846535026753011772>'
+spell_equip_emoji = '<:spell_equip:846733184527892500>'
+spell1_emoji = '<:spell1:846733202487902239>'
+spell2_emoji = '<:spell2:846733211036155935>'
+spell3_emoji = '<:spell3:846733218605826049>'
+spell4_emoji = '<:spell4:846733227620040714>'
 
 # Functions
 def initialise_db():
@@ -699,6 +706,95 @@ class RPGCog(MyCog):
 			return await ctx.send(f'You unequipped **{unequipped.name}**')
 		else:
 			return await ctx.send('You have nothing equipped in that slot.')
+
+	## Spells
+	@commands.command(name='spells',
+					pass_context=True,
+					description='Show the spells your character has learned',
+					brief='Show learned spells',
+					aliases=['sp'])
+	async def spells(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to view learned spells')
+		spells = [s for s in spell.get_spells_by_profession(p.current_character.profession) if s.level <= p.current_character.level]	
+		pages = [s.page for s in spells]
+		idx = 0
+		emb = pages[idx].embed
+		if len(pages) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+		msg = await ctx.send(embed=emb)
+		await msg.add_reaction(spell_equip_emoji)
+		if len(pages) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+		def is_spell_icon(m):
+			return all([
+				(m.emoji.name == BACK or m.emoji.name == NEXT or m.emoji.name == 'spell_equip'),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		def is_spell_slot_icon(m):
+			return all([
+				(m.emoji.name in ['spell1', 'spell2', 'spell3', 'spell4']),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		while True:
+			try:
+				react = await self.bot.wait_for('raw_reaction_add', check=is_spell_icon, timeout=60)
+			except asyncio.TimeoutError:
+				log.debug('Timeout, breaking')
+				await msg.clear_reactions()
+				break
+			if react.emoji.name == NEXT:
+				await msg.remove_reaction(NEXT, react.member)
+				idx = (idx + 1) % len(pages)
+			elif react.emoji.name == 'spell_equip':
+				await msg.remove_reaction(spell_equip_emoji, react.member)
+				if spells[idx] in p.current_character._spells:
+					await msg.edit(content='You already have this spell equipped')
+					continue
+				if len(p.current_character._spells) < 4:
+					p.current_character._spells.append(spells[idx])
+					await msg.edit(content=f'You equipped **{spells[idx].name}**')
+					p.current_character.update()
+					continue
+				await msg.clear_reactions()
+				await msg.add_reaction(spell1_emoji)
+				await msg.add_reaction(spell2_emoji)
+				await msg.add_reaction(spell3_emoji)
+				await msg.add_reaction(spell4_emoji)
+				await msg.edit(content='Which slot?')
+				try:
+					react = await self.bot.wait_for('raw_reaction_add', check=is_spell_icon, timeout=60)
+				except asyncio.TimeoutError:
+					log.debug('Timeout, breaking')
+					await msg.clear_reactions()
+					await msg.add_reaction(spell_equip_emoji)
+					await msg.add_reaction(BACK)
+					await msg.add_reaction(NEXT)
+					continue
+				if react.emoji.name == 'spell1':
+					p.current_character._spells[0] = spells[idx]
+				elif react.emoji.name == 'spell2':
+					p.current_character._spells[1] = spells[idx]
+				elif react.emoji.name == 'spell3':
+					p.current_character._spells[2] = spells[idx]
+				else:
+					p.current_character._spells[3] = spells[idx]
+				p.current_character.update()
+			else:
+				await msg.remove_reaction(BACK, react.member)
+				idx = (idx - 1) % len(pages)
+			emb = pages[idx].embed
+			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
+			await msg.edit(content='', embed=emb)
 
 	# Tasks
 	## Health
