@@ -373,7 +373,9 @@ class Character:
 		splash_desc += f'**Amulet:** {self.amulet.name if self.amulet else ""}\n'
 		splash_desc += f'**Ring:** {self.ring.name if self.ring else ""}\n'
 		splash_desc += f'**Weapon:** {self.weapon.name if self.weapon else ""}\n'
-		splash_desc += f'**Off Hand:** {self.off_hand.name if self.off_hand else ""}\n'
+		splash_desc += f'**Off Hand:** {self.off_hand.name if self.off_hand else ""}\n\n'
+		splash_desc += '__**Spells**__\n'
+		splash_desc += '\n'.join([s.name for s in self._spells])
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
 		pages.append(splash_page)
 
