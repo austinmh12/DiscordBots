@@ -349,7 +349,8 @@ class Character:
 		splash_desc += f'**Gold:** {self.gold}\n\n'
 		splash_desc += '__**Stats**__\n'
 		splash_desc += f'**STR:** {self.stats["STR"]} | **DEX:** {self.stats["DEX"]}\n'
-		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n\n'
+		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n'
+		splash_desc += f'**ATK:** {self.atk_rating} | **DEF:** {self.armour_defense}\n\n'
 		if self.helmet:
 			splash_desc += f'**Helmet:** {self.helmet.name}\n'
 		else:
@@ -420,6 +421,15 @@ class Character:
 		if random() < self.weapon.crit_chance:
 			dmg *= 1.5
 		return dmg
+
+	@property
+	def atk_rating(self):
+		dmg = floor((self.weapon.min_damage + self.weapon.max_damage) / 2)
+		dmg += floor(self.stats[self.weapon.stat] / 10)
+		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
+		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
+		dmg += self.armour_attack
+		return (1 - self.weapon.crit_chance) * dmg + self.weapon.crit_chance * 1.5 * dmg
 
 	def heal(self):
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
