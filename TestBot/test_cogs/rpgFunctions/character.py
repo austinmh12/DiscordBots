@@ -344,7 +344,7 @@ class Character:
 		pages = []
 
 		# Character Overview
-		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
+		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
 		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"]} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
