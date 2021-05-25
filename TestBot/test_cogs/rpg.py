@@ -458,6 +458,68 @@ class RPGCog(MyCog):
 			p.current_character._death_timer = dt.now() + td(hours=1)
 		return p.current_character.update()
 
+	@commands.command(name='findbattles',
+					pass_context=True,
+					description='Find a monster to battle in the current area',
+					brief='Find a battle',
+					aliases=['fbs'])
+	async def find_battles(self, ctx):
+		p = self.get_or_add_player_from_ctx(ctx)
+		if p.current_character is None:
+			return await ctx.send('You need a character to battle')
+		if p.current_character.current_area is None:
+			return await ctx.send('You need to be in an area before you can battle')
+		if p.current_character._death_timer > dt.now():
+			return await ctx.send(f'**{p.current_character.name}** is dead for another **{format_remaining_time(p.current_character._death_timer)}**')
+		cb = combat.Combat(p.current_character)
+		msg = await ctx.send(embed=cb.embed)
+		await msg.add_reaction(attack_emoji)
+		await msg.add_reaction(run_emoji)
+		while True:
+
+			def is_combat_icon(m):
+				return all([
+					(m.emoji.name == attack_emoji or m.emoji.name == run_emoji),
+					m.member.id != self.bot.user.id,
+					m.message_id == msg.id,
+					m.member == ctx.author
+				])
+
+			while not cb.winner:
+				try:
+					react = await self.bot.wait_for('raw_reaction_add', check=is_combat_icon, timeout=600)
+				except asyncio.TimeoutError:
+					log.debug('Timeout, breaking')
+					break
+				if react.emoji.name == attack_emoji:
+					await msg.remove_reaction(attack_emoji, react.member)
+					cb.character_combat('Attack')
+				else:
+					await msg.remove_reaction(run_emoji, react.member)
+					await msg.remove_reaction(attack_emoji, self.bot.user)
+					await msg.remove_reaction(run_emoji, self.bot.user)
+					await msg.edit(content='You run from the battle', embed=None)
+					return p.current_character.update()
+				await msg.edit(embed=cb.embed)
+
+			if cb.winner == p.current_character:
+				lvlup = p.current_character.add_exp(cb.exp)
+				p.current_character.gold += cb.loot['gold']
+				p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
+				p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
+				if lvlup:
+					await ctx.send(f'You leveled up to {p.current_character.level}')
+				await msg.edit(content=cb.desc)
+			else:
+				p.current_character._death_timer = dt.now() + td(hours=1)
+				p.current_character.update()
+				await msg.remove_reaction(attack_emoji, self.bot.user)
+				await msg.remove_reaction(run_emoji, self.bot.user)
+				return
+			p.current_character.update()
+			cb = combat.Combat(p.current_character)
+			await msg.edit(embed=cb.embed)
+
 	## Equipment/Inventory
 	@commands.command(name='equipment',
 					pass_context=True,
