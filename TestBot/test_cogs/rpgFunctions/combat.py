@@ -54,7 +54,7 @@ class Combat:
 				self.desc += '\n'.join([f'{i.name}' for i in self.loot['equipment']])
 			if self.loot['consumables']:
 				self.desc += '\n'
-				self.desc += '\n'.join([f'{i.name}' for i in self.loot['equipment']])
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['consumables']])
 			self.winner = self.character
 			self.colour = (0, 196, 18)
 

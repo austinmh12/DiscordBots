@@ -54,7 +54,7 @@ class Area:
 				item = generate_random_equipment(item_type, rarity, level)
 				equipment.append(item)
 		consumables = []
-		for _ in range(self.loot_table['max_item_count'] - len(items)):
+		for _ in range(self.loot_table['max_item_count'] - len(equipment)):
 			if random() < self.loot_table['item_chance']:
 				item_type = choice(list(self.loot_table['consumables'].keys()))
 				item_info = self.loot_table['consumables'][item_type]
