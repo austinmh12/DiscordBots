@@ -430,8 +430,13 @@ class Character:
 	def heal(self):
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
+			self.current_mp = self.stats['INT']
 		if self.stats['CON'] != self.current_con:
 			self.current_con += ceil(self.stats['CON'] / 10)
 			if self.current_con > self.stats['CON']:
 				self.current_con = self.stats['CON']
+		if self.stats['INT'] != self.current_mp:
+			self.current_mp += ceil(self.stats['INT'] / 10)
+			if self.current_mp > self.stats['INT']:
+				self.current_mp = self.stats['INT']
 		self.update()
