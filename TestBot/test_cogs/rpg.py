@@ -566,7 +566,7 @@ class RPGCog(MyCog):
 
 		while True:
 			try:
-				react = await self.bot.wait_for('raw_reaction_add', check=is_equipment_icon, timeout=60)
+				react = await self.bot.wait_for('raw_reaction_add', check=is_consumable_icon, timeout=60)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
 				break

@@ -17,17 +17,13 @@ def get_next_consumable_id():
 		return 1
 	return max(df.id) + 1
 
-def get_consumables():
-	df = sql('rpg', 'select * from consumables')
-	if df.empty:
-		return []
-	return [Consumable(**d) for d in df.to_dict('records')]
-
 def get_consumable(id):
 	df = sql('rpg', 'select * from consumables where id = ?', (id,))
 	if df.empty:
 		return None
-	return Consumable(**df.to_dict('records')[0])
+	if df['type'][0] in ['Health', 'Mana']:
+		return RestorationPotion(**df.to_dict('records')[0])
+	return StatPotion(**df.to_dict('records')[0])
 
 def add_consumable(consumable):
 	sql('rpg', 'insert into consumables values (?,?,?,?,?,?)', consumable.to_row)
@@ -39,7 +35,7 @@ def generate_consumable(type, level):
 	# Level just determines how many rolls it does
 	id = get_next_consumable_id()
 	if type in ('Health', 'Mana'):
-		restored = sum([randint(0, 3) for _ in range(level)])
+		restored = sum([randint(1, 3) for _ in range(level)])
 		consumable = RestorationPotion(id=id, name=f'{type} Potion ({restored})', type=type, restored=restored)
 	else:
 		stat = choice(['STR','DEX','INT','CON'])
