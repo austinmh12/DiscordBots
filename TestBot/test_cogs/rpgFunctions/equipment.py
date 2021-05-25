@@ -21,7 +21,7 @@ str_weapons = ['Sword', 'Longsword', 'Claymore']
 dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife']
 int_weapons = ['Staff', 'Wand']
 con_weapons = []
-one_handed_weapons = ['Sword', 'Dagger', 'Knife']
+one_handed_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
 armour_types = [
 	'Helmet',
 	'Chest',
