@@ -770,9 +770,9 @@ class RPGCog(MyCog):
 				await msg.add_reaction(spell2_emoji)
 				await msg.add_reaction(spell3_emoji)
 				await msg.add_reaction(spell4_emoji)
-				await msg.edit(content='Which slot?')
+				await msg.edit(content='Which slot?', embed=Page('Current Spells', '\n'.join([f'**{i}**: {s.name} ({s.avg_dmg})' for i, s in enumerate(p.current_character._spells, start=1)])).embed)
 				try:
-					react = await self.bot.wait_for('raw_reaction_add', check=is_spell_icon, timeout=60)
+					react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=60)
 				except asyncio.TimeoutError:
 					log.debug('Timeout, breaking')
 					await msg.clear_reactions()
@@ -789,6 +789,11 @@ class RPGCog(MyCog):
 				else:
 					p.current_character._spells[3] = spells[idx]
 				p.current_character.update()
+				await msg.clear_reactions()
+				await msg.add_reaction(spell_equip_emoji)
+				await msg.add_reaction(BACK)
+				await msg.add_reaction(NEXT)
+				await msg.edit(content=f'You equipped **{spells[idx].name}**', embed=emb)
 			else:
 				await msg.remove_reaction(BACK, react.member)
 				idx = (idx - 1) % len(pages)
