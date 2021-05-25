@@ -63,8 +63,8 @@ rarity_colour = {
 	'Mythic': (151, 0, 166)
 }
 
-up_indicator = ':small_red_triangle:'
-down_indicator = ':small_red_triangle_down:'
+up_indicator = '<:good_icon:846539230901829702>'
+down_indicator = '<:bad_icon:846539241353773056>'
 
 #############
 # Functions #
