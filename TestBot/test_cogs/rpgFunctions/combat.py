@@ -28,7 +28,7 @@ class Combat:
 	def alive(self, entity):
 		return entity.current_con > 0
 
-	def character_combat(self, action):
+	def character_combat(self, action, slot=-1):
 		if action == 'Attack':
 			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
 			if random() <= enemy_dodge_chance:
@@ -38,6 +38,17 @@ class Combat:
 				dmg_done = floor(char_dmg * self.enemy.defense)
 				self.enemy.current_con -= dmg_done
 				self.desc = f'**{self.character.name}** did {dmg_done} damage to the **{self.enemy.name}**!'
+		elif action == 'Spell':
+			spell = self.character._spells[slot]
+			self.character.current_mp -= spell.cost
+			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
+			if random() <= enemy_dodge_chance:
+				self.desc = f'**{self.enemy.name}** dodged your attack!'
+			else:
+				char_dmg = self.character.spell_damage(spell)
+				dmg_done = floor(char_dmg * self.enemy.defense)
+				self.enemy.current_con -= dmg_done
+				self.desc = f'**{self.character.name}**\'s **{spell.name}** did {dmg_done} damage to the **{self.enemy.name}**!'
 		elif action == 'Pass':
 			self.desc = f'**{self.character.name}** passed.'
 		if self.alive(self.enemy):

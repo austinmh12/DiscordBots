@@ -31,6 +31,7 @@ spell1_emoji = '<:spell1:846733202487902239>'
 spell2_emoji = '<:spell2:846733211036155935>'
 spell3_emoji = '<:spell3:846733218605826049>'
 spell4_emoji = '<:spell4:846733227620040714>'
+spell_emojis = [spell1_emoji, spell2_emoji, spell3_emoji, spell4_emoji]
 
 # Functions
 def initialise_db():
@@ -447,11 +448,20 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
+		await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 
 		def is_combat_icon(m):
 			return all([
-				(m.emoji.name == attack_emoji or m.emoji.name == run_emoji),
+				(m.emoji.name in [attack_emoji, run_emoji, 'spell1']),
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		def is_spell_slot_icon(m):
+			return all([
+				(m.emoji.name in ['spell1', 'spell2', 'spell3', 'spell4']),
 				m.member.id != self.bot.user.id,
 				m.message_id == msg.id,
 				m.member == ctx.author
@@ -466,16 +476,53 @@ class RPGCog(MyCog):
 			if react.emoji.name == attack_emoji:
 				await msg.remove_reaction(attack_emoji, react.member)
 				cb.character_combat('Attack')
+			elif react.emoji.name == 'spell1':
+				await msg.clear_reactions()
+				desc = ''
+				for i, s in enumerate(p.current_character._spells):
+					desc += f'**{i+1}**: {s.name} ({s.avg_dmg})\n'
+					await msg.add_reaction(spell_emojis[i])
+				await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
+				try:
+					react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=600)
+				except asyncio.TimeoutError:
+					log.debug('Timeout, breaking')
+					await msg.clear_reactions()
+					await msg.add_reaction(attack_emoji)
+					await msg.add_reaction(spell1_emoji)
+					await msg.add_reaction(run_emoji)
+					continue
+				if react.emoji.name == 'spell1':
+					if p.current_character.current_mp < p.current_character._spells[0].cost:
+						await msg.edit(content='You don\'t have the MP to cast this')
+					else:
+						cb.character_combat('Spell', 0)
+				elif react.emoji.name == 'spell2':
+					if p.current_character.current_mp < p.current_character._spells[1].cost:
+						await msg.edit(content='You don\'t have the MP to cast this')
+					else:
+						cb.character_combat('Spell', 1)
+				elif react.emoji.name == 'spell3':
+					if p.current_character.current_mp < p.current_character._spells[2].cost:
+						await msg.edit(content='You don\'t have the MP to cast this')
+					else:
+						cb.character_combat('Spell', 2)
+				else:
+					if p.current_character.current_mp < p.current_character._spells[3].cost:
+						await msg.edit(content='You don\'t have the MP to cast this')
+					else:
+						cb.character_combat('Spell', 3)
+				await msg.clear_reactions()
+				await msg.add_reaction(attack_emoji)
+				await msg.add_reaction(spell1_emoji)
+				await msg.add_reaction(run_emoji)
 			else:
-				await msg.remove_reaction(run_emoji, react.member)
-				await msg.remove_reaction(attack_emoji, self.bot.user)
-				await msg.remove_reaction(run_emoji, self.bot.user)
+				await msg.clear_reactions()
 				await msg.edit(content='You run from the battle', embed=None)
 				return p.current_character.update()
-			await msg.edit(embed=cb.embed)
+			await msg.edit(content='', embed=cb.embed)
 
-		await msg.remove_reaction(attack_emoji, self.bot.user)
-		await msg.remove_reaction(run_emoji, self.bot.user)
+		await msg.clear_reactions()
 		if cb.winner == p.current_character:
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
@@ -503,12 +550,21 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
+		await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 		while True:
 
 			def is_combat_icon(m):
 				return all([
-					(m.emoji.name == attack_emoji or m.emoji.name == run_emoji),
+					(m.emoji.name in [attack_emoji, run_emoji, 'spell1']),
+					m.member.id != self.bot.user.id,
+					m.message_id == msg.id,
+					m.member == ctx.author
+				])
+
+			def is_spell_slot_icon(m):
+				return all([
+					(m.emoji.name in ['spell1', 'spell2', 'spell3', 'spell4']),
 					m.member.id != self.bot.user.id,
 					m.message_id == msg.id,
 					m.member == ctx.author
@@ -523,10 +579,48 @@ class RPGCog(MyCog):
 				if react.emoji.name == attack_emoji:
 					await msg.remove_reaction(attack_emoji, react.member)
 					cb.character_combat('Attack')
+				elif react.emoji.name == 'spell1':
+					await msg.clear_reactions()
+					desc = ''
+					for i, s in enumerate(p.current_character._spells):
+						desc += f'**{i+1}**: {s.name} ({s.avg_dmg})\n'
+						await msg.add_reaction(spell_emojis[i])
+					await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
+					try:
+						react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=600)
+					except asyncio.TimeoutError:
+						log.debug('Timeout, breaking')
+						await msg.clear_reactions()
+						await msg.add_reaction(attack_emoji)
+						await msg.add_reaction(spell1_emoji)
+						await msg.add_reaction(run_emoji)
+						continue
+					if react.emoji.name == 'spell1':
+						if p.current_character.current_mp < p.current_character._spells[0].cost:
+							await msg.edit(content='You don\'t have the MP to cast this')
+						else:
+							cb.character_combat('Spell', 0)
+					elif react.emoji.name == 'spell2':
+						if p.current_character.current_mp < p.current_character._spells[1].cost:
+							await msg.edit(content='You don\'t have the MP to cast this')
+						else:
+							cb.character_combat('Spell', 1)
+					elif react.emoji.name == 'spell3':
+						if p.current_character.current_mp < p.current_character._spells[2].cost:
+							await msg.edit(content='You don\'t have the MP to cast this')
+						else:
+							cb.character_combat('Spell', 2)
+					else:
+						if p.current_character.current_mp < p.current_character._spells[3].cost:
+							await msg.edit(content='You don\'t have the MP to cast this')
+						else:
+							cb.character_combat('Spell', 3)
+					await msg.clear_reactions()
+					await msg.add_reaction(attack_emoji)
+					await msg.add_reaction(spell1_emoji)
+					await msg.add_reaction(run_emoji)
 				else:
-					await msg.remove_reaction(run_emoji, react.member)
-					await msg.remove_reaction(attack_emoji, self.bot.user)
-					await msg.remove_reaction(run_emoji, self.bot.user)
+					await msg.clear_reactions()
 					await msg.edit(content='You run from the battle', embed=None)
 					return p.current_character.update()
 				await msg.edit(embed=cb.embed)
