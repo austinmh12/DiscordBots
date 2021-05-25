@@ -17,6 +17,12 @@ def get_spells():
 		return []
 	return [Spell(**d) for d in df.to_dict('records')]
 
+def get_spells_by_profession(profession):
+	df = sql('rpg', 'select * from spells where profession = ?', (profession.name,))
+	if df.empty:
+		return []
+	return [Spell(**d) for d in df.to_dict('records')]
+
 def get_spell(name):
 	df = sql('rpg', 'select * from spells where lower(name) = ?', (name.lower(),))
 	if df.empty:
