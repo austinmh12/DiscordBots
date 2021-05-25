@@ -152,6 +152,27 @@ def initialise_db():
 		,('Forest',4,'{"Mole":{"min_level":3,"max_level":8},"Spider":{"min_level":2,"max_level":6},"Rat":{"min_level":2,"max_level":6},"Skeleton":{"min_level":3,"max_level":5},"Zombie":{"min_level":2,"max_level":6},"Ghoul":{"min_level":1,"max_level":5},"Imp":{"min_level":1,"max_level":8}}','{"gold":15,"item_chance":0.15,"max_item_count":2,"items":{"Sword":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Chest":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Boots":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Dagger":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Helmet":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Longsword":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Shortbow":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Gloves":{"rarities":["Trash","Common"],"min_level":2,"max_level":6},"Wand":{"rarities":["Trash","Common"],"min_level":2,"max_level":6}},"consumables":{"Health":{"min_level":2,"max_level":4},"Mana":{"min_level":2,"max_level":4}},"unique_items":[]}')
 		,('SideRoads',9,'{"Bandit":{"min_level":6,"max_level":11},"Thief":{"min_level":6,"max_level":11},"Imp":{"min_level":4,"max_level":14},"Goblin":{"min_level":5,"max_level":12},"Guard":{"min_level":7,"max_level":12}}','{"gold":40,"item_chance":0.15,"max_item_count":3,"items":{"Sword":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Chest":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Boots":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Dagger":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Helmet":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Longsword":{"rarities":["Common"],"min_level":5,"max_level":12},"Shortbow":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Gloves":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Wand":{"rarities":["Common","Uncommon"],"min_level":5,"max_level":12},"Claymore":{"rarities":["Common"],"min_level":5,"max_level":12},"Crossbow":{"rarities":["Common"],"min_level":5,"max_level":12},"Staff":{"rarities":["Common"],"min_level":5,"max_level":12},"Knife":{"rarities":["Common"],"min_level":5,"max_level":12}},"consumables":{"Health":{"min_level":3,"max_level":6},"Mana":{"min_level":3,"max_level":6}},"unique_items":[]}')'''
 	)
+	sql('rpg', '''insert into spells values
+		('Roar','Warrior',3,5,7,'STR',2)
+		,('Frenzy','Warrior',5,10,11,'STR',5)
+		,('Stomp','Warrior',8,15,20,'STR',10)
+		,('Cleave','Warrior',10,25,26,'STR',12)
+		,('Pinpoint','Archer',2,8,9,'DEX',1)
+		,('Deadeye','Archer',4,5,18,'DEX',3)
+		,('Straight Shot','Archer',6,12,20,'DEX',7)
+		,('Double Shot','Archer',9,30,36,'DEX',15)
+		,('Firebolt','Wizard',1,2,3,'INT',2)
+		,('Thunderbolt','Wizard',1,2,3,'INT',2)
+		,('Icebolt','Wizard',2,2,3,'INT',2)
+		,('Earthbolt','Wizard',3,3,5,'INT',2)
+		,('Fire Strike','Wizard',5,5,8,'INT',5)
+		,('Lightning Strike','Wizard',7,7,11,'INT',5)
+		,('Ice Strike','Wizard',9,9,14,'INT',5)
+		,('Earth Strike','Wizard',10,10,15,'INT',5)
+		,('Sneak','Rogue',2,7,8,'DEX',3)
+		,('Backstab','Rogue',5,7,12,'DEX',5)
+		,('Tendon Slash','Rogue',10,25,35,'DEX',10)'''
+	)
 
 # Classes
 class RPGCog(MyCog):
