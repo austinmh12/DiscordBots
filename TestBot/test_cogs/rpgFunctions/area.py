@@ -20,7 +20,7 @@ def get_areas():
 	return [Area(**d) for d in df.to_dict('records')]
 
 def get_area(name):
-	df = sql('rpg', 'select * from areas where name = ?', (name,))
+	df = sql('rpg', 'select * from areas where lower(name) = ?', (name.lower(),))
 	if df.empty:
 		return None
 	return Area(**df.to_dict('records')[0])
