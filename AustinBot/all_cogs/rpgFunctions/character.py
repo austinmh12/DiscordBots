@@ -6,6 +6,8 @@ from . import *
 from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon_types
 from .profession import Profession, get_profession
 from .area import Area, get_area
+from .consumable import RestorationPotion, StatPotion, get_consumable
+from .spell import Spell, get_spell
 
 #############
 # Constants #
@@ -34,7 +36,7 @@ def get_character(player, name):
 	return Character(**df.to_dict('records')[0])
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
@@ -60,10 +62,12 @@ class Character:
 				ring,
 				weapon,
 				off_hand,
-				current_con = 0,
+				current_con = -1,
 				current_area = 'Sewer',
 				death_timer = '1999-01-01 00:00:00',
-				inventory = '[]'
+				inventory = {'equipment': [], 'consumables': []},
+				current_mp = -1,
+				spells = '[]'
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
@@ -83,15 +87,22 @@ class Character:
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
-		self.current_con = self.stats['CON'] if not current_con else current_con
+		self.current_con = self.stats['CON'] if 0 > current_con else current_con
+		self.current_mp = self.stats['INT'] if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
 		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
+		self._spells = self.parse_spells(spells) if isinstance(spells, str) else spells
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()
 
 		# Migrations
+		## v2.0.0
+		### Inventory
+		if isinstance(self._inventory, list):
+			log.info('Migrating inventory')
+			self._inventory = {'equipment': self._inventory, 'consumables': []}
 
 	@property
 	def death_timer(self):
@@ -99,7 +110,17 @@ class Character:
 
 	@property
 	def inventory(self):
-		return json.dumps([i.id for i in self._inventory])
+		if isinstance(self._inventory, list):
+			return json.dumps([i.id for i in self._inventory])
+		ret = {
+			'equipment': [e.id for e in self._inventory['equipment']], 
+			'consumables': [c.id for c in self._inventory['consumables']]
+		}
+		return json.dumps(ret)
+
+	@property
+	def spells(self):
+		return json.dumps([s.name for s in self._spells])
 
 	@property
 	def to_row(self):
@@ -123,7 +144,9 @@ class Character:
 			self.current_con,
 			self.current_area.name if self.current_area else '',
 			self.death_timer,
-			self.inventory
+			self.inventory,
+			self.current_mp,
+			self.spells
 		)
 
 	def to_dict(self):
@@ -147,12 +170,24 @@ class Character:
 			'current_con': self.current_con,
 			'current_area': self.current_area,
 			'death_timer': self.death_timer,
-			'inventory': self.inventory
+			'inventory': self.inventory,
+			'current_mp': self.current_mp,
+			'spells': self.spells
 		}
 
 	def parse_inventory(self, inv):
 		inventory = json.loads(inv)
-		return [get_equipment(i) for i in inventory]
+		if isinstance(inventory, list):
+			return [get_equipment(i) for i in inventory]
+		else:
+			return {
+				'equipment': [get_equipment(e) for e in inventory['equipment']],
+				'consumables': [get_consumable(c) for c in inventory['consumables']]
+			}
+
+	def parse_spells(self, spells):
+		spells = json.loads(spells)
+		return [get_spell(s) for s in spells]
 	
 	def update(self):
 		current = self.to_dict()
@@ -226,7 +261,7 @@ class Character:
 		self.calculate_stats()
 		self.current_con = self.stats['CON']
 
-	def equip(self, equipment):
+	def equip(self, equipment, slot=''):
 		if equipment.type == 'Helmet':
 			prev_equip = self.helmet
 			self.helmet = equipment
@@ -249,8 +284,12 @@ class Character:
 			prev_equip = self.ring
 			self.ring = equipment
 		elif equipment.type in weapon_types:
-			prev_equip = self.weapon
-			self.weapon = equipment
+			if slot == 'main':
+				prev_equip = self.weapon
+				self.weapon = equipment
+			else:
+				prev_equip = self.off_hand
+				self.off_hand = equipment
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
@@ -290,6 +329,19 @@ class Character:
 		self.calculate_stats()
 		return prev_equip
 
+	def drink(self, potion):
+		if isinstance(potion, RestorationPotion):
+			if potion.type == 'Health':
+				self.current_con += potion.restored
+				if self.current_con > self.stats['CON']:
+					self.current_con = self.stats['CON']
+			else:
+				self.current_mp += potion.restored
+				if self.current_mp > self.stats['INT']:
+					self.current_mp = self.stats['INT']
+
+		self.update()
+
 	@property
 	def equipment(self):
 		return (
@@ -309,48 +361,25 @@ class Character:
 		pages = []
 
 		# Character Overview
-		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level})\n'
+		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
+		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"]} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
 		splash_desc += '__**Stats**__\n'
 		splash_desc += f'**STR:** {self.stats["STR"]} | **DEX:** {self.stats["DEX"]}\n'
-		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n\n'
-		if self.helmet:
-			splash_desc += f'**Helmet:** {self.helmet.name}\n'
-		else:
-			splash_desc += '**Helmet:** \n'
-		if self.chest:
-			splash_desc += f'**Chest:** {self.chest.name}\n'
-		else:
-			splash_desc += '**Chest:** \n'
-		if self.legs:
-			splash_desc += f'**Legs:** {self.legs.name}\n'
-		else:
-			splash_desc += '**Legs:** \n'
-		if self.boots:
-			splash_desc += f'**Boots:** {self.boots.name}\n'
-		else:
-			splash_desc += '**Boots:** \n'
-		if self.gloves:
-			splash_desc += f'**Gloves:** {self.gloves.name}\n'
-		else:
-			splash_desc += '**Gloves:** \n'
-		if self.amulet:
-			splash_desc += f'**Amulet:** {self.amulet.name}\n'
-		else:
-			splash_desc += '**Amulet:** \n'
-		if self.ring:
-			splash_desc += f'**Ring:** {self.ring.name}\n'
-		else:
-			splash_desc += '**Ring:** \n'
-		if self.weapon:
-			splash_desc += f'**Weapon:** {self.weapon.name}\n'
-		else:
-			splash_desc += '**Weapon:** \n'
-		if self.off_hand:
-			splash_desc += f'**Off Hand:** {self.off_hand.name}\n'
-		else:
-			splash_desc += '**Off Hand:**'
+		splash_desc += f'**INT:** {self.stats["INT"]} | **CON:** {self.stats["CON"]}\n'
+		splash_desc += f'**ATK:** {round(self.atk_rating, 2)} | **DEF:** {self.armour_defense}\n\n'
+		splash_desc += f'**Helmet:** {self.helmet.name if self.helmet else ""}\n'
+		splash_desc += f'**Chest:** {self.chest.name if self.chest else ""}\n'
+		splash_desc += f'**Legs:** {self.legs.name if self.legs else ""}\n'
+		splash_desc += f'**Boots:** {self.boots.name if self.boots else ""}\n'
+		splash_desc += f'**Gloves:** {self.gloves.name if self.gloves else ""}\n'
+		splash_desc += f'**Amulet:** {self.amulet.name if self.amulet else ""}\n'
+		splash_desc += f'**Ring:** {self.ring.name if self.ring else ""}\n'
+		splash_desc += f'**Weapon:** {self.weapon.name if self.weapon else ""}\n'
+		splash_desc += f'**Off Hand:** {self.off_hand.name if self.off_hand else ""}\n\n'
+		splash_desc += '__**Spells**__\n'
+		splash_desc += '\n'.join([s.name for s in self._spells])
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
 		pages.append(splash_page)
 
@@ -377,8 +406,16 @@ class Character:
 	
 	@property
 	def damage(self):
-		dmg = randint(self.weapon.min_damage, self.weapon.max_damage)
-		dmg += floor(self.stats[self.weapon.stat] / 10)
+		min_damage = self.weapon.min_damage
+		max_damage = self.weapon.max_damage
+		if self.off_hand.type in weapon_types:
+			min_damage += self.off_hand.min_damage
+			max_damage += self.off_hand.max_damage
+		dmg = randint(min_damage, max_damage)
+		if self.off_hand.type in weapon_types:
+			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
+		else:
+			dmg += floor(self.stats[self.weapon.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
 		dmg += self.armour_attack
@@ -386,11 +423,40 @@ class Character:
 			dmg *= 1.5
 		return dmg
 
+	@property
+	def atk_rating(self):
+		min_damage = self.weapon.min_damage
+		max_damage = self.weapon.max_damage
+		if self.off_hand.type in weapon_types:
+			min_damage += self.off_hand.min_damage
+			max_damage += self.off_hand.max_damage
+		dmg = floor((min_damage + max_damage) / 2)
+		if self.off_hand.type in weapon_types:
+			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
+		else:
+			dmg += floor(self.stats[self.weapon.stat] / 10)
+		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
+		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
+		dmg += self.armour_attack
+		return (1 - self.weapon.crit_chance) * dmg + self.weapon.crit_chance * 1.5 * dmg
+
+	def spell_damage(self, spell):
+		dmg = randint(spell.min_damage, spell.max_damage)
+		dmg += floor(self.stats[spell.stat] / 5)
+		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
+		dmg += self.armour_attack
+		return dmg
+
 	def heal(self):
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
+			self.current_mp = self.stats['INT']
 		if self.stats['CON'] != self.current_con:
 			self.current_con += ceil(self.stats['CON'] / 10)
 			if self.current_con > self.stats['CON']:
 				self.current_con = self.stats['CON']
+		if self.stats['INT'] != self.current_mp:
+			self.current_mp += ceil(self.stats['INT'] / 10)
+			if self.current_mp > self.stats['INT']:
+				self.current_mp = self.stats['INT']
 		self.update()

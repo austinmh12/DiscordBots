@@ -28,7 +28,7 @@ class Combat:
 	def alive(self, entity):
 		return entity.current_con > 0
 
-	def character_combat(self, action):
+	def character_combat(self, action, slot=-1):
 		if action == 'Attack':
 			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
 			if random() <= enemy_dodge_chance:
@@ -38,6 +38,17 @@ class Combat:
 				dmg_done = floor(char_dmg * self.enemy.defense)
 				self.enemy.current_con -= dmg_done
 				self.desc = f'**{self.character.name}** did {dmg_done} damage to the **{self.enemy.name}**!'
+		elif action == 'Spell':
+			spell = self.character._spells[slot]
+			self.character.current_mp -= spell.cost
+			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
+			if random() <= enemy_dodge_chance:
+				self.desc = f'**{self.enemy.name}** dodged your attack!'
+			else:
+				char_dmg = self.character.spell_damage(spell)
+				dmg_done = floor(char_dmg * self.enemy.defense)
+				self.enemy.current_con -= dmg_done
+				self.desc = f'**{self.character.name}**\'s **{spell.name}** did {dmg_done} damage to the **{self.enemy.name}**!'
 		elif action == 'Pass':
 			self.desc = f'**{self.character.name}** passed.'
 		if self.alive(self.enemy):
@@ -47,9 +58,14 @@ class Combat:
 			self.exp = self.enemy.base_exp + (self.enemy.level * self.enemy.exp_mod)
 			self.loot = self.area.get_random_loot()
 			self.desc += f'\nYou gained {self.exp} EXP and {self.loot["gold"]} gold.'
-			if self.loot['items']:
-				self.desc += '\nYou also got:\n'
-				self.desc += '\n'.join([f'{i.name}' for i in self.loot['items']])
+			if self.loot['equipment'] or self.loot['consumables']:
+				self.desc += '\nYou also got:'
+			if self.loot['equipment']:
+				self.desc += '\n'
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['equipment']])
+			if self.loot['consumables']:
+				self.desc += '\n'
+				self.desc += '\n'.join([f'{i.name}' for i in self.loot['consumables']])
 			self.winner = self.character
 			self.colour = (0, 196, 18)
 
@@ -83,6 +99,6 @@ class Combat:
 			description=self.desc,
 			colour=Colour.from_rgb(*self.colour)
 		)
-		emb.add_field(name=self.character.name, value=f'HP: {self.character.current_con}', inline=True)
+		emb.add_field(name=self.character.name, value=f'HP: {self.character.current_con}\nMP: {self.character.current_mp}', inline=True)
 		emb.add_field(name=f'{self.enemy.name} (Lvl {self.enemy.level})', value=f'HP: {self.enemy.current_con}', inline=True)
 		return emb

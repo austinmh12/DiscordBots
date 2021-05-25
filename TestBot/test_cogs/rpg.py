@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '1.0.1'
+version = '2.0.0'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'

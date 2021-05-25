@@ -21,6 +21,7 @@ str_weapons = ['Sword', 'Longsword', 'Claymore']
 dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife']
 int_weapons = ['Staff', 'Wand']
 con_weapons = []
+one_handed_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
 armour_types = [
 	'Helmet',
 	'Chest',
@@ -63,8 +64,8 @@ rarity_colour = {
 	'Mythic': (151, 0, 166)
 }
 
-up_indicator = ':small_red_triangle:'
-down_indicator = ':small_red_triangle_down:'
+up_indicator = '<:good_icon:846539230901829702>'
+down_indicator = '<:bad_icon:846539241353773056>'
 
 #############
 # Functions #
@@ -90,6 +91,8 @@ def add_equipment(equipment):
 	sql('rpg', 'insert into equipment values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', equipment.to_row)
 
 def delete_equipment(equipment):
+	if equipment.id <= 11:
+		return
 	sql('rpg', 'delete from equipment where id = ?', (equipment.id,))
 
 def generate_random_equipment(type, rarity, level):
@@ -213,8 +216,12 @@ class Weapon(Equipment):
 	def equipment_rating(self):
 		return (1 - self.crit_chance) * self.avg_dmg + self.crit_chance * 1.5 * self.avg_dmg
 
+	def equipment_rating_with_character_stats(self, character):
+		average_damage = self.avg_dmg + floor(character.stats[self.stat] / 10)
+		return (1 - self.crit_chance) * average_damage + self.crit_chance * 1.5 * average_damage
+
 	def compare_weapons(self, character):
-		rating = 1 - (character.weapon.equipment_rating / self.equipment_rating)
+		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
 		if rating < -.3:
 			return down_indicator * 3
 		elif -.3 <= rating < -.2:
@@ -276,6 +283,8 @@ class Armour(Equipment):
 		return 80 / (80 + self.defense)
 
 	def compare_armour(self, character):
+		if self.weight != character.profession.weight:
+			return ':x:'
 		if self.type == 'Helmet':
 			equipment = character.helmet
 		elif self.type == 'Chest':
