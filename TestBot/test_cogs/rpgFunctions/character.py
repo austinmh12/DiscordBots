@@ -120,7 +120,7 @@ class Character:
 
 	@property
 	def spells(self):
-		return [s.name for s in self._spells]
+		return json.dumps([s.name for s in self._spells])
 
 	@property
 	def to_row(self):
