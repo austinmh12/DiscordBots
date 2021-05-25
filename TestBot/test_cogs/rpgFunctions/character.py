@@ -406,8 +406,16 @@ class Character:
 	
 	@property
 	def damage(self):
-		dmg = randint(self.weapon.min_damage, self.weapon.max_damage)
-		dmg += floor(self.stats[self.weapon.stat] / 10)
+		min_damage = self.weapon.min_damage
+		max_damage = self.weapon.max_damage
+		if self.off_hand.type in weapon_types:
+			min_damage += self.off_hand.min_damage
+			max_damage += self.off_hand.max_damage
+		dmg = randint(min_damage, max_damage)
+		if self.off_hand.type in weapon_types:
+			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
+		else:
+			dmg += floor(self.stats[self.weapon.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
 		dmg += self.armour_attack
@@ -417,8 +425,16 @@ class Character:
 
 	@property
 	def atk_rating(self):
-		dmg = floor((self.weapon.min_damage + self.weapon.max_damage) / 2)
-		dmg += floor(self.stats[self.weapon.stat] / 10)
+		min_damage = self.weapon.min_damage
+		max_damage = self.weapon.max_damage
+		if self.off_hand.type in weapon_types:
+			min_damage += self.off_hand.min_damage
+			max_damage += self.off_hand.max_damage
+		dmg = floor((min_damage + max_damage) / 2)
+		if self.off_hand.type in weapon_types:
+			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
+		else:
+			dmg += floor(self.stats[self.weapon.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
 		dmg += self.armour_attack
