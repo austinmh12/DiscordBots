@@ -164,15 +164,15 @@ def initialise_db():
 		,('Double Shot','Archer',9,30,36,'DEX',15)
 		,('Firebolt','Wizard',1,2,3,'INT',2)
 		,('Thunderbolt','Wizard',1,2,3,'INT',2)
-		,('Icebolt','Wizard',2,2,3,'INT',2)
-		,('Earthbolt','Wizard',3,3,5,'INT',2)
-		,('Fire Strike','Wizard',5,5,8,'INT',5)
-		,('Lightning Strike','Wizard',7,7,11,'INT',5)
-		,('Ice Strike','Wizard',9,9,14,'INT',5)
-		,('Earth Strike','Wizard',10,10,15,'INT',5)
+		,('Icebolt','Wizard',2,3,5,'INT',2)
+		,('Earthbolt','Wizard',3,5,8,'INT',2)
+		,('Fire Strike','Wizard',5,8,12,'INT',5)
+		,('Lightning Strike','Wizard',7,11,17,'INT',5)
+		,('Ice Strike','Wizard',9,14,21,'INT',5)
+		,('Earth Strike','Wizard',10,15,23,'INT',5)
 		,('Sneak','Rogue',2,7,8,'DEX',3)
 		,('Backstab','Rogue',5,7,12,'DEX',5)
-		,('Tendon Slash','Rogue',10,25,35,'DEX',10)'''
+		,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
 	)
 
 # Classes
