@@ -7,6 +7,7 @@ from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon
 from .profession import Profession, get_profession
 from .area import Area, get_area
 from .consumable import RestorationPotion, StatPotion, get_consumable
+from .spell import Spell, get_spell
 
 #############
 # Constants #
@@ -35,7 +36,7 @@ def get_character(player, name):
 	return Character(**df.to_dict('records')[0])
 
 def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
 def delete_character(player, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
@@ -65,7 +66,8 @@ class Character:
 				current_area = 'Sewer',
 				death_timer = '1999-01-01 00:00:00',
 				inventory = {'equipment': [], 'consumables': []},
-				current_mp = -1
+				current_mp = -1,
+				spells = '[]'
 	):
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
@@ -90,6 +92,7 @@ class Character:
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
 		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
+		self._spells = self.parse_spells(spells) if isinstance(spells, str) else spells
 
 		# Original cached user
 		self.loaded = self.to_dict().copy()
@@ -116,6 +119,10 @@ class Character:
 		return json.dumps(ret)
 
 	@property
+	def spells(self):
+		return [s.name for s in self._spells]
+
+	@property
 	def to_row(self):
 		return (
 			self.player_id,
@@ -138,7 +145,8 @@ class Character:
 			self.current_area.name if self.current_area else '',
 			self.death_timer,
 			self.inventory,
-			self.current_mp
+			self.current_mp,
+			self.spells
 		)
 
 	def to_dict(self):
@@ -163,7 +171,8 @@ class Character:
 			'current_area': self.current_area,
 			'death_timer': self.death_timer,
 			'inventory': self.inventory,
-			'current_mp': self.current_mp
+			'current_mp': self.current_mp,
+			'spells': self.spells
 		}
 
 	def parse_inventory(self, inv):
@@ -175,6 +184,10 @@ class Character:
 				'equipment': [get_equipment(e) for e in inventory['equipment']],
 				'consumables': [get_consumable(c) for c in inventory['consumables']]
 			}
+
+	def parse_spells(self, spells):
+		spells = json.loads(spells)
+		return [get_spell(s) for s in spells]
 	
 	def update(self):
 		current = self.to_dict()
