@@ -418,6 +418,13 @@ class Character:
 		dmg += self.armour_attack
 		return (1 - self.weapon.crit_chance) * dmg + self.weapon.crit_chance * 1.5 * dmg
 
+	def spell_damage(self, spell):
+		dmg = randint(spell.min_damage, spell.max_damage)
+		dmg += floor(self.stats[spell.stat] / 5)
+		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
+		dmg += self.armour_attack
+		return dmg
+
 	def heal(self):
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
