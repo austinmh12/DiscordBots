@@ -99,6 +99,6 @@ class Combat:
 			description=self.desc,
 			colour=Colour.from_rgb(*self.colour)
 		)
-		emb.add_field(name=self.character.name, value=f'HP: {self.character.current_con}', inline=True)
+		emb.add_field(name=self.character.name, value=f'HP: {self.character.current_con}\nMP: {self.character.current_mp}', inline=True)
 		emb.add_field(name=f'{self.enemy.name} (Lvl {self.enemy.level})', value=f'HP: {self.enemy.current_con}', inline=True)
 		return emb
