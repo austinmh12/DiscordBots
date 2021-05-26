@@ -133,7 +133,7 @@ def generate_random_magic_properties(rarity, level):
 	generated_properties = {p: 0 for p in properties}
 	for _ in range(rarity_magic_properties[rarity]):
 		prop = choice(properties)
-		val = sum([randint(0, 5) for _ in range(level)])
+		val = level
 		generated_properties[prop] += val
 	return generated_properties
 
