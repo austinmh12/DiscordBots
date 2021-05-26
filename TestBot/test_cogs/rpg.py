@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.1'
+version = '2.0.2'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -401,7 +401,7 @@ class RPGCog(MyCog):
 					pass_context=True,
 					description='Get information about your current character',
 					brief='Get current character info',
-					aliases=['curchar', 'cur'])
+					aliases=['curchar', 'cur', 'char'])
 	async def current_character(self, ctx):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if not p.current_character:
