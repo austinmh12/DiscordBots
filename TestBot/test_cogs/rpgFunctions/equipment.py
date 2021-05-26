@@ -221,6 +221,8 @@ class Weapon(Equipment):
 		return (1 - self.crit_chance) * average_damage + self.crit_chance * 1.5 * average_damage
 
 	def compare_weapons(self, character):
+		if not character.weapon:
+			return ''
 		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
 		if rating < -.3:
 			return down_indicator * 3
