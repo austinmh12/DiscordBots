@@ -414,6 +414,7 @@ class Character:
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		min_damage += floor(self.armour_attack / 5)
 		max_damage += floor(self.armour_attack / 5)
 		dmg = randint(min_damage, max_damage)
 		if self.weapon:
@@ -437,6 +438,7 @@ class Character:
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		min_damage += floor(self.armour_attack / 5)
 		max_damage += floor(self.armour_attack / 5)
 		dmg = floor((min_damage + max_damage) / 2)
 		if self.weapon:

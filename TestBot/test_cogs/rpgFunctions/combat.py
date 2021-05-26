@@ -30,7 +30,7 @@ class Combat:
 
 	def character_combat(self, action, slot=-1):
 		if action == 'Attack':
-			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
+			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 9 + self.enemy.stats['DEX'])
 			if random() <= enemy_dodge_chance:
 				self.desc = f'**{self.enemy.name}** dodged your attack!'
 			else:
@@ -41,7 +41,7 @@ class Combat:
 		elif action == 'Spell':
 			spell = self.character._spells[slot]
 			self.character.current_mp -= spell.cost
-			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 100)
+			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 9 + self.enemy.stats['DEX'])
 			if random() <= enemy_dodge_chance:
 				self.desc = f'**{self.enemy.name}** dodged your attack!'
 			else:
@@ -70,7 +70,7 @@ class Combat:
 			self.colour = (0, 196, 18)
 
 	def enemy_combat(self):
-		char_dodge_chance = self.character.stats['DEX'] / (self.enemy.stats['DEX'] * 100)
+		char_dodge_chance = self.character.stats['DEX'] / (self.enemy.stats['DEX'] * 9 + self.character.stats['DEX'])
 		if random() <= char_dodge_chance:
 			self.desc += f'\n**{self.character.name}** dodged the attack!'
 		else:
