@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.1'
+version = '2.0.6'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -401,7 +401,7 @@ class RPGCog(MyCog):
 					pass_context=True,
 					description='Get information about your current character',
 					brief='Get current character info',
-					aliases=['curchar', 'cur'])
+					aliases=['curchar', 'cur', 'char'])
 	async def current_character(self, ctx):
 		p = self.get_or_add_player_from_ctx(ctx)
 		if not p.current_character:
@@ -866,6 +866,8 @@ class RPGCog(MyCog):
 		if p.current_character is None:
 			return await ctx.send('You need a character to view learned spells')
 		spells = [s for s in spell.get_spells_by_profession(p.current_character.profession) if s.level <= p.current_character.level]	
+		if not spells:
+			return await ctx.send('You haven\'t learned any spells yet')
 		pages = [s.page for s in spells]
 		idx = 0
 		emb = pages[idx].embed

@@ -406,39 +406,48 @@ class Character:
 	
 	@property
 	def damage(self):
-		min_damage = self.weapon.min_damage
-		max_damage = self.weapon.max_damage
+		min_damage = 0
+		max_damage = 0
+		if self.weapon:
+			min_damage += self.weapon.min_damage
+			max_damage += self.weapon.max_damage
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		max_damage += floor(self.armour_attack / 5)
 		dmg = randint(min_damage, max_damage)
-		if self.off_hand and self.off_hand.type in weapon_types:
-			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
-		else:
+		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
+		if self.off_hand and self.off_hand.type in weapon_types:
+			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
-		dmg += self.armour_attack
-		if random() < self.weapon.crit_chance:
-			dmg *= 1.5
+		if self.weapon:
+			if random() < self.weapon.crit_chance:
+				dmg *= 1.5
 		return dmg
 
 	@property
 	def atk_rating(self):
-		min_damage = self.weapon.min_damage
-		max_damage = self.weapon.max_damage
+		min_damage = 0
+		max_damage = 0
+		if self.weapon:
+			min_damage += self.weapon.min_damage
+			max_damage += self.weapon.max_damage
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		max_damage += floor(self.armour_attack / 5)
 		dmg = floor((min_damage + max_damage) / 2)
-		if self.off_hand and self.off_hand.type in weapon_types:
-			dmg += floor((self.stats[self.weapon.stat] + self.stats[self.off_hand.stat]) / 10)
-		else:
+		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
+		if self.off_hand and self.off_hand.type in weapon_types:
+			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
-		dmg += self.armour_attack
-		return (1 - self.weapon.crit_chance) * dmg + self.weapon.crit_chance * 1.5 * dmg
+		if self.weapon:
+			return (1 - self.weapon.crit_chance) * dmg + self.weapon.crit_chance * 1.5 * dmg
+		return dmg
 
 	def spell_damage(self, spell):
 		dmg = randint(spell.min_damage, spell.max_damage)
