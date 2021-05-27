@@ -788,6 +788,7 @@ class RPGCog(MyCog):
 				p.current_character.gold += sold.price
 				p.current_character.update()
 				if len(pages) == 0:
+					await msg.clear_reactions()
 					return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
 			else:
@@ -845,6 +846,7 @@ class RPGCog(MyCog):
 				content = f'You regained {consumed.restored} {"HP" if consumed.type == "Health" else "MP"} ({p.current_character.current_con if consumed.type == "Health" else p.current_character.current_mp}/{p.current_character.stats["CON"] if consumed.type == "Health" else p.current_character.stats["INT"]})'
 				pages.pop(idx)
 				if len(pages) == 0:
+					await msg.clear_reactions()
 					return await msg.edit(content=f'{content}\nYou have no consumables', embed=None)
 				idx = idx % len(pages)
 			elif react.emoji.name == sell_emoji:
@@ -855,6 +857,7 @@ class RPGCog(MyCog):
 				p.current_character.gold += sold.price
 				p.current_character.update()
 				if len(pages) == 0:
+					await msg.clear_reactions()
 					return await msg.edit(content='You have no consumables', embed=None)
 				idx = idx % len(pages)
 			else:
