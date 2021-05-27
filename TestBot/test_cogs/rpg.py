@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.16'
+version = '2.0.22'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -339,7 +339,7 @@ class RPGCog(MyCog):
 		chars = character.get_characters(p)
 		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
 		desc += '__All characters__\n'
-		desc += '\n'.join([f'**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		desc += '\n'.join([f'{":skull_crossbones: " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
 
@@ -467,7 +467,8 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
-		await msg.add_reaction(spell1_emoji)
+		if p.current_character._spells:
+			await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 
 		def is_combat_icon(m):
@@ -582,7 +583,8 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
-		await msg.add_reaction(spell1_emoji)
+		if p.current_character._spells:
+			await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 		while True:
 
@@ -681,9 +683,8 @@ class RPGCog(MyCog):
 			else:
 				p.current_character._death_timer = dt.now() + td(hours=1)
 				p.current_character.update()
-				await msg.remove_reaction(attack_emoji, self.bot.user)
-				await msg.remove_reaction(run_emoji, self.bot.user)
-				return
+				await msg.clear_reactions()
+				return await msg.edit(content='', embed=cb.embed)
 			p.current_character.update()
 			cb = combat.Combat(p.current_character)
 			await msg.edit(embed=cb.embed)
@@ -833,6 +834,7 @@ class RPGCog(MyCog):
 				react = await self.bot.wait_for('raw_reaction_add', check=is_consumable_icon, timeout=60)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
+				await msg.clear_reactions()
 				break
 			if react.emoji.name == NEXT:
 				await msg.remove_reaction(NEXT, react.member)
