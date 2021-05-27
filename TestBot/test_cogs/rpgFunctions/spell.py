@@ -46,10 +46,16 @@ class Spell:
 	def avg_dmg(self):
 		return (self.min_damage + self.max_damage) / 2
 
-	@property	
-	def page(self):
-		desc = f'**DPS:** {round(self.avg_dmg, 2)}\n\n'
+	def avg_dmg_with_character_stats(self, character):
+		dmg = (self.min_damage + floor(character.armour_attack / 5) + self.max_damage + floor(character.armour_attack / 5)) / 2
+		dmg += floor(character.stats[self.stat] / 5)
+		dmg += floor(character.stats.get(character.profession.primary_stat, 0) / 10)
+		return round(dmg, 2)
+
+	def stat_page(self, character):
+		desc = f'**DPS:** {self.avg_dmg_with_character_stats(character)}\n\n'
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
+		desc += f'**Costs:** {self.cost}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
 		return Page(self.name, desc, colour=(22, 0, 240))
 

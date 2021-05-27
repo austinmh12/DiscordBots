@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.13'
+version = '2.0.14'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -499,7 +499,7 @@ class RPGCog(MyCog):
 				await msg.clear_reactions()
 				desc = ''
 				for i, s in enumerate(p.current_character._spells):
-					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost})\n'
+					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 					await msg.add_reaction(spell_emojis[i])
 				await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 				try:
@@ -602,7 +602,7 @@ class RPGCog(MyCog):
 					await msg.clear_reactions()
 					desc = ''
 					for i, s in enumerate(p.current_character._spells):
-						desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost})\n'
+						desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 						await msg.add_reaction(spell_emojis[i])
 					await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 					try:
@@ -866,7 +866,7 @@ class RPGCog(MyCog):
 		spells = [s for s in spell.get_spells_by_profession(p.current_character.profession) if s.level <= p.current_character.level]	
 		if not spells:
 			return await ctx.send('You haven\'t learned any spells yet')
-		pages = [s.page for s in spells]
+		pages = [s.stat_page(p.current_character) for s in spells]
 		idx = 0
 		emb = pages[idx].embed
 		if len(pages) > 1:
