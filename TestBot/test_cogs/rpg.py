@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.14'
+version = '2.0.15'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -543,10 +543,23 @@ class RPGCog(MyCog):
 
 		await msg.clear_reactions()
 		if cb.winner == p.current_character:
+			full_inv = []
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
-			p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
-			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
+			for e in cb.loot['equipment']:
+				if len(p.current_character._inventory['equipment']) < 10:
+					p.current_character._inventory['equipment'].append(e)
+				else:
+					full_inv.append(e)
+			for c in cb.loot['consumables']:
+				if len(p.current_character._inventory['consumables']) < 10:
+					p.current_character._inventory['consumables'].append(c)
+				else:
+					full_inv.append(c)
+			if full_inv:
+				full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
+				full_inv_msg += '\n'.join([i.name for i in full_inv])
+				await ctx.send(full_inv_msg)
 			if lvlup:
 				await ctx.send(f'You leveled up to {p.current_character.level}')
 		else:
@@ -645,10 +658,23 @@ class RPGCog(MyCog):
 				await msg.edit(embed=cb.embed)
 
 			if cb.winner == p.current_character:
+				full_inv = []
 				lvlup = p.current_character.add_exp(cb.exp)
 				p.current_character.gold += cb.loot['gold']
-				p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
-				p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
+				for e in cb.loot['equipment']:
+					if len(p.current_character._inventory['equipment']) < 10:
+						p.current_character._inventory['equipment'].append(e)
+					else:
+						full_inv.append(e)
+				for c in cb.loot['consumables']:
+					if len(p.current_character._inventory['consumables']) < 10:
+						p.current_character._inventory['consumables'].append(c)
+					else:
+						full_inv.append(c)
+				if full_inv:
+					full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
+					full_inv_msg += '\n'.join([i.name for i in full_inv])
+					await ctx.send(full_inv_msg)
 				if lvlup:
 					await ctx.send(f'You leveled up to {p.current_character.level}')
 				await msg.edit(content=cb.desc)
