@@ -172,7 +172,12 @@ class Equipment:
 		desc = f'**STR:** {self.str_bonus} | **DEX:** {self.dex_bonus}\n'
 		desc += f'**INT:** {self.int_bonus} | **CON:** {self.con_bonus}\n'
 		desc += f'**ATK:** {self.atk_bonus} | **DEF:** {self.def_bonus}\n\n'
-		return desc	
+		return desc
+
+	def __eq__(self, e):
+		if e is None:
+			return False
+		return self.id == e.id
 
 class Weapon(Equipment):
 	def __init__(self, min_damage, max_damage, stat, crit_chance, **kwargs):

@@ -53,6 +53,11 @@ class Consumable:
 		self.name = name
 		self.type = type
 
+	def __eq__(self, c):
+		if c is None:
+			return False
+		return self.id == c.id
+
 class RestorationPotion(Consumable):
 	def __init__(self, restored, **kwargs):
 		super().__init__(**kwargs)

@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.6'
+version = '2.0.22'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -339,7 +339,7 @@ class RPGCog(MyCog):
 		chars = character.get_characters(p)
 		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
 		desc += '__All characters__\n'
-		desc += '\n'.join([f'**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		desc += '\n'.join([f'{":skull_crossbones: " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
 
@@ -467,7 +467,8 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
-		await msg.add_reaction(spell1_emoji)
+		if p.current_character._spells:
+			await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 
 		def is_combat_icon(m):
@@ -497,9 +498,9 @@ class RPGCog(MyCog):
 				cb.character_combat('Attack')
 			elif react.emoji.name == 'spell1':
 				await msg.clear_reactions()
-				desc = ''
+				desc = f'**Current MP:** {p.current_character.current_mp}/{p.current_character.stats["INT"]}\n\n'
 				for i, s in enumerate(p.current_character._spells):
-					desc += f'**{i+1}**: {s.name} ({s.avg_dmg})\n'
+					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 					await msg.add_reaction(spell_emojis[i])
 				await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 				try:
@@ -543,10 +544,23 @@ class RPGCog(MyCog):
 
 		await msg.clear_reactions()
 		if cb.winner == p.current_character:
+			full_inv = []
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
-			p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
-			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
+			for e in cb.loot['equipment']:
+				if len(p.current_character._inventory['equipment']) < 10:
+					p.current_character._inventory['equipment'].append(e)
+				else:
+					full_inv.append(e)
+			for c in cb.loot['consumables']:
+				if len(p.current_character._inventory['consumables']) < 10:
+					p.current_character._inventory['consumables'].append(c)
+				else:
+					full_inv.append(c)
+			if full_inv:
+				full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
+				full_inv_msg += '\n'.join([i.name for i in full_inv])
+				await ctx.send(full_inv_msg)
 			if lvlup:
 				await ctx.send(f'You leveled up to {p.current_character.level}')
 		else:
@@ -569,7 +583,8 @@ class RPGCog(MyCog):
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
-		await msg.add_reaction(spell1_emoji)
+		if p.current_character._spells:
+			await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 		while True:
 
@@ -600,9 +615,9 @@ class RPGCog(MyCog):
 					cb.character_combat('Attack')
 				elif react.emoji.name == 'spell1':
 					await msg.clear_reactions()
-					desc = ''
+					desc = f'**Current MP:** {p.current_character.current_mp}/{p.current_character.stats["INT"]}\n\n'
 					for i, s in enumerate(p.current_character._spells):
-						desc += f'**{i+1}**: {s.name} ({s.avg_dmg})\n'
+						desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 						await msg.add_reaction(spell_emojis[i])
 					await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 					try:
@@ -645,19 +660,31 @@ class RPGCog(MyCog):
 				await msg.edit(embed=cb.embed)
 
 			if cb.winner == p.current_character:
+				full_inv = []
 				lvlup = p.current_character.add_exp(cb.exp)
 				p.current_character.gold += cb.loot['gold']
-				p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
-				p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
+				for e in cb.loot['equipment']:
+					if len(p.current_character._inventory['equipment']) < 10:
+						p.current_character._inventory['equipment'].append(e)
+					else:
+						full_inv.append(e)
+				for c in cb.loot['consumables']:
+					if len(p.current_character._inventory['consumables']) < 10:
+						p.current_character._inventory['consumables'].append(c)
+					else:
+						full_inv.append(c)
+				if full_inv:
+					full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
+					full_inv_msg += '\n'.join([i.name for i in full_inv])
+					await ctx.send(full_inv_msg)
 				if lvlup:
 					await ctx.send(f'You leveled up to {p.current_character.level}')
 				await msg.edit(content=cb.desc)
 			else:
 				p.current_character._death_timer = dt.now() + td(hours=1)
 				p.current_character.update()
-				await msg.remove_reaction(attack_emoji, self.bot.user)
-				await msg.remove_reaction(run_emoji, self.bot.user)
-				return
+				await msg.clear_reactions()
+				return await msg.edit(content='', embed=cb.embed)
 			p.current_character.update()
 			cb = combat.Combat(p.current_character)
 			await msg.edit(embed=cb.embed)
@@ -739,11 +766,9 @@ class RPGCog(MyCog):
 					else:
 						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
 				else:
-					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx])
-				p.current_character._inventory['equipment'].pop(idx)
+					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
 				pages.pop(idx)
 				if unequipped:
-					p.current_character._inventory['equipment'].append(unequipped)
 					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
@@ -792,6 +817,7 @@ class RPGCog(MyCog):
 		await msg.add_reaction(potion_emoji)
 		await msg.add_reaction(sell_emoji)
 		if len(pages) > 1:
+			content = ''
 			await msg.add_reaction(BACK)
 			await msg.add_reaction(NEXT)
 
@@ -808,17 +834,18 @@ class RPGCog(MyCog):
 				react = await self.bot.wait_for('raw_reaction_add', check=is_consumable_icon, timeout=60)
 			except asyncio.TimeoutError:
 				log.debug('Timeout, breaking')
+				await msg.clear_reactions()
 				break
 			if react.emoji.name == NEXT:
 				await msg.remove_reaction(NEXT, react.member)
 				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == 'potion':
 				await msg.remove_reaction(potion_emoji, react.member)
-				p.current_character.drink(p.current_character._inventory['consumables'][idx])
-				consumed = p.current_character._inventory['consumables'].pop(idx)
+				consumed = p.current_character.drink(p.current_character._inventory['consumables'][idx])
+				content = f'You regained {consumed.restored} {"HP" if consumed.type == "Health" else "MP"} ({p.current_character.current_con if consumed.type == "Health" else p.current_character.current_mp}/{p.current_character.stats["CON"] if consumed.type == "Health" else p.current_character.stats["INT"]})'
 				pages.pop(idx)
 				if len(pages) == 0:
-					return await msg.edit(content='You have no consumables', embed=None)
+					return await msg.edit(content=f'{content}\nYou have no consumables', embed=None)
 				idx = idx % len(pages)
 			elif react.emoji.name == sell_emoji:
 				await msg.remove_reaction(sell_emoji, react.member)
@@ -835,7 +862,7 @@ class RPGCog(MyCog):
 				idx = (idx - 1) % len(pages)
 			emb = pages[idx].embed
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
-			await msg.edit(content='', embed=emb)
+			await msg.edit(content=content, embed=emb)
 
 	@commands.command(name='unequip',
 					pass_context=True,
@@ -850,7 +877,6 @@ class RPGCog(MyCog):
 			return await ctx.send('That\'s not a slot')
 		unequipped = p.current_character.unequip(slot.lower())
 		if unequipped:
-			p.current_character._inventory['equipment'].append(unequipped)
 			return await ctx.send(f'You unequipped **{unequipped.name}**')
 		else:
 			return await ctx.send('You have nothing equipped in that slot.')
@@ -868,7 +894,7 @@ class RPGCog(MyCog):
 		spells = [s for s in spell.get_spells_by_profession(p.current_character.profession) if s.level <= p.current_character.level]	
 		if not spells:
 			return await ctx.send('You haven\'t learned any spells yet')
-		pages = [s.page for s in spells]
+		pages = [s.stat_page(p.current_character) for s in spells]
 		idx = 0
 		emb = pages[idx].embed
 		if len(pages) > 1:

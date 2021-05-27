@@ -67,7 +67,7 @@ class Monster:
 		i = self.base_int + (level * self.int_mod)
 		c = self.base_con + (level * self.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
-		self.current_con = c
+		self.current_con = ceil(c * 1.5)
 		self.level = level
 
 	@property
@@ -76,9 +76,7 @@ class Monster:
 	
 	@property
 	def damage(self):
-		min_dmg = randint(self.level * self.min_damage, ceil(self.level * self.min_damage * 1.1))
-		max_dmg = randint(self.level * self.max_damage + ceil((self.level * self.max_damage) / 10), int(self.level * self.max_damage * 2))
-		dmg = randint(min_dmg, max_dmg)
+		dmg = randint(self.level, floor(self.level * 1.25))
 		dmg += floor(self.stats.get(self.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.secondary_stat, 0) / 20)
 		if random() < self.crit_chance:

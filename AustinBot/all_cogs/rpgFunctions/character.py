@@ -260,6 +260,7 @@ class Character:
 		self.get_next_level_exp()
 		self.calculate_stats()
 		self.current_con = self.stats['CON']
+		self.current_mp = self.stats['INT']
 
 	def equip(self, equipment, slot=''):
 		if equipment.type == 'Helmet':
@@ -293,8 +294,15 @@ class Character:
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
-		self.update()
 		self.calculate_stats()
+		if self.current_con > self.stats['CON']:
+			self.current_con = self.stats['CON']
+		if self.current_mp > self.stats['INT']:
+			self.current_mp = self.stats['INT']
+		self._inventory['equipment'].pop(self._inventory['equipment'].index(equipment))
+		if prev_equip:
+			self._inventory['equipment'].append(prev_equip)
+		self.update()
 		return prev_equip
 
 	def unequip(self, slot):
@@ -325,8 +333,13 @@ class Character:
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = None
-		self.update()
 		self.calculate_stats()
+		if self.current_con > self.stats['CON']:
+			self.current_con = self.stats['CON']
+		if self.current_mp > self.stats['INT']:
+			self.current_mp = self.stats['INT']
+		self._inventory['equipment'].append(prev_equip)
+		self.update()
 		return prev_equip
 
 	def drink(self, potion):
@@ -339,8 +352,9 @@ class Character:
 				self.current_mp += potion.restored
 				if self.current_mp > self.stats['INT']:
 					self.current_mp = self.stats['INT']
-
+		self._inventory['consumables'].pop(self._inventory['consumables'].index(potion))
 		self.update()
+		return potion
 
 	@property
 	def equipment(self):
@@ -414,6 +428,7 @@ class Character:
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		min_damage += floor(self.armour_attack / 5)
 		max_damage += floor(self.armour_attack / 5)
 		dmg = randint(min_damage, max_damage)
 		if self.weapon:
@@ -437,6 +452,7 @@ class Character:
 		if self.off_hand and self.off_hand.type in weapon_types:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
+		min_damage += floor(self.armour_attack / 5)
 		max_damage += floor(self.armour_attack / 5)
 		dmg = floor((min_damage + max_damage) / 2)
 		if self.weapon:
@@ -450,10 +466,9 @@ class Character:
 		return dmg
 
 	def spell_damage(self, spell):
-		dmg = randint(spell.min_damage, spell.max_damage)
+		dmg = randint(spell.min_damage + floor(self.armour_attack / 5), spell.max_damage + floor(self.armour_attack / 5))
 		dmg += floor(self.stats[spell.stat] / 5)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
-		dmg += self.armour_attack
 		return dmg
 
 	def heal(self):
