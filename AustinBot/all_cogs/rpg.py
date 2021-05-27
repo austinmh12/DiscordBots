@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.22'
+version = '2.0.23'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -339,7 +339,7 @@ class RPGCog(MyCog):
 		chars = character.get_characters(p)
 		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
 		desc += '__All characters__\n'
-		desc += '\n'.join([f'{":skull_crossbones: " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c._death_timer) + " " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
 

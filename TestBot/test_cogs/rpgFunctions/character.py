@@ -180,10 +180,16 @@ class Character:
 		if isinstance(inventory, list):
 			return [get_equipment(i) for i in inventory]
 		else:
-			return {
-				'equipment': [get_equipment(e) for e in inventory['equipment']],
-				'consumables': [get_consumable(c) for c in inventory['consumables']]
-			}
+			ret = {'equipment': [], 'consumables': []}
+			for e in inventory['equipment']:
+				eq = get_equipment(e)
+				if eq:
+					ret['equipment'].append(eq)
+			for c in inventory['consumables']:
+				co = get_consumable(c)
+				if co:
+					ret['consumables'].append(co)
+			return ret
 
 	def parse_spells(self, spells):
 		spells = json.loads(spells)
