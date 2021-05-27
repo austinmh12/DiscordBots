@@ -352,8 +352,9 @@ class Character:
 				self.current_mp += potion.restored
 				if self.current_mp > self.stats['INT']:
 					self.current_mp = self.stats['INT']
-
+		self._inventory['consumables'].pop(self._inventory['consumables'].index(potion))
 		self.update()
+		return potion
 
 	@property
 	def equipment(self):

@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.12'
+version = '2.0.13'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -790,6 +790,7 @@ class RPGCog(MyCog):
 		await msg.add_reaction(potion_emoji)
 		await msg.add_reaction(sell_emoji)
 		if len(pages) > 1:
+			content = ''
 			await msg.add_reaction(BACK)
 			await msg.add_reaction(NEXT)
 
@@ -812,11 +813,11 @@ class RPGCog(MyCog):
 				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == 'potion':
 				await msg.remove_reaction(potion_emoji, react.member)
-				p.current_character.drink(p.current_character._inventory['consumables'][idx])
-				consumed = p.current_character._inventory['consumables'].pop(idx)
+				consumed = p.current_character.drink(p.current_character._inventory['consumables'][idx])
+				content = f'You regained {consumed.restored} {"HP" if consumed.type == "Health" else "MP"} ({p.current_character.current_con if consumed.type == "Health" else p.current_character.current_mp}/{p.current_character.stats["CON"] if consumed.type == "Health" else p.current_character.stats["INT"]})'
 				pages.pop(idx)
 				if len(pages) == 0:
-					return await msg.edit(content='You have no consumables', embed=None)
+					return await msg.edit(content=f'{content}\nYou have no consumables', embed=None)
 				idx = idx % len(pages)
 			elif react.emoji.name == sell_emoji:
 				await msg.remove_reaction(sell_emoji, react.member)
@@ -833,7 +834,7 @@ class RPGCog(MyCog):
 				idx = (idx - 1) % len(pages)
 			emb = pages[idx].embed
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
-			await msg.edit(content='', embed=emb)
+			await msg.edit(content=content, embed=emb)
 
 	@commands.command(name='unequip',
 					pass_context=True,
