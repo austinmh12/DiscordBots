@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.15'
+version = '2.0.16'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -497,7 +497,7 @@ class RPGCog(MyCog):
 				cb.character_combat('Attack')
 			elif react.emoji.name == 'spell1':
 				await msg.clear_reactions()
-				desc = ''
+				desc = f'**Current MP:** {p.current_character.current_mp}/{p.current_character.stats["INT"]}\n\n'
 				for i, s in enumerate(p.current_character._spells):
 					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 					await msg.add_reaction(spell_emojis[i])
@@ -613,7 +613,7 @@ class RPGCog(MyCog):
 					cb.character_combat('Attack')
 				elif react.emoji.name == 'spell1':
 					await msg.clear_reactions()
-					desc = ''
+					desc = f'**Current MP:** {p.current_character.current_mp}/{p.current_character.stats["INT"]}\n\n'
 					for i, s in enumerate(p.current_character._spells):
 						desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
 						await msg.add_reaction(spell_emojis[i])
