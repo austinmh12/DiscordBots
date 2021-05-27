@@ -17,7 +17,7 @@ from .rpgFunctions import consumable
 from .rpgFunctions import spell
 
 # Version
-version = '2.0.10'
+version = '2.0.12'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -499,7 +499,7 @@ class RPGCog(MyCog):
 				await msg.clear_reactions()
 				desc = ''
 				for i, s in enumerate(p.current_character._spells):
-					desc += f':spell{i+1}:: {s.name} (costs: {s.cost})\n'
+					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost})\n'
 					await msg.add_reaction(spell_emojis[i])
 				await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 				try:
@@ -602,7 +602,7 @@ class RPGCog(MyCog):
 					await msg.clear_reactions()
 					desc = ''
 					for i, s in enumerate(p.current_character._spells):
-						desc += f'**{i+1}**: {s.name} ({s.avg_dmg})\n'
+						desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost})\n'
 						await msg.add_reaction(spell_emojis[i])
 					await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 					try:
@@ -740,10 +740,8 @@ class RPGCog(MyCog):
 						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
 				else:
 					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
-				p.current_character._inventory['equipment'].pop(idx)
 				pages.pop(idx)
 				if unequipped:
-					p.current_character._inventory['equipment'].append(unequipped)
 					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
@@ -850,7 +848,6 @@ class RPGCog(MyCog):
 			return await ctx.send('That\'s not a slot')
 		unequipped = p.current_character.unequip(slot.lower())
 		if unequipped:
-			p.current_character._inventory['equipment'].append(unequipped)
 			return await ctx.send(f'You unequipped **{unequipped.name}**')
 		else:
 			return await ctx.send('You have nothing equipped in that slot.')

@@ -260,6 +260,7 @@ class Character:
 		self.get_next_level_exp()
 		self.calculate_stats()
 		self.current_con = self.stats['CON']
+		self.current_mp = self.stats['INT']
 
 	def equip(self, equipment, slot=''):
 		if equipment.type == 'Helmet':
@@ -293,8 +294,15 @@ class Character:
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
-		self.update()
 		self.calculate_stats()
+		if self.current_con > self.stats['CON']:
+			self.current_con = self.stats['CON']
+		if self.current_mp > self.stats['INT']:
+			self.current_mp = self.stats['INT']
+		self._inventory['equipment'].pop(self._inventory['equipment'].index(equipment))
+		if prev_equip:
+			self._inventory['equipment'].append(prev_equip)
+		self.update()
 		return prev_equip
 
 	def unequip(self, slot):
@@ -325,8 +333,13 @@ class Character:
 		else:
 			prev_equip = self.off_hand
 			self.off_hand = None
-		self.update()
 		self.calculate_stats()
+		if self.current_con > self.stats['CON']:
+			self.current_con = self.stats['CON']
+		if self.current_mp > self.stats['INT']:
+			self.current_mp = self.stats['INT']
+		self._inventory['equipment'].append(prev_equip)
+		self.update()
 		return prev_equip
 
 	def drink(self, potion):
