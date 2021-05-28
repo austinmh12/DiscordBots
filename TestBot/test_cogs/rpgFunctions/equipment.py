@@ -5,40 +5,32 @@ from random import randint, choice
 #############
 # Constants #
 #############
-weapon_types = [
-	'Sword',
-	'Longsword',
-	'Claymore',
-	'Shortbow',
-	'Longbow',
-	'Crossbow',
-	'Staff',
-	'Wand',
-	'Dagger',
-	'Knife'
-]
+## Weapon Info
+simple_weapons = ['Sword', 'Shortbow', 'Dagger', 'Wand']
+advanced_weapons = ['Longsword', 'Longbow', 'Knife', 'Staff']
+complex_weapons = ['Claymore', 'Crossbow', 'Whip', 'Grimoire']
+all_weapons = [*simple_weapons, *advanced_weapons, *complex_weapons]
+
 str_weapons = ['Sword', 'Longsword', 'Claymore']
-dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife']
-int_weapons = ['Staff', 'Wand']
+dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife', 'Whip']
+int_weapons = ['Staff', 'Wand', 'Grimoire']
 con_weapons = []
-one_handed_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
-armour_types = [
-	'Helmet',
-	'Chest',
-	'Legs',
-	'Boots',
-	'Gloves',
-	'Vambraces',
-	'Coif',
-	'Coat',
-	'Shield',
-	'Quiver',
-	'Orb'
-]
-jewelry_types = [
-	'Ring',
-	'Amulet'
-]
+
+dual_wield_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
+two_handed_weapons = ['Claymore', 'Shortbow', 'Longbow', 'Staff', 'Whip']
+
+## Armour Info
+basic_armour = ['Helmet', 'Chest', 'Gloves', 'Legs', 'Boots']
+off_hands = ['Shield', 'Orb', 'Quiver']
+all_armour = [*basic_armour, *off_hands]
+
+ignores_two_handed = ['Orb', 'Quiver']
+
+## Jewelry Info
+jewelry = ['Ring', 'Amulet']
+
+
+## Rarity Info
 rarity_magic_properties = {
 	'Trash': 0,
 	'Common': 1,
@@ -64,6 +56,7 @@ rarity_colour = {
 	'Mythic': (151, 0, 166)
 }
 
+## Icons
 up_indicator = '<:good_icon:846539230901829702>'
 down_indicator = '<:bad_icon:846539241353773056>'
 
@@ -80,9 +73,9 @@ def get_equipment(id):
 	df = sql('rpg', 'select * from equipment where id = ?', (id,))
 	if df.empty:
 		return None
-	if df['type'][0] in weapon_types:
+	if df['type'][0] in all_weapons:
 		return Weapon(**df.to_dict('records')[0])
-	elif df['type'][0] in armour_types:
+	elif df['type'][0] in all_armour:
 		return Armour(**df.to_dict('records')[0])
 	else:
 		return Jewelry(**df.to_dict('records')[0])
@@ -97,42 +90,124 @@ def delete_equipment(equipment):
 
 def generate_random_equipment(type, rarity, level):
 	id = get_next_equipment_id()
-	magic_properties = generate_random_magic_properties(rarity, level)
-	if type in weapon_types:
-		weapon_dict = {}
-		weapon_dict['min_damage'] = randint(level, ceil(level * 1.1))
-		weapon_dict['max_damage'] = randint(level + ceil(level / 10), int(level * 2))
-		weapon_dict['crit_chance'] = randint(0, 5 * rarity_magic_properties[rarity]) / 100
-		if type in str_weapons:
-			weapon_dict['stat'] = 'STR'
-		elif type in dex_weapons:
-			weapon_dict['stat'] = 'DEX'
-		elif type in int_weapons:
-			weapon_dict['stat'] = 'INT'
-		else:
-			weapon_dict['stat'] = 'CON'
-		equip = Weapon(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties, **weapon_dict)
-	elif type in armour_types:
-		armour_dict = {}
-		weight = choice(['Heavy', 'Medium', 'Light'])
-		armour_dict['weight'] = weight
-		if weight == 'Light':
-			armour_dict['defense'] = randint(level, ceil(level * 1.2))
-		elif weight == 'Medium':
-			armour_dict['defense'] = randint(level, ceil(level * 1.35))
-		else:
-			armour_dict['defense'] = randint(level, ceil(level * 1.5))
-		equip = Armour(id=id, name=f'{rarity} {weight} {type}', rarity=rarity, type=type, level=level, **magic_properties, **armour_dict)
+	if type in all_weapons:
+		equip = generate_weapon(id, type, rarity, level)
+	elif type in all_armour:
+		equip = generate_armour(id, type, rarity, level)
 	else:
-		equip = Jewelry(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties)
+		equip = generate_jewelry(id, type, rarity, level)
 	add_equipment(equip)
 	return equip
 
-def generate_random_magic_properties(rarity, level):
+def generate_weapon(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	name = generate_name(type, rarity, magic_properties)
+	if type in simple_weapons:
+		min_dmg = randint(level, ceil(level * 1.1))
+		max_dmg = randint(ceil(level * 1.1), int(ceil(level * 1.1) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 1.5
+	elif type in advanced_weapons:
+		min_dmg = randint(level, ceil(level * 1.25))
+		max_dmg = randint(ceil(level * 1.25), int(ceil(level * 1.25) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 1.8
+	else:
+		min_dmg = randint(level, ceil(level * 1.5))
+		max_dmg = randint(ceil(level * 1.5), int(ceil(level * 1.5) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 2.25
+	if type in str_weapons:
+		stat = 'STR'
+	elif type in dex_weapons:
+		stat = 'DEX'
+	elif type in int_weapons:
+		stat = 'INT'
+	else:
+		stat = 'CON'
+	return Weapon(
+		id=id, 
+		name=name, 
+		rarity=rarity, 
+		type=type, 
+		level=level, 
+		min_damage=min_dmg, 
+		max_damage=max_dmg, 
+		crit_chance=crit_chance,
+		stat=stat, 
+		**magic_properties
+	)
+
+def generate_armour(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	weight = choice(['Heavy', 'Medium', 'Light'])
+	name = generate_name(type, rarity, magic_properties, weight)
+	if weight == 'Light':
+		defense = randint(level, ceil(level * 1.2))
+	elif weight == 'Medium':
+		defense = randint(level, ceil(level * 1.35))
+	else:
+		defense = randint(level, ceil(level * 1.5))
+	return Armour(
+		id=id,
+		name=name,
+		rarity=rarity,
+		type=type,
+		level=level,
+		weight=weight,
+		defense=defense,
+		**magic_properties
+	)
+
+def generate_jewelry(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	name = generate_name(type, rarity, magic_properties)
+	return Jewelry(
+		id=id,
+		name=name,
+		rarity=rarity,
+		type=type,
+		level=level,
+		**magic_properties
+	)
+
+def generate_name(type, rarity, magic_properties, weight=''):
+	highest_bonus, _ = max([(k, v) for k,v in magic_properties.items()], key=lambda x: x[1])
+	if highest_bonus == 'str_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Lion'
+	elif highest_bonus == 'dex_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Hawk'
+	elif highest_bonus == 'int_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Scholar'
+	elif highest_bonus == 'con_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Bear'
+	else:
+		suffix = ''
+	if magic_properties['def_bonus'] > magic_properties['atk_bonus']:
+		prefix = 'Iron '
+	elif magic_properties['def_bonus'] < magic_properties['atk_bonus']:
+		prefix = 'Brutal '
+	else:
+		prefix = ''
+	return f'{rarity} {prefix}{" " + weight + " " if weight else ""}{type}{suffix}'
+
+def generate_random_magic_properties(type, rarity, level):
 	properties = ['str_bonus', 'dex_bonus', 'int_bonus', 'con_bonus', 'def_bonus', 'atk_bonus']
+	bonuses = ['con_bonus', 'def_bonus', 'atk_bonus']
+	if type in str_weapons:
+		bonuses.append('str_bonus')
+	if type in dex_weapons:
+		bonuses.append('dex_bonus')
+	if type in int_weapons:
+		bonuses.append('int_bonus')
+	if type in all_armour or type in jewelry:
+		bonuses = properties
 	generated_properties = {p: 0 for p in properties}
 	for _ in range(rarity_magic_properties[rarity]):
-		prop = choice(properties)
+		prop = choice(bonuses)
 		val = level
 		generated_properties[prop] += val
 	return generated_properties

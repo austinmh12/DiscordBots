@@ -6,7 +6,7 @@ from random import randint, choice
 #############
 # Constants #
 #############
-
+potions = ['Health', 'Mana']
 
 #############
 # Functions #

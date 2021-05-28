@@ -3,7 +3,8 @@ from random import randint, random, choice
 from datetime import datetime as dt, timedelta as td
 import json
 from . import *
-from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon_types
+from .equipment import (Equipment, Weapon, Armour, Jewelry, get_equipment, all_weapons,
+	dual_wield_weapons, two_handed_weapons, all_armour, ignores_two_handed, jewelry)
 from .profession import Profession, get_profession
 from .area import Area, get_area
 from .consumable import RestorationPotion, StatPotion, get_consumable
@@ -290,7 +291,7 @@ class Character:
 		elif equipment.type == 'Ring':
 			prev_equip = self.ring
 			self.ring = equipment
-		elif equipment.type in weapon_types:
+		elif equipment.type in all_weapons:
 			if slot == 'main':
 				prev_equip = self.weapon
 				self.weapon = equipment
@@ -431,7 +432,7 @@ class Character:
 		if self.weapon:
 			min_damage += self.weapon.min_damage
 			max_damage += self.weapon.max_damage
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
 		min_damage += floor(self.armour_attack / 5)
@@ -439,7 +440,7 @@ class Character:
 		dmg = randint(min_damage, max_damage)
 		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
@@ -455,7 +456,7 @@ class Character:
 		if self.weapon:
 			min_damage += self.weapon.min_damage
 			max_damage += self.weapon.max_damage
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
 		min_damage += floor(self.armour_attack / 5)
@@ -463,7 +464,7 @@ class Character:
 		dmg = floor((min_damage + max_damage) / 2)
 		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
