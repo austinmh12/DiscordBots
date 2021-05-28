@@ -167,11 +167,20 @@ class Equipment:
 		self.def_bonus = def_bonus
 		self.atk_bonus = atk_bonus
 
-	@property
-	def bonuses_details(self):
-		desc = f'**STR:** {self.str_bonus} | **DEX:** {self.dex_bonus}\n'
-		desc += f'**INT:** {self.int_bonus} | **CON:** {self.con_bonus}\n'
-		desc += f'**ATK:** {self.atk_bonus} | **DEF:** {self.def_bonus}\n\n'
+	def stat_indicator(self, eq, char):
+		if char < eq:
+			return up_indicator
+		elif char > eq:
+			return down_indicator
+		else:
+			return ':heavy_minus_sign:'
+
+	def bonuses_details(self, equipment):
+		if not equipment:
+			equipment = Equipment(0, '', '', '', 0, 0, 0, 0, 0, 0, 0)
+		desc = f'**STR:** {self.str_bonus} {self.stat_indicator(self.str_bonus, equipment.str_bonus)} | **DEX:** {self.dex_bonus} {self.stat_indicator(self.dex_bonus, equipment.dex_bonus)}\n'
+		desc += f'**INT:** {self.int_bonus} {self.stat_indicator(self.int_bonus, equipment.int_bonus)} | **CON:** {self.con_bonus} {self.stat_indicator(self.con_bonus, equipment.con_bonus)}\n'
+		desc += f'**ATK:** {self.atk_bonus} {self.stat_indicator(self.atk_bonus, equipment.atk_bonus)} | **DEF:** {self.def_bonus} {self.stat_indicator(self.def_bonus, equipment.def_bonus)}\n\n'
 		return desc
 
 	def __eq__(self, e):
@@ -229,17 +238,17 @@ class Weapon(Equipment):
 		if not character.weapon:
 			return ''
 		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
-		if rating < -.3:
+		if rating < -.5:
 			return down_indicator * 3
-		elif -.3 <= rating < -.2:
+		elif -.5 <= rating < -.35:
 			return down_indicator * 2
-		elif -.2 <= rating < -.1:
+		elif -.35 <= rating < -.1:
 			return down_indicator
 		elif -.1 <= rating < .1:
 			return ''
-		elif .1 <= rating < .2:
+		elif .1 <= rating < .35:
 			return up_indicator
-		elif .2 <= rating < .3:
+		elif .35 <= rating < .5:
 			return up_indicator * 2
 		else:
 			return up_indicator * 3
@@ -249,7 +258,7 @@ class Weapon(Equipment):
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
 		desc += f'**Crit Chance:** {self.crit_chance}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
-		desc += self.bonuses_details
+		desc += self.bonuses_details(character.weapon)
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -289,43 +298,50 @@ class Armour(Equipment):
 	def equipment_rating(self):
 		return 80 / (80 + self.defense)
 
+	def equipment_rating_with_character_stats(self, character):
+		return 80 / (80 + self.defense + character.stats['STR'])
+
+	def get_character_equipment(self, character):
+		if self.type == 'Helmet':
+			return character.helmet
+		elif self.type == 'Chest':
+			return character.chest
+		elif self.type == 'Legs':
+			return character.legs
+		elif self.type == 'Boots':
+			return character.boots
+		elif self.type == 'Gloves':
+			return character.gloves
+		else:
+			return character.off_hand
+
 	def compare_armour(self, character):
 		if self.weight != character.profession.weight:
 			return ':x:'
-		if self.type == 'Helmet':
-			equipment = character.helmet
-		elif self.type == 'Chest':
-			equipment = character.chest
-		elif self.type == 'Legs':
-			equipment = character.legs
-		elif self.type == 'Boots':
-			equipment = character.boots
-		elif self.type == 'Gloves':
-			equipment = character.gloves
-		else:
-			equipment = character.off_hand
+		equipment = self.get_character_equipment(character)
 		if not equipment:
 			return up_indicator * 3
-		rating = 1 - (equipment.equipment_rating / self.equipment_rating)
-		if rating < -.3:
+		rating = 1 - (equipment.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
+		if rating < -.5:
 			return down_indicator * 3
-		elif -.3 <= rating < -.2:
+		elif -.5 <= rating < -.35:
 			return down_indicator * 2
-		elif -.2 <= rating < -.1:
+		elif -.35 <= rating < -.1:
 			return down_indicator
 		elif -.1 <= rating < .1:
 			return ''
-		elif .1 <= rating < .2:
+		elif .1 <= rating < .35:
 			return up_indicator
-		elif .2 <= rating < .3:
+		elif .35 <= rating < .5:
 			return up_indicator * 2
 		else:
 			return up_indicator * 3
 
 	def stat_page(self, character):
+		eq = self.get_character_equipment(character)
 		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n'
 		desc += f'**Weight:** {self.weight}\n\n'
-		desc += self.bonuses_details
+		desc += self.bonuses_details(eq)
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -359,7 +375,14 @@ class Jewelry(Equipment):
 	def price(self):
 		return floor(self.level * rarity_price_bonus[self.rarity])
 
+	def get_character_equipment(self, character):
+		if self.type == 'Ring':
+			return character.ring
+		else:
+			return character.amulet
+
 	def stat_page(self, character):
-		desc += self.bonuses_details
+		eq = self.get_character_equipment(character)
+		desc += self.bonuses_details(eq)
 		desc = f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])

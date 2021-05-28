@@ -18,7 +18,7 @@ from .rpgFunctions import spell
 from .rpgFunctions.database import initialise_db
 
 # Version
-version = '2.0.24'
+version = '2.0.26'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -389,11 +389,7 @@ class RPGCog(MyCog):
 					p.current_character._inventory['equipment'].append(e)
 				else:
 					full_inv.append(e)
-			for c in cb.loot['consumables']:
-				if len(p.current_character._inventory['consumables']) < 10:
-					p.current_character._inventory['consumables'].append(c)
-				else:
-					full_inv.append(c)
+			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
 			if full_inv:
 				full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
 				full_inv_msg += '\n'.join([i.name for i in full_inv])
@@ -505,11 +501,7 @@ class RPGCog(MyCog):
 						p.current_character._inventory['equipment'].append(e)
 					else:
 						full_inv.append(e)
-				for c in cb.loot['consumables']:
-					if len(p.current_character._inventory['consumables']) < 10:
-						p.current_character._inventory['consumables'].append(c)
-					else:
-						full_inv.append(c)
+				p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
 				if full_inv:
 					full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
 					full_inv_msg += '\n'.join([i.name for i in full_inv])
