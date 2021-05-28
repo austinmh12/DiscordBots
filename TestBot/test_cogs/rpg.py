@@ -18,7 +18,7 @@ from .rpgFunctions import spell
 from .rpgFunctions.database import initialise_db
 
 # Version
-version = '2.0.26'
+version = '2.0.27'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -381,19 +381,10 @@ class RPGCog(MyCog):
 
 		await msg.clear_reactions()
 		if cb.winner == p.current_character:
-			full_inv = []
 			lvlup = p.current_character.add_exp(cb.exp)
 			p.current_character.gold += cb.loot['gold']
-			for e in cb.loot['equipment']:
-				if len(p.current_character._inventory['equipment']) < 10:
-					p.current_character._inventory['equipment'].append(e)
-				else:
-					full_inv.append(e)
 			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
-			if full_inv:
-				full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
-				full_inv_msg += '\n'.join([i.name for i in full_inv])
-				await ctx.send(full_inv_msg)
+			p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
 			if lvlup:
 				await ctx.send(f'You leveled up to {p.current_character.level}')
 		else:
@@ -493,19 +484,10 @@ class RPGCog(MyCog):
 				await msg.edit(embed=cb.embed)
 
 			if cb.winner == p.current_character:
-				full_inv = []
 				lvlup = p.current_character.add_exp(cb.exp)
 				p.current_character.gold += cb.loot['gold']
-				for e in cb.loot['equipment']:
-					if len(p.current_character._inventory['equipment']) < 10:
-						p.current_character._inventory['equipment'].append(e)
-					else:
-						full_inv.append(e)
 				p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
-				if full_inv:
-					full_inv_msg = 'You couldn\'t claim the following due to your inventory being full:\n'
-					full_inv_msg += '\n'.join([i.name for i in full_inv])
-					await ctx.send(full_inv_msg)
+				p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
 				if lvlup:
 					await ctx.send(f'You leveled up to {p.current_character.level}')
 				await msg.edit(content=cb.desc)
@@ -531,9 +513,9 @@ class RPGCog(MyCog):
 		# Do something similar to the paginated_embeds, but with a forward, back, equip, and sell icons
 		if not p.current_character._inventory['equipment']:
 			return await ctx.send('You have no equipment')
-		pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
+		pages = [e for e in p.current_character._inventory['equipment']]
 		idx = 0
-		emb = pages[idx].embed
+		emb = pages[idx].stat_page(p.current_character).embed
 		if len(pages) > 1:
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 		msg = await ctx.send(embed=emb)
@@ -598,7 +580,7 @@ class RPGCog(MyCog):
 					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
 				pages.pop(idx)
 				if unequipped:
-					pages = [e.stat_page(p.current_character) for e in p.current_character._inventory['equipment']]
+					pages = [e for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
 						await msg.clear_reactions()
@@ -623,7 +605,7 @@ class RPGCog(MyCog):
 			else:
 				await msg.remove_reaction(BACK, react.member)
 				idx = (idx - 1) % len(pages)
-			emb = pages[idx].embed
+			emb = pages[idx].stat_page(p.current_character).embed
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 			await msg.edit(content='', embed=emb)
 
@@ -638,9 +620,9 @@ class RPGCog(MyCog):
 			return await ctx.send('You need a character to view an consumables')
 		if not p.current_character._inventory['consumables']:
 			return await ctx.send('You have no consumables')
-		pages = [c.page for c in p.current_character._inventory['consumables']]
+		pages = [c for c in p.current_character._inventory['consumables']]
 		idx = 0
-		emb = pages[idx].embed
+		emb = pages[idx].page.embed
 		if len(pages) > 1:
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 		msg = await ctx.send(embed=emb)
@@ -692,7 +674,7 @@ class RPGCog(MyCog):
 			else:
 				await msg.remove_reaction(BACK, react.member)
 				idx = (idx - 1) % len(pages)
-			emb = pages[idx].embed
+			emb = pages[idx].page.embed
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 			await msg.edit(content=content, embed=emb)
 
