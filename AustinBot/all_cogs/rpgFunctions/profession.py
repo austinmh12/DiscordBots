@@ -8,7 +8,10 @@ all_professions = [
 	'warrior',
 	'wizard',
 	'archer',
-	'rogue'
+	'rogue',
+	'druid',
+	'artificer',
+	'paladin'
 ]
 light_professions = ['Archer', 'Wizard']
 medium_professions = ['Rogue']

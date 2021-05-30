@@ -41,7 +41,7 @@ class Combat:
 		elif action == 'Spell':
 			spell = self.character._spells[slot]
 			self.character.current_mp -= spell.cost
-			enemy_dodge_chance = self.enemy.stats['DEX'] / (self.character.stats['DEX'] * 9 + self.enemy.stats['DEX'])
+			enemy_dodge_chance = self.enemy.stats['INT'] / (self.character.stats['INT'] * 9 + self.enemy.stats['INT'])
 			if random() <= enemy_dodge_chance:
 				self.desc = f'**{self.enemy.name}** dodged your attack!'
 			else:

@@ -3,7 +3,8 @@ from random import randint, random, choice
 from datetime import datetime as dt, timedelta as td
 import json
 from . import *
-from .equipment import Equipment, Weapon, Armour, Jewelry, get_equipment, weapon_types
+from .equipment import (Equipment, Weapon, Armour, Jewelry, get_equipment, all_weapons,
+	dual_wield_weapons, two_handed_weapons, all_armour, ignores_two_handed, jewelry)
 from .profession import Profession, get_profession
 from .area import Area, get_area
 from .consumable import RestorationPotion, StatPotion, get_consumable
@@ -87,7 +88,7 @@ class Character:
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
-		self.current_con = self.stats['CON'] if 0 > current_con else current_con
+		self.current_con = self.stats['CON'] * 10 if 0 > current_con else current_con
 		self.current_mp = self.stats['INT'] if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
@@ -265,7 +266,7 @@ class Character:
 		self.level += 1
 		self.get_next_level_exp()
 		self.calculate_stats()
-		self.current_con = self.stats['CON']
+		self.current_con = self.stats['CON'] * 10
 		self.current_mp = self.stats['INT']
 
 	def equip(self, equipment, slot=''):
@@ -290,7 +291,7 @@ class Character:
 		elif equipment.type == 'Ring':
 			prev_equip = self.ring
 			self.ring = equipment
-		elif equipment.type in weapon_types:
+		elif equipment.type in all_weapons:
 			if slot == 'main':
 				prev_equip = self.weapon
 				self.weapon = equipment
@@ -301,8 +302,8 @@ class Character:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
 		self.calculate_stats()
-		if self.current_con > self.stats['CON']:
-			self.current_con = self.stats['CON']
+		if self.current_con > self.stats['CON'] * 10:
+			self.current_con = self.stats['CON'] * 10
 		if self.current_mp > self.stats['INT']:
 			self.current_mp = self.stats['INT']
 		self._inventory['equipment'].pop(self._inventory['equipment'].index(equipment))
@@ -340,8 +341,8 @@ class Character:
 			prev_equip = self.off_hand
 			self.off_hand = None
 		self.calculate_stats()
-		if self.current_con > self.stats['CON']:
-			self.current_con = self.stats['CON']
+		if self.current_con > self.stats['CON'] * 10:
+			self.current_con = self.stats['CON'] * 10
 		if self.current_mp > self.stats['INT']:
 			self.current_mp = self.stats['INT']
 		self._inventory['equipment'].append(prev_equip)
@@ -352,8 +353,8 @@ class Character:
 		if isinstance(potion, RestorationPotion):
 			if potion.type == 'Health':
 				self.current_con += potion.restored
-				if self.current_con > self.stats['CON']:
-					self.current_con = self.stats['CON']
+				if self.current_con > self.stats['CON'] * 10:
+					self.current_con = self.stats['CON'] * 10
 			else:
 				self.current_mp += potion.restored
 				if self.current_mp > self.stats['INT']:
@@ -382,7 +383,7 @@ class Character:
 
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
-		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"]} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
+		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"] * 10} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
 		splash_desc += '__**Stats**__\n'
@@ -431,7 +432,7 @@ class Character:
 		if self.weapon:
 			min_damage += self.weapon.min_damage
 			max_damage += self.weapon.max_damage
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
 		min_damage += floor(self.armour_attack / 5)
@@ -439,7 +440,7 @@ class Character:
 		dmg = randint(min_damage, max_damage)
 		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
@@ -455,7 +456,7 @@ class Character:
 		if self.weapon:
 			min_damage += self.weapon.min_damage
 			max_damage += self.weapon.max_damage
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			min_damage += self.off_hand.min_damage
 			max_damage += self.off_hand.max_damage
 		min_damage += floor(self.armour_attack / 5)
@@ -463,7 +464,7 @@ class Character:
 		dmg = floor((min_damage + max_damage) / 2)
 		if self.weapon:
 			dmg += floor(self.stats[self.weapon.stat] / 10)
-		if self.off_hand and self.off_hand.type in weapon_types:
+		if self.off_hand and self.off_hand.type in all_weapons:
 			dmg += floor(self.stats[self.off_hand.stat] / 10)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		dmg += floor(self.stats.get(self.profession.secondary_stat, 0) / 20)
@@ -472,7 +473,7 @@ class Character:
 		return dmg
 
 	def spell_damage(self, spell):
-		dmg = randint(spell.min_damage + floor(self.armour_attack / 5), spell.max_damage + floor(self.armour_attack / 5))
+		dmg = randint(spell.min_damage + floor(self.armour_attack / 5) + floor(self.stats['INT'] / 5), spell.max_damage + floor(self.armour_attack / 5) + floor(self.stats['INT'] / 5))
 		dmg += floor(self.stats[spell.stat] / 5)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		return dmg
@@ -481,10 +482,10 @@ class Character:
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
 			self.current_mp = self.stats['INT']
-		if self.stats['CON'] != self.current_con:
-			self.current_con += ceil(self.stats['CON'] / 10)
-			if self.current_con > self.stats['CON']:
-				self.current_con = self.stats['CON']
+		if self.stats['CON'] * 10 != self.current_con:
+			self.current_con += self.stats['CON']
+			if self.current_con > self.stats['CON'] * 10:
+				self.current_con = self.stats['CON'] * 10
 		if self.stats['INT'] != self.current_mp:
 			self.current_mp += ceil(self.stats['INT'] / 10)
 			if self.current_mp > self.stats['INT']:

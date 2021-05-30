@@ -2,8 +2,9 @@ from .. import sql, log, BASE_PATH, chunk, Page
 from random import randint, random, choice
 import json
 from .monster import get_monster
-from .equipment import generate_random_equipment
-from .consumable import generate_consumable
+from .equipment import (Equipment, generate_random_equipment, simple_weapons, advanced_weapons, complex_weapons,
+	all_weapons, basic_armour, off_hands, all_armour, jewelry)
+from .consumable import Consumable, generate_consumable, potions
 
 #############
 # Constants #
@@ -25,6 +26,33 @@ def get_area(name):
 		return None
 	return Area(**df.to_dict('records')[0])
 
+def get_item(item_info):
+	if item_info['type'] == 'Simple Weapon':
+		type = choice(simple_weapons)
+	elif item_info['type'] == 'Advanced Weapon':
+		type = choice(advanced_weapons)
+	elif item_info['type'] == 'Complex Weapon':
+		type = choice(complex_weapons)
+	elif item_info['type'] == 'All Weapons':
+		type = choice(all_weapons)
+	elif item_info['type'] == 'Basic Armour':
+		type = choice(basic_armour)
+	elif item_info['type'] == 'Off Hand':
+		type = choice(off_hands)
+	elif item_info['type'] == 'All Armour':
+		type = choice(all_armour)
+	elif item_info['type'] == 'Jewelry':
+		type = choice(jewelry)
+	elif item_info['type'] == 'Restoration':
+		type = choice(potions)
+	else:
+		type = item_info['type']
+	level = randint(item_info['min_level'], item_info['max_level'])
+	if type in potions:
+		return generate_consumable(type, level)
+	rarity = choice(item_info['rarities'])
+	return generate_random_equipment(type, rarity, level)
+
 ###########
 # Classes #
 ###########
@@ -44,25 +72,20 @@ class Area:
 	def get_random_loot(self):
 		ret = {}
 		ret['gold'] = randint(1, self.loot_table['gold'])
-		equipment = []
-		for _ in range(self.loot_table['max_item_count']):
-			if random() < self.loot_table['item_chance']:
-				item_type = choice(list(self.loot_table['items'].keys()))
-				item_info = self.loot_table['items'][item_type]
-				rarity = choice(item_info['rarities'])
-				level = randint(item_info['min_level'], item_info['max_level'])
-				item = generate_random_equipment(item_type, rarity, level)
-				equipment.append(item)
-		consumables = []
-		for _ in range(self.loot_table['max_item_count'] - len(equipment)):
-			if random() < self.loot_table['item_chance']:
-				item_type = choice(list(self.loot_table['consumables'].keys()))
-				item_info = self.loot_table['consumables'][item_type]
-				level = randint(item_info['min_level'], item_info['max_level'])
-				item = generate_consumable(item_type, level)
-				consumables.append(item)
-		ret['equipment'] = equipment
-		ret['consumables'] = consumables
+		items = []
+		for _ in range(self.loot_table['100%']['drops']):
+			item_info = choice(list(self.loot_table['100%']['items']))
+			items.append(get_item(item_info))
+		for _ in range(self.loot_table['main']['drops']):
+			if random() < self.loot_table['main']['chance']:
+				item_info = choice(list(self.loot_table['main']['items']))
+				items.append(get_item(item_info))
+		for _ in range(self.loot_table['secondary']['drops']):
+			if random() < self.loot_table['secondary']['chance']:
+				item_info = choice(list(self.loot_table['secondary']['items']))
+				items.append(get_item(item_info))
+		ret['equipment'] = [i for i in items if isinstance(i, Equipment)]
+		ret['consumables'] = [i for i in items if isinstance(i, Consumable)]
 		return ret
 
 	@property
@@ -71,8 +94,4 @@ class Area:
 		desc += '__**Monsters**__\n'
 		for m, m_inf in self.monsters.items():
 			desc += f'{m} ({m_inf["min_level"]} - {m_inf["max_level"]})\n'
-		desc += '\n__**Items**__\n'
-		for i, i_inf in self.loot_table['items'].items():
-			desc += f'{i.capitalize()} ({i_inf["min_level"]} - {i_inf["max_level"]})\n'
 		return Page(self.name, desc, colour=(150, 150, 150))
-	

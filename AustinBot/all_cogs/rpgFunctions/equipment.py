@@ -5,40 +5,32 @@ from random import randint, choice
 #############
 # Constants #
 #############
-weapon_types = [
-	'Sword',
-	'Longsword',
-	'Claymore',
-	'Shortbow',
-	'Longbow',
-	'Crossbow',
-	'Staff',
-	'Wand',
-	'Dagger',
-	'Knife'
-]
+## Weapon Info
+simple_weapons = ['Sword', 'Shortbow', 'Dagger', 'Wand']
+advanced_weapons = ['Longsword', 'Longbow', 'Knife', 'Staff']
+complex_weapons = ['Claymore', 'Crossbow', 'Whip', 'Grimoire']
+all_weapons = [*simple_weapons, *advanced_weapons, *complex_weapons]
+
 str_weapons = ['Sword', 'Longsword', 'Claymore']
-dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife']
-int_weapons = ['Staff', 'Wand']
+dex_weapons = ['Shortbow', 'Longbow', 'Crossbow', 'Dagger', 'Knife', 'Whip']
+int_weapons = ['Staff', 'Wand', 'Grimoire']
 con_weapons = []
-one_handed_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
-armour_types = [
-	'Helmet',
-	'Chest',
-	'Legs',
-	'Boots',
-	'Gloves',
-	'Vambraces',
-	'Coif',
-	'Coat',
-	'Shield',
-	'Quiver',
-	'Orb'
-]
-jewelry_types = [
-	'Ring',
-	'Amulet'
-]
+
+dual_wield_weapons = ['Sword', 'Dagger', 'Knife', 'Crossbow']
+two_handed_weapons = ['Claymore', 'Shortbow', 'Longbow', 'Staff', 'Whip']
+
+## Armour Info
+basic_armour = ['Helmet', 'Chest', 'Gloves', 'Legs', 'Boots']
+off_hands = ['Shield', 'Orb', 'Quiver']
+all_armour = [*basic_armour, *off_hands]
+
+ignores_two_handed = ['Orb', 'Quiver']
+
+## Jewelry Info
+jewelry = ['Ring', 'Amulet']
+
+
+## Rarity Info
 rarity_magic_properties = {
 	'Trash': 0,
 	'Common': 1,
@@ -64,6 +56,7 @@ rarity_colour = {
 	'Mythic': (151, 0, 166)
 }
 
+## Icons
 up_indicator = '<:good_icon:846539230901829702>'
 down_indicator = '<:bad_icon:846539241353773056>'
 
@@ -80,9 +73,9 @@ def get_equipment(id):
 	df = sql('rpg', 'select * from equipment where id = ?', (id,))
 	if df.empty:
 		return None
-	if df['type'][0] in weapon_types:
+	if df['type'][0] in all_weapons:
 		return Weapon(**df.to_dict('records')[0])
-	elif df['type'][0] in armour_types:
+	elif df['type'][0] in all_armour:
 		return Armour(**df.to_dict('records')[0])
 	else:
 		return Jewelry(**df.to_dict('records')[0])
@@ -97,42 +90,124 @@ def delete_equipment(equipment):
 
 def generate_random_equipment(type, rarity, level):
 	id = get_next_equipment_id()
-	magic_properties = generate_random_magic_properties(rarity, level)
-	if type in weapon_types:
-		weapon_dict = {}
-		weapon_dict['min_damage'] = randint(level, ceil(level * 1.1))
-		weapon_dict['max_damage'] = randint(level + ceil(level / 10), int(level * 2))
-		weapon_dict['crit_chance'] = randint(0, 5 * rarity_magic_properties[rarity]) / 100
-		if type in str_weapons:
-			weapon_dict['stat'] = 'STR'
-		elif type in dex_weapons:
-			weapon_dict['stat'] = 'DEX'
-		elif type in int_weapons:
-			weapon_dict['stat'] = 'INT'
-		else:
-			weapon_dict['stat'] = 'CON'
-		equip = Weapon(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties, **weapon_dict)
-	elif type in armour_types:
-		armour_dict = {}
-		weight = choice(['Heavy', 'Medium', 'Light'])
-		armour_dict['weight'] = weight
-		if weight == 'Light':
-			armour_dict['defense'] = randint(level, ceil(level * 1.2))
-		elif weight == 'Medium':
-			armour_dict['defense'] = randint(level, ceil(level * 1.35))
-		else:
-			armour_dict['defense'] = randint(level, ceil(level * 1.5))
-		equip = Armour(id=id, name=f'{rarity} {weight} {type}', rarity=rarity, type=type, level=level, **magic_properties, **armour_dict)
+	if type in all_weapons:
+		equip = generate_weapon(id, type, rarity, level)
+	elif type in all_armour:
+		equip = generate_armour(id, type, rarity, level)
 	else:
-		equip = Jewelry(id=id, name=f'{rarity} {type}', rarity=rarity, type=type, level=level, **magic_properties)
+		equip = generate_jewelry(id, type, rarity, level)
 	add_equipment(equip)
 	return equip
 
-def generate_random_magic_properties(rarity, level):
+def generate_weapon(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	name = generate_name(type, rarity, magic_properties)
+	if type in simple_weapons:
+		min_dmg = randint(level, ceil(level * 1.1))
+		max_dmg = randint(ceil(level * 1.1), int(ceil(level * 1.1) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 1.5
+	elif type in advanced_weapons:
+		min_dmg = randint(level, ceil(level * 1.25))
+		max_dmg = randint(ceil(level * 1.25), int(ceil(level * 1.25) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 1.8
+	else:
+		min_dmg = randint(level, ceil(level * 1.5))
+		max_dmg = randint(ceil(level * 1.5), int(ceil(level * 1.5) * 2))
+		crit_chance = randint(0, 5 * rarity_magic_properties[rarity]) / 100
+		if type in dex_weapons:
+			crit_chance *= 2.25
+	if type in str_weapons:
+		stat = 'STR'
+	elif type in dex_weapons:
+		stat = 'DEX'
+	elif type in int_weapons:
+		stat = 'INT'
+	else:
+		stat = 'CON'
+	return Weapon(
+		id=id, 
+		name=name, 
+		rarity=rarity, 
+		type=type, 
+		level=level, 
+		min_damage=min_dmg, 
+		max_damage=max_dmg, 
+		crit_chance=crit_chance,
+		stat=stat, 
+		**magic_properties
+	)
+
+def generate_armour(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	weight = choice(['Heavy', 'Medium', 'Light'])
+	name = generate_name(type, rarity, magic_properties, weight)
+	if weight == 'Light':
+		defense = randint(level, ceil(level * 1.2))
+	elif weight == 'Medium':
+		defense = randint(level, ceil(level * 1.35))
+	else:
+		defense = randint(level, ceil(level * 1.5))
+	return Armour(
+		id=id,
+		name=name,
+		rarity=rarity,
+		type=type,
+		level=level,
+		weight=weight,
+		defense=defense,
+		**magic_properties
+	)
+
+def generate_jewelry(id, type, rarity, level):
+	magic_properties = generate_random_magic_properties(type, rarity, level)
+	name = generate_name(type, rarity, magic_properties)
+	return Jewelry(
+		id=id,
+		name=name,
+		rarity=rarity,
+		type=type,
+		level=level,
+		**magic_properties
+	)
+
+def generate_name(type, rarity, magic_properties, weight=''):
+	highest_bonus, _ = max([(k, v) for k,v in magic_properties.items()], key=lambda x: x[1])
+	if highest_bonus == 'str_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Lion'
+	elif highest_bonus == 'dex_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Hawk'
+	elif highest_bonus == 'int_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Scholar'
+	elif highest_bonus == 'con_bonus' and magic_properties[highest_bonus] != 0:
+		suffix = ' of the Bear'
+	else:
+		suffix = ''
+	if magic_properties['def_bonus'] > magic_properties['atk_bonus']:
+		prefix = 'Valiant '
+	elif magic_properties['def_bonus'] < magic_properties['atk_bonus']:
+		prefix = 'Brutal '
+	else:
+		prefix = ''
+	return f'{rarity} {prefix}{weight + " " if weight else ""}{type}{suffix}'
+
+def generate_random_magic_properties(type, rarity, level):
 	properties = ['str_bonus', 'dex_bonus', 'int_bonus', 'con_bonus', 'def_bonus', 'atk_bonus']
+	bonuses = ['con_bonus', 'def_bonus', 'atk_bonus']
+	if type in str_weapons:
+		bonuses.append('str_bonus')
+	if type in dex_weapons:
+		bonuses.append('dex_bonus')
+	if type in int_weapons:
+		bonuses.append('int_bonus')
+	if type in all_armour or type in jewelry:
+		bonuses = properties
 	generated_properties = {p: 0 for p in properties}
 	for _ in range(rarity_magic_properties[rarity]):
-		prop = choice(properties)
+		prop = choice(bonuses)
 		val = level
 		generated_properties[prop] += val
 	return generated_properties
@@ -167,11 +242,20 @@ class Equipment:
 		self.def_bonus = def_bonus
 		self.atk_bonus = atk_bonus
 
-	@property
-	def bonuses_details(self):
-		desc = f'**STR:** {self.str_bonus} | **DEX:** {self.dex_bonus}\n'
-		desc += f'**INT:** {self.int_bonus} | **CON:** {self.con_bonus}\n'
-		desc += f'**ATK:** {self.atk_bonus} | **DEF:** {self.def_bonus}\n\n'
+	def stat_indicator(self, eq, char):
+		if char < eq:
+			return up_indicator
+		elif char > eq:
+			return down_indicator
+		else:
+			return ':heavy_minus_sign:'
+
+	def bonuses_details(self, equipment):
+		if not equipment:
+			equipment = Equipment(0, '', '', '', 0, 0, 0, 0, 0, 0, 0)
+		desc = f'**STR:** {self.str_bonus} {self.stat_indicator(self.str_bonus, equipment.str_bonus)} | **DEX:** {self.dex_bonus} {self.stat_indicator(self.dex_bonus, equipment.dex_bonus)}\n'
+		desc += f'**INT:** {self.int_bonus} {self.stat_indicator(self.int_bonus, equipment.int_bonus)} | **CON:** {self.con_bonus} {self.stat_indicator(self.con_bonus, equipment.con_bonus)}\n'
+		desc += f'**ATK:** {self.atk_bonus} {self.stat_indicator(self.atk_bonus, equipment.atk_bonus)} | **DEF:** {self.def_bonus} {self.stat_indicator(self.def_bonus, equipment.def_bonus)}\n\n'
 		return desc
 
 	def __eq__(self, e):
@@ -229,17 +313,17 @@ class Weapon(Equipment):
 		if not character.weapon:
 			return ''
 		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
-		if rating < -.3:
+		if rating < -.5:
 			return down_indicator * 3
-		elif -.3 <= rating < -.2:
+		elif -.5 <= rating < -.35:
 			return down_indicator * 2
-		elif -.2 <= rating < -.1:
+		elif -.35 <= rating < -.1:
 			return down_indicator
 		elif -.1 <= rating < .1:
 			return ''
-		elif .1 <= rating < .2:
+		elif .1 <= rating < .35:
 			return up_indicator
-		elif .2 <= rating < .3:
+		elif .35 <= rating < .5:
 			return up_indicator * 2
 		else:
 			return up_indicator * 3
@@ -247,9 +331,9 @@ class Weapon(Equipment):
 	def stat_page(self, character):
 		desc = f'**DPS:** {round(self.equipment_rating, 2)} {self.compare_weapons(character)}\n\n'
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
-		desc += f'**Crit Chance:** {self.crit_chance}\n'
+		desc += f'**Crit Chance:** {round(self.crit_chance, 2)}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
-		desc += self.bonuses_details
+		desc += self.bonuses_details(character.weapon)
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -289,43 +373,50 @@ class Armour(Equipment):
 	def equipment_rating(self):
 		return 80 / (80 + self.defense)
 
+	def equipment_rating_with_character_stats(self, character):
+		return 80 / (80 + self.defense + character.stats['STR'])
+
+	def get_character_equipment(self, character):
+		if self.type == 'Helmet':
+			return character.helmet
+		elif self.type == 'Chest':
+			return character.chest
+		elif self.type == 'Legs':
+			return character.legs
+		elif self.type == 'Boots':
+			return character.boots
+		elif self.type == 'Gloves':
+			return character.gloves
+		else:
+			return character.off_hand
+
 	def compare_armour(self, character):
 		if self.weight != character.profession.weight:
 			return ':x:'
-		if self.type == 'Helmet':
-			equipment = character.helmet
-		elif self.type == 'Chest':
-			equipment = character.chest
-		elif self.type == 'Legs':
-			equipment = character.legs
-		elif self.type == 'Boots':
-			equipment = character.boots
-		elif self.type == 'Gloves':
-			equipment = character.gloves
-		else:
-			equipment = character.off_hand
+		equipment = self.get_character_equipment(character)
 		if not equipment:
 			return up_indicator * 3
-		rating = 1 - (equipment.equipment_rating / self.equipment_rating)
-		if rating < -.3:
+		rating = 1 - (equipment.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
+		if rating < -.5:
 			return down_indicator * 3
-		elif -.3 <= rating < -.2:
+		elif -.5 <= rating < -.35:
 			return down_indicator * 2
-		elif -.2 <= rating < -.1:
+		elif -.35 <= rating < -.1:
 			return down_indicator
 		elif -.1 <= rating < .1:
 			return ''
-		elif .1 <= rating < .2:
+		elif .1 <= rating < .35:
 			return up_indicator
-		elif .2 <= rating < .3:
+		elif .35 <= rating < .5:
 			return up_indicator * 2
 		else:
 			return up_indicator * 3
 
 	def stat_page(self, character):
+		eq = self.get_character_equipment(character)
 		desc = f'**Defense:** {self.defense} {self.compare_armour(character)}\n'
 		desc += f'**Weight:** {self.weight}\n\n'
-		desc += self.bonuses_details
+		desc += self.bonuses_details(eq)
 		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
@@ -359,7 +450,14 @@ class Jewelry(Equipment):
 	def price(self):
 		return floor(self.level * rarity_price_bonus[self.rarity])
 
+	def get_character_equipment(self, character):
+		if self.type == 'Ring':
+			return character.ring
+		else:
+			return character.amulet
+
 	def stat_page(self, character):
-		desc += self.bonuses_details
-		desc = f'**Sell Price:** {self.price} :coin:'
+		eq = self.get_character_equipment(character)
+		desc = self.bonuses_details(eq)
+		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
