@@ -88,7 +88,7 @@ class Character:
 		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
-		self.current_con = self.stats['CON'] if 0 > current_con else current_con
+		self.current_con = self.stats['CON'] * 10 if 0 > current_con else current_con
 		self.current_mp = self.stats['INT'] if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer

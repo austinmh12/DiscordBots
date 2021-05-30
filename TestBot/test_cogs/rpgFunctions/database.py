@@ -90,7 +90,11 @@ def initialise_db():
 			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7,'Heavy')
 			,("Wizard","INT","",4,5,10,5,1,1,3,1,3,0,'Light')
 			,("Archer","DEX","",5,9,6,5,1,3,1,2,2,0,'Light')
-			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0,'Medium')'''
+			,("Rogue","DEX","",3,11,7,6,1,3,1,1,4,0,'Medium')
+			,("Artificer","INT","CON",4,6,8,8,1,2,3,3,3,0,'Medium')
+			,("Druid","CON","STR",8,7,5,9,3,1,1,3,1,0,'Medium')
+			,("Paladin","STR","INT",9,4,8,7,3,1,3,2,1,7,'Heavy')
+			'''
 	)
 	sql('rpg', '''insert into equipment values
 			(1,"Starter Sword","Trash","Sword",1,0,0,0,0,0,0,"",0,1,3,"STR",0.05)
@@ -103,7 +107,8 @@ def initialise_db():
 			,(8,"Ripped Leather Vest","Trash","Chest",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
 			,(9,"Ripped Leather Pants","Trash","Legs",1,0,0,0,0,0,0,"Medium",2,0,0,"",0)
 			,(10,"Tattered Cloth Shirt","Trash","Chest",1,0,0,0,0,0,0,"Light",1,0,0,"",0)
-			,(11,"Tattered Cloth Pants","Trash","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)'''
+			,(11,"Tattered Cloth Pants","Trash","Legs",1,0,0,0,0,0,0,"Light",1,0,0,"",0)
+			'''
 	)
 	sql('rpg', '''insert into monsters values
 			('Goblin','STR','',1,3,0.02,1,1,1,1,1,1,1,1,2,2)

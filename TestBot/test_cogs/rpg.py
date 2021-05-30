@@ -18,7 +18,7 @@ from .rpgFunctions import spell
 from .rpgFunctions.database import initialise_db
 
 # Version
-version = '2.0.30'
+version = '2.1.0'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -101,8 +101,8 @@ class RPGCog(MyCog):
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
 		p = self.get_or_add_player_from_ctx(ctx)
 		marked_for_deletion = False
-		if len(character.get_characters(p)) >= 3:
-			return await ctx.send('You can only have 3 characters')
+		if len(character.get_characters(p)) >= 5:
+			return await ctx.send('You can only have 5 characters')
 
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
@@ -133,10 +133,10 @@ class RPGCog(MyCog):
 				return await ctx.send('You ran out of time.')
 			prof = reply.content
 		prof = profession.get_profession(prof)
-		if prof.name in profession.light_professions:
+		if prof.weight == 'Light':
 			starting_chest = equipment.get_equipment(10)
 			starting_legs = equipment.get_equipment(11)
-		elif prof.name in profession.medium_professions:
+		elif prof.weight == 'Medium':
 			starting_chest = equipment.get_equipment(8)
 			starting_legs = equipment.get_equipment(9)
 		else:
