@@ -18,7 +18,7 @@ from .rpgFunctions import spell
 from .rpgFunctions.database import initialise_db
 
 # Version
-version = '2.1.0'
+version = '2.1.1'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'
@@ -617,10 +617,9 @@ class RPGCog(MyCog):
 				pages.pop(idx)
 				if unequipped:
 					pages = [e for e in p.current_character._inventory['equipment']]
-				else:
-					if len(pages) == 0:
-						await msg.clear_reactions()
-						return await msg.edit(content='You have no items', embed=None)
+				if len(pages) == 0:
+					await msg.clear_reactions()
+					return await msg.edit(content='You have no items', embed=None)
 				idx = idx % len(pages)
 				await msg.clear_reactions()
 				await msg.add_reaction(equip_emoji)
