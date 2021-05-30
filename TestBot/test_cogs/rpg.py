@@ -553,34 +553,101 @@ class RPGCog(MyCog):
 				idx = (idx + 1) % len(pages)
 			elif react.emoji.name == 'equip':
 				await msg.remove_reaction(equip_emoji, react.member)
-				if isinstance(p.current_character._inventory['equipment'][idx], equipment.Armour):
-					if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
-						await msg.edit(content='You can\'t equip this item')
-						continue
-				if p.current_character._inventory['equipment'][idx].type in equipment.one_handed_weapons:
-					await msg.clear_reactions()
-					await msg.edit(content='Main or Off-Hand?')
-					await msg.add_reaction(main_hand)
-					await msg.add_reaction(off_hand)
-					try:
-						react = await self.bot.wait_for('raw_reaction_add', check=is_main_off_hand_icon, timeout=60)
-					except asyncio.TimeoutError:
-						log.debug('Timeout, breaking')
+				unequipped = []
+				eq = p.current_character._inventory['equipment'][idx]
+				# If the item is armour
+				if isinstance(eq, equipment.Armour):
+					# If the item is in basic armour, equip it so long as the weight is for that profession
+					if eq.type in equipment.basic_armour:
+						unequipped.append(p.current_character.equip(eq))
+					# If the item is in off hands then check to see if the weapon is two-handed
+					if eq.type in equipment.off_hands:
+						# If the weapon is two-handed check to see if this item ignores two-handed
+						if p.current_character.weapon and p.current_character.weapon.type in equipment.two_handed_weapons:
+							# If it ignores, equip it
+							if eq.type in equipment.ignores_two_handed:
+								unequipped.append(p.current_character.equip(eq))
+							# If not send warning
+							else:
+								await msg.edit(content='You need to unequip you weapon to equip this')
+								continue
+						# If the weapon is one handed or dual-wieldable, equip
+						else:
+							unequipped.append(p.current_character.equip(eq))
+				# If the item is a weapon
+				elif isinstance(eq, equipment.Weapon):
+					# If it's one handed, equip to main hand
+					if eq.type not in [*equipment.dual_wield_weapons, *equipment.two_handed_weapons]:
+						unequipped.append(p.current_character.equip(eq, 'main'))
+					# If the item is dual-wieldable check if the current weapon is dual-wieldable
+					elif eq.type in equipment.dual_wield_weapons:
 						await msg.clear_reactions()
-						await msg.add_reaction(equip_emoji)
-						await msg.add_reaction(sell_emoji)
-						await msg.add_reaction(BACK)
-						await msg.add_reaction(NEXT)
-						continue
-					if react.emoji.name == main_hand:
-						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
+						await msg.edit(content='Main or Off-Hand?')
+						await msg.add_reaction(main_hand)
+						await msg.add_reaction(off_hand)
+						try:
+							react = await self.bot.wait_for('raw_reaction_add', check=is_main_off_hand_icon, timeout=60)
+						except asyncio.TimeoutError:
+							log.debug('Timeout, breaking')
+							await msg.clear_reactions()
+							await msg.add_reaction(equip_emoji)
+							await msg.add_reaction(sell_emoji)
+							await msg.add_reaction(BACK)
+							await msg.add_reaction(NEXT)
+							continue
+						# check if current weapon is dual-wieldable
+						if react.emoji.name == main_hand:
+							# if it is, equip to off-hand
+							unequipped.append(p.current_character.equip(eq, 'main'))
+						else:
+							# otherwise, unequip main hand and equip to off-hand
+							if p.current_character.weapon and p.current_character.weapon.type in equipment.two_handed_weapons:
+								unequipped.append(p.current_character.unequip('weapon'))
+							unequipped.append(p.current_character.equip(eq, 'off'))
+					# If the item is two-handed unequip the main hand
 					else:
-						unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
+						# If the off-hand doesn't ignore two-handed weapons, unequip it
+						if p.current_character.off_hand and p.current_character.off_hand.type not in equipment.ignores_two_handed:
+							unequipped.append(p.current_character.unequip('offhand'))
+						unequipped.append(p.current_character.equip(eq, 'main'))
+				# If it's jewelry just equip it
 				else:
-					unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
+					unequipped.append(p.current_character.equip(eq))
+				# Add unequipped items back the inventory
 				pages.pop(idx)
 				if unequipped:
 					pages = [e for e in p.current_character._inventory['equipment']]
+
+
+
+				# if isinstance(p.current_character._inventory['equipment'][idx], equipment.Armour):
+				# 	if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
+				# 		await msg.edit(content='You can\'t equip this item')
+				# 		continue
+				# if p.current_character._inventory['equipment'][idx].type in equipment.dual_wield_weapons:
+				# 	await msg.clear_reactions()
+				# 	await msg.edit(content='Main or Off-Hand?')
+				# 	await msg.add_reaction(main_hand)
+				# 	await msg.add_reaction(off_hand)
+				# 	try:
+				# 		react = await self.bot.wait_for('raw_reaction_add', check=is_main_off_hand_icon, timeout=60)
+				# 	except asyncio.TimeoutError:
+				# 		log.debug('Timeout, breaking')
+				# 		await msg.clear_reactions()
+				# 		await msg.add_reaction(equip_emoji)
+				# 		await msg.add_reaction(sell_emoji)
+				# 		await msg.add_reaction(BACK)
+				# 		await msg.add_reaction(NEXT)
+				# 		continue
+				# 	if react.emoji.name == main_hand:
+				# 		unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
+				# 	else:
+				# 		unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
+				# else:
+				# 	unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
+				# pages.pop(idx)
+				# if unequipped:
+				# 	pages = [e for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
 						await msg.clear_reactions()

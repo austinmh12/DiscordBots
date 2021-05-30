@@ -187,12 +187,12 @@ def generate_name(type, rarity, magic_properties, weight=''):
 	else:
 		suffix = ''
 	if magic_properties['def_bonus'] > magic_properties['atk_bonus']:
-		prefix = 'Iron '
+		prefix = 'Valiant '
 	elif magic_properties['def_bonus'] < magic_properties['atk_bonus']:
 		prefix = 'Brutal '
 	else:
 		prefix = ''
-	return f'{rarity} {prefix}{" " + weight + " " if weight else ""}{type}{suffix}'
+	return f'{rarity} {prefix}{weight + " " if weight else ""}{type}{suffix}'
 
 def generate_random_magic_properties(type, rarity, level):
 	properties = ['str_bonus', 'dex_bonus', 'int_bonus', 'con_bonus', 'def_bonus', 'atk_bonus']
@@ -458,6 +458,6 @@ class Jewelry(Equipment):
 
 	def stat_page(self, character):
 		eq = self.get_character_equipment(character)
-		desc += self.bonuses_details(eq)
-		desc = f'**Sell Price:** {self.price} :coin:'
+		desc = self.bonuses_details(eq)
+		desc += f'**Sell Price:** {self.price} :coin:'
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
