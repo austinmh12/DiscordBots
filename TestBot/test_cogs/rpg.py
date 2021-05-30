@@ -18,7 +18,7 @@ from .rpgFunctions import spell
 from .rpgFunctions.database import initialise_db
 
 # Version
-version = '2.0.29'
+version = '2.0.30'
 
 # Constants
 attack_emoji = '\u2694\ufe0f'

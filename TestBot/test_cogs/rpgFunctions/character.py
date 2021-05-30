@@ -266,7 +266,7 @@ class Character:
 		self.level += 1
 		self.get_next_level_exp()
 		self.calculate_stats()
-		self.current_con = self.stats['CON']
+		self.current_con = self.stats['CON'] * 10
 		self.current_mp = self.stats['INT']
 
 	def equip(self, equipment, slot=''):
@@ -302,8 +302,8 @@ class Character:
 			prev_equip = self.off_hand
 			self.off_hand = equipment
 		self.calculate_stats()
-		if self.current_con > self.stats['CON']:
-			self.current_con = self.stats['CON']
+		if self.current_con > self.stats['CON'] * 10:
+			self.current_con = self.stats['CON'] * 10
 		if self.current_mp > self.stats['INT']:
 			self.current_mp = self.stats['INT']
 		self._inventory['equipment'].pop(self._inventory['equipment'].index(equipment))
@@ -341,8 +341,8 @@ class Character:
 			prev_equip = self.off_hand
 			self.off_hand = None
 		self.calculate_stats()
-		if self.current_con > self.stats['CON']:
-			self.current_con = self.stats['CON']
+		if self.current_con > self.stats['CON'] * 10:
+			self.current_con = self.stats['CON'] * 10
 		if self.current_mp > self.stats['INT']:
 			self.current_mp = self.stats['INT']
 		self._inventory['equipment'].append(prev_equip)
@@ -353,8 +353,8 @@ class Character:
 		if isinstance(potion, RestorationPotion):
 			if potion.type == 'Health':
 				self.current_con += potion.restored
-				if self.current_con > self.stats['CON']:
-					self.current_con = self.stats['CON']
+				if self.current_con > self.stats['CON'] * 10:
+					self.current_con = self.stats['CON'] * 10
 			else:
 				self.current_mp += potion.restored
 				if self.current_mp > self.stats['INT']:
@@ -383,7 +383,7 @@ class Character:
 
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
-		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"]} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
+		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"] * 10} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
 		splash_desc += '__**Stats**__\n'
@@ -482,10 +482,10 @@ class Character:
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON']
 			self.current_mp = self.stats['INT']
-		if self.stats['CON'] != self.current_con:
-			self.current_con += ceil(self.stats['CON'] / 10)
-			if self.current_con > self.stats['CON']:
-				self.current_con = self.stats['CON']
+		if self.stats['CON'] * 10 != self.current_con:
+			self.current_con += self.stats['CON']
+			if self.current_con > self.stats['CON'] * 10:
+				self.current_con = self.stats['CON'] * 10
 		if self.stats['INT'] != self.current_mp:
 			self.current_mp += ceil(self.stats['INT'] / 10)
 			if self.current_mp > self.stats['INT']:

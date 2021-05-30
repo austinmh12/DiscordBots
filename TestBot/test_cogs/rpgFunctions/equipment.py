@@ -331,7 +331,7 @@ class Weapon(Equipment):
 	def stat_page(self, character):
 		desc = f'**DPS:** {round(self.equipment_rating, 2)} {self.compare_weapons(character)}\n\n'
 		desc += f'**Damage:** {self.min_damage} - {self.max_damage}\n'
-		desc += f'**Crit Chance:** {self.crit_chance}\n'
+		desc += f'**Crit Chance:** {round(self.crit_chance, 2)}\n'
 		desc += f'**Main Stat:** {self.stat}\n\n'
 		desc += self.bonuses_details(character.weapon)
 		desc += f'**Sell Price:** {self.price} :coin:'

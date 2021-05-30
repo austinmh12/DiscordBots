@@ -67,7 +67,7 @@ class Monster:
 		i = self.base_int + (level * self.int_mod)
 		c = self.base_con + (level * self.con_mod)
 		self.stats = {'STR': s, 'DEX': d, 'INT': i, 'CON': c}
-		self.current_con = ceil(c * 1.5)
+		self.current_con = c * 10
 		self.level = level
 
 	@property
