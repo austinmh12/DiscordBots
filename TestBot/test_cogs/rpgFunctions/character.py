@@ -473,7 +473,7 @@ class Character:
 		return dmg
 
 	def spell_damage(self, spell):
-		dmg = randint(spell.min_damage + floor(self.armour_attack / 5), spell.max_damage + floor(self.armour_attack / 5))
+		dmg = randint(spell.min_damage + floor(self.armour_attack / 5) + floor(self.stats['INT'] / 5), spell.max_damage + floor(self.armour_attack / 5) + floor(self.stats['INT'] / 5))
 		dmg += floor(self.stats[spell.stat] / 5)
 		dmg += floor(self.stats.get(self.profession.primary_stat, 0) / 10)
 		return dmg
