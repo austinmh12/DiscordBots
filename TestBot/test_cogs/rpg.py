@@ -617,37 +617,6 @@ class RPGCog(MyCog):
 				pages.pop(idx)
 				if unequipped:
 					pages = [e for e in p.current_character._inventory['equipment']]
-
-
-
-				# if isinstance(p.current_character._inventory['equipment'][idx], equipment.Armour):
-				# 	if p.current_character.profession.weight != p.current_character._inventory['equipment'][idx].weight:
-				# 		await msg.edit(content='You can\'t equip this item')
-				# 		continue
-				# if p.current_character._inventory['equipment'][idx].type in equipment.dual_wield_weapons:
-				# 	await msg.clear_reactions()
-				# 	await msg.edit(content='Main or Off-Hand?')
-				# 	await msg.add_reaction(main_hand)
-				# 	await msg.add_reaction(off_hand)
-				# 	try:
-				# 		react = await self.bot.wait_for('raw_reaction_add', check=is_main_off_hand_icon, timeout=60)
-				# 	except asyncio.TimeoutError:
-				# 		log.debug('Timeout, breaking')
-				# 		await msg.clear_reactions()
-				# 		await msg.add_reaction(equip_emoji)
-				# 		await msg.add_reaction(sell_emoji)
-				# 		await msg.add_reaction(BACK)
-				# 		await msg.add_reaction(NEXT)
-				# 		continue
-				# 	if react.emoji.name == main_hand:
-				# 		unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
-				# 	else:
-				# 		unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'off')
-				# else:
-				# 	unequipped = p.current_character.equip(p.current_character._inventory['equipment'][idx], 'main')
-				# pages.pop(idx)
-				# if unequipped:
-				# 	pages = [e for e in p.current_character._inventory['equipment']]
 				else:
 					if len(pages) == 0:
 						await msg.clear_reactions()
