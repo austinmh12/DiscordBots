@@ -1,7 +1,7 @@
 from .. import sql
 
 def initialise_db():
-	sql('rpg', 'create table players (id integer, guild_id integer, current_character text)')
+	sql('rpg', 'create table players (id integer, guild_id integer, current_character text, bank text)')
 	sql('rpg', '''create table professions (
 			name text
 			,primary_stat text
