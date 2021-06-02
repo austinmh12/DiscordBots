@@ -89,7 +89,7 @@ class Character:
 		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] * 10 if 0 > current_con else current_con
-		self.current_mp = self.stats['INT'] if 0 > current_mp else current_mp
+		self.current_mp = self.stats['INT'] * 5 if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
 		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
 		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
@@ -267,7 +267,7 @@ class Character:
 		self.get_next_level_exp()
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] * 10
-		self.current_mp = self.stats['INT']
+		self.current_mp = self.stats['INT'] * 5
 
 	def equip(self, equipment, slot=''):
 		if equipment.type == 'Helmet':
@@ -304,8 +304,8 @@ class Character:
 		self.calculate_stats()
 		if self.current_con > self.stats['CON'] * 10:
 			self.current_con = self.stats['CON'] * 10
-		if self.current_mp > self.stats['INT']:
-			self.current_mp = self.stats['INT']
+		if self.current_mp > self.stats['INT'] * 5:
+			self.current_mp = self.stats['INT'] * 5
 		self._inventory['equipment'].pop(self._inventory['equipment'].index(equipment))
 		if prev_equip:
 			self._inventory['equipment'].append(prev_equip)
@@ -343,8 +343,8 @@ class Character:
 		self.calculate_stats()
 		if self.current_con > self.stats['CON'] * 10:
 			self.current_con = self.stats['CON'] * 10
-		if self.current_mp > self.stats['INT']:
-			self.current_mp = self.stats['INT']
+		if self.current_mp > self.stats['INT'] * 5:
+			self.current_mp = self.stats['INT'] * 5
 		self._inventory['equipment'].append(prev_equip)
 		self.update()
 		return prev_equip
@@ -357,8 +357,8 @@ class Character:
 					self.current_con = self.stats['CON'] * 10
 			else:
 				self.current_mp += potion.restored
-				if self.current_mp > self.stats['INT']:
-					self.current_mp = self.stats['INT']
+				if self.current_mp > self.stats['INT'] * 5:
+					self.current_mp = self.stats['INT'] * 5
 		self._inventory['consumables'].pop(self._inventory['consumables'].index(potion))
 		self.update()
 		return potion
@@ -383,7 +383,7 @@ class Character:
 
 		# Character Overview
 		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
-		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"] * 10} | **Current MP:** {self.current_mp}/{self.stats["INT"]}\n'
+		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"] * 10} | **Current MP:** {self.current_mp}/{self.stats["INT"] * 5}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
 		splash_desc += '__**Stats**__\n'
@@ -480,14 +480,14 @@ class Character:
 
 	def heal(self):
 		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
-			self.current_con = self.stats['CON']
-			self.current_mp = self.stats['INT']
+			self.current_con = self.stats['CON'] * 10
+			self.current_mp = self.stats['INT'] * 5
 		if self.stats['CON'] * 10 != self.current_con:
 			self.current_con += self.stats['CON']
 			if self.current_con > self.stats['CON'] * 10:
 				self.current_con = self.stats['CON'] * 10
-		if self.stats['INT'] != self.current_mp:
-			self.current_mp += ceil(self.stats['INT'] / 10)
-			if self.current_mp > self.stats['INT']:
-				self.current_mp = self.stats['INT']
+		if self.stats['INT'] * 5 != self.current_mp:
+			self.current_mp += ceil(self.stats['INT'] / 2)
+			if self.current_mp > self.stats['INT'] * 5:
+				self.current_mp = self.stats['INT'] * 5
 		self.update()
