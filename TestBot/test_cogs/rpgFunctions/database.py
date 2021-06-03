@@ -170,3 +170,12 @@ def initialise_db():
 		,('Backstab','Rogue',5,7,12,'DEX',5)
 		,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
 	)
+
+def migrate_database():
+	for sql_command in migration_steps:
+		sql('rpg', sql_command)
+
+migration_steps = [
+	'alter table players add column bank text;',
+	'''update players set bank = '{"gold": 0, "equipment": [], "consumables": []}';'''
+]
