@@ -27,6 +27,7 @@ mods/
 world/
 *.json
 *.jar
+*.log
 server.properties
 
 # Temporary values
