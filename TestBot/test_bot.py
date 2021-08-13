@@ -13,7 +13,8 @@ from os.path import getmtime
 # from test_cogs.pokeroulette import PokeRoulette
 # from test_cogs.anime import AnimeCog
 # from test_cogs.boardgame import BoardGameCog
-from test_cogs.rpg import RPGCog
+# from test_cogs.rpg import RPGCog
+from test_cogs.poketcg import PokeTCG
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -105,5 +106,6 @@ client.loop.create_task(check_for_changes())
 # client.add_cog(PokeRoulette(client))
 # client.add_cog(AnimeCog(client))
 # client.add_cog(BoardGameCog(client))
-client.add_cog(RPGCog(client))
+# client.add_cog(RPGCog(client))
+client.add_cog(PokeTCG(client))
 client.run(ENV['TESTBOT'], bot=True)
