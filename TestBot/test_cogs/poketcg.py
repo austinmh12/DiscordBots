@@ -74,7 +74,9 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_player_cards(self, ctx):
-		...
+		player = Player.get_player(ctx.author.id)
+		cards = Card.get_player_cards(player)
+		return await self.paginated_embeds(ctx, [c.page for c in cards])
 
 	## sets
 	@commands.command(name='sets',
@@ -106,14 +108,35 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_player_packs(self, ctx):
-		...
+		player = Player.get_player(ctx.author.id)
+		desc = 'Use **.openpack <set_id> (amount)** to open packs\n'
+		for set_id, amount in player.packs.items():
+			desc += f'**{set_id}** - {amount}\n'
+		return await self.paginated_embeds(ctx, Page('You packs', desc))
 
 	@commands.command(name='openpack',
 					pass_context=True,
 					description='',
 					brief='')
 	async def open_pack(self, ctx, set_id):
-		...
+		# TODO: add ability to open multiple
+		player = Player.get_player(ctx.author.id)
+		set_id = set_id.lower()
+		set_ = Sets.get_set(set_id)
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		if set_id not in player.packs:
+			return await ctx.send('Looks like you don\'t have a pack from that set')
+		pack = Packs.Pack.from_set(set_id)
+		for card in pack:
+			Card.add_or_update_card(player, card)
+		player.packs[set_id] -= 1
+		if player.packs[set_id] == 0:
+			del player.packs[set_id]
+		player.packs_opened += 1
+		player.total_cards += 10
+		player.update()
+		return await self.paginated_embeds(ctx, pack.pages)
 
 	## store
 	@commands.command(name='store',
@@ -121,6 +144,7 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
+		# TODO: Fix buying multiple bug
 		player = Player.get_player(ctx.author.id)
 		slot = slot if 1 <= slot <= 5 else 0
 		if not self.store:
@@ -128,8 +152,17 @@ class PokeTCG(MyCog):
 		if self.store.get('reset') < dt.now():
 			self.store = self.generate_store()
 		if slot:
-			# buying pack code
-			...
+			s = self.store.get(slot)
+			if player.cash < s.pack_price:
+				return await ctx.send(f'You don\'t have enough... You need **${s.pack_price - player.cash}** more.')
+			if s.id in player.packs:
+				player.packs[s.id] += 1
+			else:
+				player.packs[s.id] = 1
+			player.cash -= s.pack_price
+			player.packs_bought += 1
+			await ctx.send(f'You bought {amt} {s.name} packs!')
+			return player.update()
 		desc = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
 		desc += f'You have **${player.cash}**\n'
 		desc += 'Here are the packs available today. To purchasae one, use **.store <slot no.>**\n\n'

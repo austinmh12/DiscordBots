@@ -76,3 +76,6 @@ class Pack:
 		rare = choices(rares, weights=rare_weight, k=1)[0]
 		pack.append(rare)
 		return cls(set_, pack)
+
+	def __iter__(self):
+		yield from self.cards

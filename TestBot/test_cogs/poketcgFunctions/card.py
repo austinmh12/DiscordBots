@@ -1,5 +1,5 @@
 import json
-from .. import Page, log
+from .. import Page, log, sql
 from . import api_call
 from .sets import Set
 from .player import Player, get_player
@@ -37,7 +37,7 @@ def get_card_by_id(card_id):
 		return None
 
 def get_player_cards(player):
-	df = sql('poketcg', 'select * from cards where discord_id = ?', (player.discord_id))
+	df = sql('poketcg', 'select * from cards where discord_id = ?', (player.discord_id,))
 	if df.empty:
 		return []
 	return [PlayerCard(**d) for d in df.to_dict('records')]
@@ -51,11 +51,14 @@ def get_player_card(player, card_id):
 def add_or_update_card(player, card):
 	player_card = get_player_card(player, card.id)
 	if player_card is None:
-		player_card = PlayerCard(player.discord_id, card_id, -1)
+		player_card = PlayerCard(player.discord_id, card.id, -1)
 	if player_card.amount == -1:
 		sql('poketcg', 'insert into cards values (?,?,?)', (player.discord_id, card.id, 1))
 	else:
 		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (player.discord_id, card.id, player_card.amount + 1))
+
+def add_pack(player, pack):
+	...
 
 def remove_card(player, card, amount=1):
 	...
