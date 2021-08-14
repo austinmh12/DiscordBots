@@ -1,4 +1,4 @@
-from .. import Page, sql
+from .. import Page, sql, format_remaining_time
 from datetime import datetime as dt
 import json
 
@@ -88,3 +88,12 @@ class Player:
 		if not col_val:
 			return
 		return sql('poketcg', sql_str, vals)
+
+	@property
+	def stats_desc(self):
+		desc = f'**Wallet:** ${self.cash:.2f} | **Total Earned:** ${self.total_cash:.2f}\n'
+		desc += f'**Current Packs:** {sum(self.packs.values())}\n'
+		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n'
+		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n'
+		desc += f'Daily reset in **{format_remaining_time(self.daily_reset)}**'
+		return desc

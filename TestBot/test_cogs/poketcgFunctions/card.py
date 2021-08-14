@@ -1,8 +1,14 @@
 import json
-from .. import Page, log, sql
+from .. import Page, log, sql, chunk
 from . import api_call
 from .sets import Set
 from .player import Player, get_player
+
+# contants
+UPDATE_CARDS = '''update cards
+set amount = (select tc.amount from tmp_cards tc where tc.discord_id = cards.discord_id and tc.card_id = cards.card_id)
+where cards.discord_id in (select tc.discord_id from tmp_cards tc where tc.discord_id = cards.discord_id and tc.card_id = cards.card_id)
+	and cards.card_id in (select tc.card_id from tmp_cards tc where tc.discord_id = cards.discord_id and tc.card_id = cards.card_id);'''
 
 # functions
 def get_cards():
@@ -17,6 +23,7 @@ def get_cards():
 
 def get_cards_with_query(q):
 	params = {'q': q}
+	log.debug(json.dumps(params))
 	data = api_call('cards', params)
 	try:
 		cards = [Card(**d) for d in data['data']]
@@ -37,16 +44,16 @@ def get_card_by_id(card_id):
 		return None
 
 def get_player_cards(player):
-	df = sql('poketcg', 'select * from cards where discord_id = ?', (player.discord_id,))
+	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ?', (player.discord_id,))
 	if df.empty:
 		return []
-	return [PlayerCard(**d) for d in df.to_dict('records')]
+	return [PlayerCard(player, **d) for d in df.to_dict('records')]
 
 def get_player_card(player, card_id):
-	df = sql('poketcg', 'select * from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
+	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
 	if df.empty:
 		return None
-	return PlayerCard(**df.to_dict('records')[0])
+	return PlayerCard(player, **df.to_dict('records')[0])
 
 def add_or_update_card(player, card):
 	player_card = get_player_card(player, card.id)
@@ -57,8 +64,40 @@ def add_or_update_card(player, card):
 	else:
 		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (player.discord_id, card.id, player_card.amount + 1))
 
-def add_pack(player, pack):
-	...
+def add_or_update_cards_from_pack(player, pack):
+	log.debug('getting player cards')
+	player_cards = get_player_cards(player)
+	log.debug('sorting cards into bins')
+	unique = list(set(pack))
+	new = [c for c in unique if c not in player_cards]
+	updating = [c for c in unique if c not in new]
+	if new:
+		log.debug('adding new cards')
+		new_chunks = chunk(new, 249)
+		for nc in new_chunks:
+			vals = []
+			sql_str = 'insert into cards values '
+			for c in nc:
+				sql_str += ' (?,?,?),'
+				vals.extend((player.discord_id, c.id, 1))
+			sql('poketcg', sql_str[:-1], vals)
+	if updating:
+		log.debug('updating existing cards')
+		sql('poketcg', 'drop table if exists tmp_cards')
+		sql('poketcg', 'create table tmp_cards (discord_id integer, card_id text, amount integer)')
+		card_map = {c.card: c for c in player_cards}
+		updating_chunks = chunk(updating, 249)
+		for uc in updating_chunks:
+			vals = []
+			sql_str = 'insert into tmp_cards values '
+			for u in uc:
+				sql_str += ' (?,?,?),'
+				amt = card_map.get(u.id).amount + 1
+				vals.extend((player.discord_id, u.id, amt))
+			sql('poketcg', sql_str[:-1], vals)
+		sql('poketcg', UPDATE_CARDS)
+
+
 
 def remove_card(player, card, amount=1):
 	...
@@ -108,10 +147,18 @@ class Card:
 		desc += f'ID: {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)
 
+	def __eq__(self, c):
+		if isinstance(c, PlayerCard):
+			return self.id == c.card
+		return self.id == c.id
+
+	def __hash__(self):
+		return hash(self.id)
+
 class PlayerCard:
-	def __init__(self, discord_id, card_id, amount):
-		self.player = get_player(discord_id)
-		self.card = get_card_by_id(card_id)
+	def __init__(self, player, card_id, amount):
+		self.player = player
+		self.card = card_id
 		self.amount = amount
 
 	@property
@@ -119,3 +166,11 @@ class PlayerCard:
 		page = self.card.page
 		page.desc += f'Owned: {self.amount}'
 		return page
+
+	def __eq__(self, c):
+		if isinstance(c, Card):
+			return self.card == c.id
+		return self.card == pc.card
+
+	def __hash__(self):
+		return hash(self.card_id)

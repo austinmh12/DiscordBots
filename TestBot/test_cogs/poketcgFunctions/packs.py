@@ -20,7 +20,9 @@ rarity_mapping = {
 	'Rare Shining': 20,
 	'Rare Shiny': 5,
 	'Rare Shiny GX': 2,
-	'Rare Ultra': 35
+	'Rare Ultra': 35,
+	'Amazing Rare': 15,
+	'LEGEND': 3
 }
 
 def generate_pack(set_id):

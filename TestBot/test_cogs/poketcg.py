@@ -2,7 +2,7 @@ from . import log, BASE_PATH, Page, MyCog, chunk, sql, format_remaining_time, BA
 from discord import File
 from discord.ext import commands, tasks
 import asyncio
-from random import randint, choice, choices
+from random import randint, choice, choices, random
 import typing
 import os.path
 from datetime import datetime as dt, timedelta as td
@@ -24,6 +24,9 @@ def query_builder(q):
 	if ' ' in q:
 		q = f'"{q}"'
 	return q
+
+def admin_check(ctx):
+	return ctx.message.author.guild_permissions.administrator
 
 class PokeTCG(MyCog):
 	def __init__(self, bot):
@@ -73,10 +76,64 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='',
 					brief='')
-	async def get_player_cards(self, ctx):
+	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'id'):
 		player = Player.get_player(ctx.author.id)
-		cards = Card.get_player_cards(player)
-		return await self.paginated_embeds(ctx, [c.page for c in cards])
+		player_cards = Card.get_player_cards(player)
+		sort_by = 'id' if sort_by not in ['id', 'amount', 'price'] else sort_by
+		if sort_by == 'id':
+			player_cards.sort(key=lambda x: x.card)
+		if sort_by == 'price':
+			q = ' OR '.join([f'id:{p.card}' for p in player_cards])
+			cards = Card.get_cards_with_query(f'({q})')
+			log.debug(len(cards))
+			cards.sort(key=lambda x: x.price, reverse=True)
+			card_ids = {c.id: cards.index(c) for c in cards}
+			player_cards.sort(key=lambda x: card_ids.get(x.card, 999))
+		else:
+			player_cards.sort(key=lambda x: x.amount, reverse=True)
+		idx = 0
+		page = Card.get_card_by_id(player_cards[idx].card).page
+		page.desc += f'Owned: {player_cards[idx].amount}'
+		if len(player_cards) > 1:
+			page.footer = f'{idx + 1}/{len(player_cards)}'
+		msg = await ctx.send(embed=page.embed)
+		if len(player_cards) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+		def is_left_right(m):
+			return all([
+				m.emoji.name in [BACK, NEXT],
+				m.member.id != self.bot.user.id,
+				m.message_id == msg.id,
+				m.member == ctx.author
+			])
+
+		while True:
+			try:
+				react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=60)
+			except asyncio.TimeoutError:
+				log.debug('Timeout, breaking')
+				await msg.clear_reactions()
+				break
+			if react.emoji.name == NEXT:
+				await msg.remove_reaction(NEXT, react.member)
+				idx = (idx + 1) % len(player_cards)
+			else:
+				await msg.remove_reaction(BACK, react.member)
+				idx = (idx - 1) % len(player_cards)
+			page = Card.get_card_by_id(player_cards[idx].card).page
+			page.desc += f'Owned: {player_cards[idx].amount}'
+			if len(player_cards) > 1:
+				page.footer = f'{idx + 1}/{len(player_cards)}'
+			await msg.edit(embed=page.embed)
+
+	@commands.command(name='sellcard',
+					pass_context=True,
+					description='',
+					brief='')
+	async def sell_card(self, ctx, card_id, amt: typing.Optional[int] = 1):
+		...
 
 	## sets
 	@commands.command(name='sets',
@@ -118,24 +175,34 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='',
 					brief='')
-	async def open_pack(self, ctx, set_id):
+	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		# TODO: add ability to open multiple
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
+		log.debug('getting set')
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
 		if set_id not in player.packs:
 			return await ctx.send('Looks like you don\'t have a pack from that set')
-		pack = Packs.Pack.from_set(set_id)
-		for card in pack:
-			Card.add_or_update_card(player, card)
-		player.packs[set_id] -= 1
+		log.debug('generating packs')
+		packs = []
+		opened = 0
+		while opened < player.packs[set_id] and opened < amt:
+			pack = Packs.Pack.from_set(set_id)
+			packs.extend(pack)
+			opened += 1
+		pack = Packs.Pack(set_id, packs)
+		log.debug('updating player cards')
+		Card.add_or_update_cards_from_pack(player, pack)
+		log.debug('updating player stats')
+		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:
 			del player.packs[set_id]
-		player.packs_opened += 1
-		player.total_cards += 10
+		player.packs_opened += opened
+		player.total_cards += 10 * opened
 		player.update()
+		log.debug('displaying pack')
 		return await self.paginated_embeds(ctx, pack.pages)
 
 	## store
@@ -155,13 +222,15 @@ class PokeTCG(MyCog):
 			s = self.store.get(slot)
 			if player.cash < s.pack_price:
 				return await ctx.send(f'You don\'t have enough... You need **${s.pack_price - player.cash}** more.')
-			if s.id in player.packs:
-				player.packs[s.id] += 1
-			else:
-				player.packs[s.id] = 1
-			player.cash -= s.pack_price
-			player.packs_bought += 1
-			await ctx.send(f'You bought {amt} {s.name} packs!')
+			bought = 0
+			while player.cash >= s.pack_price and bought < amt:
+				player.cash -= s.pack_price
+				bought += 1
+			if s.id not in player.packs:
+				player.packs[s.id] = 0
+			player.packs[s.id] += bought
+			player.packs_bought += bought
+			await ctx.send(f'You bought {bought} **{s.name}** packs!')
 			return player.update()
 		desc = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
 		desc += f'You have **${player.cash}**\n'
@@ -179,7 +248,8 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def player_stats(self, ctx):
-		...
+		player = Player.get_player(ctx.author.id)
+		return await self.paginated_embeds(ctx, Page(ctx.author.display_name, player.stats_desc))
 
 	@commands.command(name='options',
 					pass_context=True,
@@ -194,7 +264,22 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def daily(self, ctx):
-		...
+		player = Player.get_player(ctx.author.id)
+		if player.daily_reset > dt.now():
+			return await ctx.send(f'Your next daily reward is in **{format_remaining_time(player.daily_reset)}**')
+		if random() < .1:
+			set_ = choice(Sets.get_sets())
+			if s.id not in player.packs:
+				player.packs[s.id] = 0
+			player.packs[s.id] += 1
+			await ctx.send(f'You got a{"n" if s.name[0] in "aeiou" else ""} **{s.name}** pack!')
+		else:
+			cash = randint(1, 10)
+			player.cash += cash
+			player.total_cash += cash
+			await ctx.send(f'You got **${cash}**!')
+		player.daily_reset = dt.now() + td(days=1)
+		return player.update()
 
 
 	@commands.command(name='testpack',
@@ -204,3 +289,15 @@ class PokeTCG(MyCog):
 	async def test_pack(self, ctx, set_id):
 		pack = packs.Pack.from_set(set_id)
 		return await self.paginated_embeds(ctx, pack.pages)
+
+	@commands.command(name='addcash',
+					pass_context=True,
+					description='',
+					brief='')
+	@commands.check(admin_check)
+	async def add_cash(self, ctx, amt: typing.Optional[int] = 100):
+		player = Player.get_player(ctx.author.id)
+		player.cash += amt
+		player.total_cash += amt
+		await ctx.send(f'{ctx.author.display_name} now has **${player.cash}**')
+		return player.update()
