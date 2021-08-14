@@ -30,7 +30,7 @@ def initialise_db():
 		)'''
 	)
 
-def migrate_database():
+def migrate_db():
 	...
 
 migration_steps = {}

@@ -2,6 +2,7 @@ import json
 from .. import Page, log
 from . import api_call
 from .sets import Set
+from .player import Player, get_player
 
 # functions
 def get_cards():
@@ -35,8 +36,26 @@ def get_card_by_id(card_id):
 		log.debug(json.dumps(data))
 		return None
 
-def add_card(player, card):
-	...
+def get_player_cards(player):
+	df = sql('poketcg', 'select * from cards where discord_id = ?', (player.discord_id))
+	if df.empty:
+		return []
+	return [PlayerCard(**d) for d in df.to_dict('records')]
+
+def get_player_card(player, card_id):
+	df = sql('poketcg', 'select * from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
+	if df.empty:
+		return None
+	return PlayerCard(**df.to_dict('records')[0])
+
+def add_or_update_card(player, card):
+	player_card = get_player_card(player, card.id)
+	if player_card is None:
+		player_card = PlayerCard(player.discord_id, card_id, -1)
+	if player_card.amount == -1:
+		sql('poketcg', 'insert into cards values (?,?,?)', (player.discord_id, card.id, 1))
+	else:
+		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (player.discord_id, card.id, player_card.amount + 1))
 
 def remove_card(player, card, amount=1):
 	...
@@ -85,3 +104,15 @@ class Card:
 		desc += f'Sells for: {self.price:.2f}\n'
 		desc += f'ID: {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)
+
+class PlayerCard:
+	def __init__(self, discord_id, card_id, amount):
+		self.player = get_player(discord_id)
+		self.card = get_card_by_id(card_id)
+		self.amount = amount
+
+	@property
+	def page(self):
+		page = self.card.page
+		page.desc += f'Owned: {self.amount}'
+		return page

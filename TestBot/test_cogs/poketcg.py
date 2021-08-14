@@ -10,10 +10,10 @@ import json
 import re
 
 from .poketcgFunctions import api_call
-from .poketcgFunctions import card
-from .poketcgFunctions import sets
-from .poketcgFunctions import packs
-from .poketcgFunctions import player
+from .poketcgFunctions import card as Card
+from .poketcgFunctions import sets as Sets
+from .poketcgFunctions import packs as Packs
+from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 
 version = '0.0.0'
@@ -28,7 +28,7 @@ def query_builder(q):
 class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
-		self.store = None
+		self.store = self.generate_store()
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
 			log.info('Initialising database.')
 			initialise_db()
@@ -36,7 +36,18 @@ class PokeTCG(MyCog):
 	# Utilities
 
 	def generate_store(self):
-		...
+		ret = {}
+		sets = Sets.get_sets()
+		store_sets =[]
+		while len(store_sets) < 5:
+			s = choice(sets)
+			if s in store_sets:
+				s = choice(sets)
+			store_sets.append(s)
+		for i, s in enumerate(store_sets, start=1):
+			ret[i] = s
+		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+		return ret
 
 	# Commands
 	## cards
@@ -45,7 +56,7 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_cards(self, ctx, *name):
-		cards = card.get_cards_with_query(f'name:{query_builder(name)}')
+		cards = Card.get_cards_with_query(f'name:{query_builder(name)}')
 		return await self.paginated_embeds(ctx, [c.page for c in cards])
 
 	@commands.command(name='card',
@@ -53,10 +64,10 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_card(self, ctx, card_id):
-		card_ = card.get_card_by_id(card_id)
-		if card_ is None:
+		card = Card.get_card_by_id(card_id)
+		if card is None:
 			return await ctx.send('I couldn\'t find a card with that ID \\:(')
-		return await self.paginated_embeds(ctx, card_.page)
+		return await self.paginated_embeds(ctx, card.page)
 
 	@commands.command(name='mycards',
 					pass_context=True,
@@ -71,10 +82,10 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_sets(self, ctx):
-		sets_ = sets.get_sets()
-		sets_.sort(key=lambda x: x.name)
+		sets = Sets.get_sets()
+		sets.sort(key=lambda x: x.name)
 		pages = []
-		for set_chunk in chunk(sets_, 15):
+		for set_chunk in chunk(sets, 15):
 			desc = '\n'.join([str(s) for s in set_chunk])
 			pages.append(Page('Sets', desc))
 		await self.paginated_embeds(ctx, pages)
@@ -84,7 +95,7 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_set(self, ctx, set_id):
-		set_ = sets.get_set(set_id)
+		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
 		return await self.paginated_embeds(ctx, set_.page)
@@ -110,7 +121,24 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
-		...
+		player = Player.get_player(ctx.author.id)
+		slot = slot if 1 <= slot <= 5 else 0
+		if not self.store:
+			self.store = self.generate_store()
+		if self.store.get('reset') < dt.now():
+			self.store = self.generate_store()
+		if slot:
+			# buying pack code
+			...
+		desc = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
+		desc += f'You have **${player.cash}**\n'
+		desc += 'Here are the packs available today. To purchasae one, use **.store <slot no.>**\n\n'
+		set_list = [(i, s) for i, s in self.store.items() if i != 'reset']
+		set_list.sort(key=lambda x: x[0])
+		for i, s in set_list:
+			desc += f'**{i}:** {s.name} (_{s.id}_) - ${s.pack_price:.2f}\n'
+		page = Page('Card Store', desc, footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
+		return await self.paginated_embeds(ctx, page)
 
 	## player
 	@commands.command(name='stats',

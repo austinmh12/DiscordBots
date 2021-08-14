@@ -1,4 +1,5 @@
 import json
+from datetime import datetime as dt, timedelta as td
 from .. import Page, log
 from . import api_call
 
@@ -30,6 +31,7 @@ class Set:
 		self.series = series
 		self.total = total
 		self.images = images
+		self.release_date = dt.strptime(kwargs.get('releaseDate'), '%Y/%m/%d')
 
 	@property
 	def page(self):
@@ -38,6 +40,11 @@ class Set:
 		desc += f'Total cards: {self.total}\n'
 		desc += f'ID: {self.id}'
 		return Page(self.name, desc, image=self.images['logo'], thumbnail=self.images['symbol'])
+
+	@property
+	def pack_price(self):
+		base_price = 4.50
+		return base_price + (dt.now().year - self.release_date.year) * 0.50
 
 	def __str__(self):
 		return f'**{self.name}** _{self.id}_'

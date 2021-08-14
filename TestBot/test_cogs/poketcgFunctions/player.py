@@ -1,5 +1,6 @@
 from .. import Page, sql
 from datetime import datetime as dt
+import json
 
 def get_player(discord_id):
 	df = sql('poketcg', 'select * from players where discord_id = ?', (discord_id,))
@@ -20,7 +21,7 @@ def add_player(discord_id):
 		0
 	)
 	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?)', player.creation_row)
-	return Player
+	return player
 
 class Player:
 	def __init__(
@@ -50,7 +51,7 @@ class Player:
 		return (
 			self.discord_id,
 			self.cash,
-			self.daily_reset.timestamp()
+			self.daily_reset.timestamp(),
 			json.dumps(self.packs),
 			self.packs_opened,
 			self.packs_bought,
