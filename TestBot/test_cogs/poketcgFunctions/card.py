@@ -1,4 +1,5 @@
-from .. import Page
+import json
+from .. import Page, log
 from . import api_call
 from .sets import Set
 
@@ -20,9 +21,19 @@ def get_cards_with_query(q):
 		cards = [Card(**d) for d in data['data']]
 		return cards		
 	except Exception as e:
+		log.debug(json.dumps(data))
+		log.error(str(e))
+		return []
+
+def get_card_by_id(card_id):
+	data = api_call(f'cards/{card_id}')
+	try:
+		card = Card(**data['data'])
+		return card
+	except Exception as e:
 		log.error(str(e))
 		log.debug(json.dumps(data))
-		return []
+		return None
 
 class Card:
 	colour = (243, 205, 11)
@@ -37,20 +48,31 @@ class Card:
 		self.rarity = kwargs.get('rarity', '?')
 		price = kwargs.get('tcgplayer', {}).get('prices', {})
 		if 'normal' in price:
-			self.price = price['normal']['market']
+			amt = price['normal']['market']
+			if amt is None:
+				amt = price['normal']['mid']
 		elif 'holofoil' in price:
-			self.price = price['holofoil']['market']
+			amt = price['holofoil']['market']
+			if amt is None:
+				amt = price['holofoil']['mid']
 		elif 'reverseHolofoil' in price:
-			self.price = price['reverseHolofoil']['market']
+			amt = price['reverseHolofoil']['market']
+			if amt is None:
+				amt = price['reverseHolofoil']['mid']
 		elif '1stEditionNormal' in price:
-			self.price = price['1stEditionNormal']['market']
+			amt = price['1stEditionNormal']['market']
+			if amt is None:
+				amt = price['1stEditionNormal']['mid']
 		else:
-			self.price = 0.01
+			amt = 0.01
+		self.price = amt
 
 	@property
 	def page(self):
-		desc = f'_{self.supertype}_\n'
-		desc += f'{self.number}/{self.set.total} {self.set.name}\n'
+		desc = ''
 		desc += f'{self.rarity}\n'
-		desc += f'Sells for: {self.price:.2f}'
+		desc += f'_{self.supertype}_\n'
+		desc += f'{self.number}/{self.set.total} {self.set.name}\n'
+		desc += f'Sells for: {self.price:.2f}\n'
+		desc += f'ID: {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)

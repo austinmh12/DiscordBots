@@ -7,6 +7,7 @@ import typing
 import os.path
 from datetime import datetime as dt, timedelta as td
 import json
+import re
 
 from .poketcgFunctions import api_call
 from .poketcgFunctions import card
@@ -16,7 +17,12 @@ from .poketcgFunctions import player
 
 version = '0.0.0'
 
-
+def query_builder(q):
+	if isinstance(q, tuple):
+		q = ' '.join(q)
+	if ' ' in q:
+		q = f'"{q}"'
+	return q
 
 class PokeTCG(MyCog):
 	def __init__(self, bot):
@@ -35,16 +41,18 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_cards(self, ctx, *name):
-		name = ' '.join(name) if isinstance(name, tuple) else name
-		cards = card.get_cards_with_query(f'name:{name}')
-		await self.paginated_embeds(ctx, [c.page for c in cards])
+		cards = card.get_cards_with_query(f'name:{query_builder(name)}')
+		return await self.paginated_embeds(ctx, [c.page for c in cards])
 
 	@commands.command(name='card',
 					pass_context=True,
 					description='',
 					brief='')
 	async def get_card(self, ctx, card_id):
-		...
+		card_ = card.get_card_by_id(card_id)
+		if card_ is None:
+			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		return await self.paginated_embeds(ctx, card_.page)
 
 	@commands.command(name='mycards',
 					pass_context=True,
@@ -72,7 +80,10 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def get_set(self, ctx, set_id):
-		...
+		set_ = sets.get_set(set_id)
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		return await self.paginated_embeds(ctx, set_.page)
 
 	## packs
 	@commands.command(name='packs',
@@ -94,7 +105,7 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='',
 					brief='')
-	async def get_card(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
+	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
 		...
 
 	## player

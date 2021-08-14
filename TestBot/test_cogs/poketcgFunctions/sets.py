@@ -1,4 +1,5 @@
-from .. import Page
+import json
+from .. import Page, log
 from . import api_call
 
 # functions
@@ -32,7 +33,11 @@ class Set:
 
 	@property
 	def page(self):
-		return Page(self.name, self.total, image=self.images['logo'])
+		desc = ''
+		desc += f'Series: {self.series}\n'
+		desc += f'Total cards: {self.total}\n'
+		desc += f'ID: {self.id}'
+		return Page(self.name, desc, image=self.images['logo'], thumbnail=self.images['symbol'])
 
 	def __str__(self):
 		return f'**{self.name}** _{self.id}_'
