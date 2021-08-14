@@ -35,6 +35,15 @@ def get_card_by_id(card_id):
 		log.debug(json.dumps(data))
 		return None
 
+def add_card(player, card):
+	...
+
+def remove_card(player, card, amount=1):
+	...
+
+def sell_card(player, card, amount=1):
+	...
+
 class Card:
 	colour = (243, 205, 11)
 
