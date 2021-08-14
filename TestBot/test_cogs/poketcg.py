@@ -14,6 +14,7 @@ from .poketcgFunctions import card
 from .poketcgFunctions import sets
 from .poketcgFunctions import packs
 from .poketcgFunctions import player
+from .poketcgFunctions.database import initialise_db, migrate_db
 
 version = '0.0.0'
 
@@ -23,9 +24,6 @@ def query_builder(q):
 	if ' ' in q:
 		q = f'"{q}"'
 	return q
-
-def initialise_db():
-	...
 
 class PokeTCG(MyCog):
 	def __init__(self, bot):
