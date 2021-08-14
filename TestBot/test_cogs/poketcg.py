@@ -24,10 +24,16 @@ def query_builder(q):
 		q = f'"{q}"'
 	return q
 
+def initialise_db():
+	...
+
 class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.store = None
+		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
+			log.info('Initialising database.')
+			initialise_db()
 
 	# Utilities
 
