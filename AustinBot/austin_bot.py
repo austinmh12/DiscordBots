@@ -10,11 +10,12 @@ import logging
 import sys
 import typing
 from string import ascii_lowercase
-from all_cogs.brendan import BrendanCog
-from all_cogs.youtube import YoutubeCog
-from all_cogs.anime import AnimeCog
-from all_cogs.boardgame import BoardGameCog
-from all_cogs.rpg import RPGCog
+# from all_cogs.brendan import BrendanCog
+# from all_cogs.youtube import YoutubeCog
+# from all_cogs.anime import AnimeCog
+# from all_cogs.boardgame import BoardGameCog
+# from all_cogs.rpg import RPGCog
+from all_cogs.poketcg import PokeTCG
 
 with open('../.env') as f:
 	ENV = {l.strip().split('=')[0]: l.strip().split('=')[1] for l in f.readlines()}
@@ -129,9 +130,10 @@ async def check_for_changes():
 		await asyncio.sleep(1)
 
 client.loop.create_task(check_for_changes())
-client.add_cog(BrendanCog(client))
-client.add_cog(YoutubeCog(client))
+# client.add_cog(BrendanCog(client))
+# client.add_cog(YoutubeCog(client))
 # client.add_cog(AnimeCog(client))
-client.add_cog(BoardGameCog(client))
-client.add_cog(RPGCog(client))
+# client.add_cog(BoardGameCog(client))
+# client.add_cog(RPGCog(client))
+client.add_cog(PokeTCG(client))
 client.run(ENV['AUSTINTOKEN'], bot=True)
