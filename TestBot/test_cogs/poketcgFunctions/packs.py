@@ -1,6 +1,7 @@
 from random import choice, choices
 from .sets import Set
 from .card import Card, get_cards_with_query
+from .. import log
 
 rarity_mapping = {
 	'Rare': 75,
@@ -52,6 +53,10 @@ def generate_packs(set_id, amount):
 	rares = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
 	uncommons = [c for c in cards if c.rarity == 'Uncommon']
 	commons = [c for c in cards if c.rarity == 'Common']
+	if not all([len(rares) > 0, len(uncommons) > 0, len(commons) > 0]):
+		while len(pack) < amount: # Promo packs are 1 card
+			pack.append(choice(cards))
+		return Pack(set_id, pack)
 	while len(pack) < 6 * amount:
 		c = choice(commons)
 		if c in pack:
@@ -62,9 +67,10 @@ def generate_packs(set_id, amount):
 		if u in pack:
 			continue
 		pack.append(u)
+	rare_weight = [rarity_mapping.get(r.rarity) for r in rares]
 	rares = choices(rares, weights=rare_weight, k=amount)
 	pack.extend(rares)
-	return Pack(set_id, packs)
+	return Pack(set_id, pack)
 
 class Pack:
 	def __init__(self, set_id, cards):
@@ -77,3 +83,6 @@ class Pack:
 
 	def __iter__(self):
 		yield from self.cards
+
+	def __len__(self):
+		return len(self.cards)

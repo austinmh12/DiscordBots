@@ -139,7 +139,8 @@ class PokeTCG(MyCog):
 		msg = 'Here are the available selling commands:\n'
 		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
 		msg += '**.sell under [value - Default: _1.00_]** to sell all cards worth less than the value entered.\n'
-		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards. Doesn\'t sell rares by default.'
+		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards until 1 remains. Doesn\'t sell rares by default.\n'
+		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default.'
 		return await ctx.send(msg)
 
 	@sell_main.command(name='card',
@@ -290,13 +291,14 @@ class PokeTCG(MyCog):
 		if set_id not in player.packs:
 			return await ctx.send('Looks like you don\'t have a pack from that set')
 		amt = 1 if amt < 1 else amt
-		pack = Packs.generate_packs(set_.id, min(amt, player.packs[set_id]))
+		opened = min(amt, player.packs[set_id])
+		pack = Packs.generate_packs(set_.id, opened)
 		Card.add_or_update_cards_from_pack(player, pack)
 		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:
 			del player.packs[set_id]
 		player.packs_opened += opened
-		player.total_cards += 10 * opened
+		player.total_cards += len(pack)
 		player.update()
 		return await self.paginated_embeds(ctx, pack.pages)
 

@@ -30,7 +30,7 @@ def get_cards_with_query(q):
 		return cards		
 	except Exception as e:
 		log.debug(json.dumps(data))
-		log.error(str(e))
+		log.error(str(e), exc_info=True)
 		return []
 
 def get_card_by_id(card_id):
@@ -133,25 +133,28 @@ class Card:
 		self.image = images['large']
 		self.rarity = kwargs.get('rarity', '?')
 		price = kwargs.get('tcgplayer', {}).get('prices', {})
-		if 'normal' in price:
-			amt = price['normal']['market']
-			if amt is None:
-				amt = price['normal']['mid']
-		elif 'holofoil' in price:
-			amt = price['holofoil']['market']
-			if amt is None:
-				amt = price['holofoil']['mid']
-		elif 'reverseHolofoil' in price:
-			amt = price['reverseHolofoil']['market']
-			if amt is None:
-				amt = price['reverseHolofoil']['mid']
-		elif '1stEditionNormal' in price:
-			amt = price['1stEditionNormal']['market']
-			if amt is None:
-				amt = price['1stEditionNormal']['mid']
+		amt = None
+		if price:
+			if 'normal' in price:
+				amt = price['normal']['market']
+				if amt is None:
+					amt = price['normal']['mid']
+			elif 'holofoil' in price:
+				amt = price['holofoil']['market']
+				if amt is None:
+					amt = price['holofoil']['mid']
+			elif 'reverseHolofoil' in price:
+				amt = price['reverseHolofoil']['market']
+				if amt is None:
+					amt = price['reverseHolofoil']['mid']
+			elif '1stEditionNormal' in price:
+				amt = price['1stEditionNormal']['market']
+				if amt is None:
+					amt = price['1stEditionNormal']['mid']
 		else:
-			amt = 0.01
-		self.price = amt
+			price = kwargs.get('cardmarket', {}).get('prices', {})
+			amt = price['averageSellPrice']
+		self.price = 0.01 if amt is None else amt 
 
 	@property
 	def page(self):
