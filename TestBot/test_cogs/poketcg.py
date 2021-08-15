@@ -362,6 +362,22 @@ class PokeTCG(MyCog):
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** trainer boxes.")
 		amt = 1 if amt < 1 else amt
 
+	@commands.command(name='collections',
+					pass_context=True,
+					description='',
+					brief='')
+	async def get_player_collections(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		...
+
+	@commands.command(name='opencollection',
+					pass_context=True,
+					description='',
+					brief='')
+	async def open_collection(self, ctx, set_id, amt: typing.Optional[int] = 1):
+		player = Player.get_player(ctx.author.id)
+		...
+
 	## store
 	@commands.command(name='store',
 					pass_context=True,
