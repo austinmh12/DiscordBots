@@ -65,14 +65,11 @@ def add_or_update_card(player, card):
 		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (player.discord_id, card.id, player_card.amount + 1))
 
 def add_or_update_cards_from_pack(player, pack):
-	log.debug('getting player cards')
 	player_cards = get_player_cards(player)
-	log.debug('sorting cards into bins')
 	unique = list(set(pack))
 	new = [c for c in unique if c not in player_cards]
 	updating = [c for c in unique if c not in new]
 	if new:
-		log.debug('adding new cards')
 		new_chunks = chunk(new, 249)
 		for nc in new_chunks:
 			vals = []
@@ -82,7 +79,6 @@ def add_or_update_cards_from_pack(player, pack):
 				vals.extend((player.discord_id, c.id, 1))
 			sql('poketcg', sql_str[:-1], vals)
 	if updating:
-		log.debug('updating existing cards')
 		sql('poketcg', 'drop table if exists tmp_cards')
 		sql('poketcg', 'create table tmp_cards (discord_id integer, card_id text, amount integer)')
 		card_map = {c.card: c for c in player_cards}
@@ -97,13 +93,31 @@ def add_or_update_cards_from_pack(player, pack):
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)
 
-
-
-def remove_card(player, card, amount=1):
-	...
-
-def sell_card(player, card, amount=1):
-	...
+def add_or_update_cards_from_player_cards(player, player_cards):
+	new = [pc for pc in player_cards if pc.amount == -1]
+	updating = [pc for pc in player_cards if pc not in new]
+	if new:
+		new_chunks = chunk(new, 249)
+		for nc in new_chunks:
+			vals = []
+			sql_str = 'insert into cards values '
+			for c in nc:
+				sql_str += ' (?,?,?),'
+				vals.extend((player.discord_id, c.card, 1))
+			sql('poketcg', sql_str[:-1], vals)
+	if updating:
+		sql('poketcg', 'drop table if exists tmp_cards')
+		sql('poketcg', 'create table tmp_cards (discord_id integer, card_id text, amount integer)')
+		updating_chunks = chunk(updating, 249)
+		for uc in updating_chunks:
+			vals = []
+			sql_str = 'insert into tmp_cards values '
+			for u in uc:
+				sql_str += ' (?,?,?),'
+				vals.extend((player.discord_id, u.card, u.amount))
+			sql('poketcg', sql_str[:-1], vals)
+		sql('poketcg', UPDATE_CARDS)
+	sql('poketcg', 'delete from cards where amount = 0')
 
 class Card:
 	colour = (243, 205, 11)

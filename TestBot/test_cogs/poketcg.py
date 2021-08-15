@@ -165,7 +165,25 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def sell_under(self, ctx, value: typing.Optional[float] = 1.00):
-		...
+		player = Player.get_player(ctx.author.id)
+		value = 0.00 if value < 0 else value
+		player_cards = Card.get_player_cards(player)
+		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
+		cards = Card.get_cards_with_query(f'({q})')
+		card_ids = {c.id: c.price for c in cards}
+		cards_to_sell = [c for c in player_cards if card_ids.get(c.card) < value]
+		total_sold = 0
+		total_cash = 0
+		for player_card in player_cards:
+			total_sold += player_card.amount
+			total_cash += card_ids.get(player_card.card) * player_card.amount
+			player_card.amount = 0
+		Card.add_or_update_cards_from_player_cards(player, player_cards)
+		player.cash += total_cash
+		player.total_cash += total_cash
+		player.cards_sold += total_sold
+		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
+		return player.update()
 
 	@sell_main.command(name='dups',
 					pass_context=True,
