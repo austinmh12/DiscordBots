@@ -38,6 +38,7 @@ class Set:
 		desc = ''
 		desc += f'Series: {self.series}\n'
 		desc += f'Total cards: {self.total}\n'
+		desc += f'Pack Price: ${self.pack_price:.2f}\n'
 		desc += f'ID: {self.id}'
 		return Page(self.name, desc, image=self.images['logo'], thumbnail=self.images['symbol'])
 

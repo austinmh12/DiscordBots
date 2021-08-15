@@ -23,7 +23,6 @@ def get_cards():
 
 def get_cards_with_query(q):
 	params = {'q': q}
-	log.debug(json.dumps(params))
 	data = api_call('cards', params)
 	try:
 		cards = [Card(**d) for d in data['data']]
@@ -56,6 +55,7 @@ def get_player_card(player, card_id):
 	return PlayerCard(player, **df.to_dict('records')[0])
 
 def add_or_update_card(player, card):
+	# TODO: revamp this garbage
 	player_card = get_player_card(player, card.id)
 	if player_card is None:
 		player_card = PlayerCard(player.discord_id, card.id, -1)
@@ -166,6 +166,9 @@ class PlayerCard:
 		page = self.card.page
 		page.desc += f'Owned: {self.amount}'
 		return page
+
+	def update(self):
+		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
 
 	def __eq__(self, c):
 		if isinstance(c, Card):

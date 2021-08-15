@@ -133,7 +133,22 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def sell_card(self, ctx, card_id, amt: typing.Optional[int] = 1):
-		...
+		player = Player.get_player(ctx.author.id)
+		player_card = Card.get_player_card(player, card_id)
+		if not player_card:
+			return await ctx.send('You don\'t have a card with that ID \\:(')
+		amt = 1 if amt < 1 else amt
+		card = Card.get_card_by_id(player_card.card)
+		sold = min(amt, player_card.amount)
+		player_card.amount -= sold
+		player.cards_sold += sold
+		player.cash += card.price * sold
+		player.total_cash += card.price * sold
+		await ctx.send(f'You sold {sold} **{card.name}** for ${card.price * sold:.2f}')
+		player.update()
+		player_card.update()
+
+
 
 	## sets
 	@commands.command(name='sets',
@@ -176,7 +191,6 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
-		# TODO: add ability to open multiple
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
 		log.debug('getting set')
@@ -211,7 +225,6 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
-		# TODO: Fix buying multiple bug
 		player = Player.get_player(ctx.author.id)
 		slot = slot if 1 <= slot <= 5 else 0
 		if not self.store:
