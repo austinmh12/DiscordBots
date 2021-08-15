@@ -16,7 +16,7 @@ from .poketcgFunctions import packs as Packs
 from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 
-version = '0.0.0'
+version = '1.0.0'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -123,7 +123,7 @@ class PokeTCG(MyCog):
 				await msg.remove_reaction(BACK, react.member)
 				idx = (idx - 1) % len(player_cards)
 			page = Card.get_card_by_id(player_cards[idx].card).page
-			page.desc += f'Owned: {player_cards[idx].amount}'
+			page.desc += f'**Owned:** {player_cards[idx].amount}'
 			if len(player_cards) > 1:
 				page.footer = f'{idx + 1}/{len(player_cards)}'
 			await msg.edit(embed=page.embed)
@@ -147,8 +147,6 @@ class PokeTCG(MyCog):
 		await ctx.send(f'You sold {sold} **{card.name}** for ${card.price * sold:.2f}')
 		player.update()
 		player_card.update()
-
-
 
 	## sets
 	@commands.command(name='sets',
@@ -184,7 +182,7 @@ class PokeTCG(MyCog):
 		desc = 'Use **.openpack <set_id> (amount)** to open packs\n'
 		for set_id, amount in player.packs.items():
 			desc += f'**{set_id}** - {amount}\n'
-		return await self.paginated_embeds(ctx, Page('You packs', desc))
+		return await self.paginated_embeds(ctx, Page('Your packs', desc))
 
 	@commands.command(name='openpack',
 					pass_context=True,
@@ -193,13 +191,11 @@ class PokeTCG(MyCog):
 	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
-		log.debug('getting set')
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
 		if set_id not in player.packs:
 			return await ctx.send('Looks like you don\'t have a pack from that set')
-		log.debug('generating packs')
 		packs = []
 		opened = 0
 		while opened < player.packs[set_id] and opened < amt:
@@ -207,16 +203,13 @@ class PokeTCG(MyCog):
 			packs.extend(pack)
 			opened += 1
 		pack = Packs.Pack(set_id, packs)
-		log.debug('updating player cards')
 		Card.add_or_update_cards_from_pack(player, pack)
-		log.debug('updating player stats')
 		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:
 			del player.packs[set_id]
 		player.packs_opened += opened
 		player.total_cards += 10 * opened
 		player.update()
-		log.debug('displaying pack')
 		return await self.paginated_embeds(ctx, pack.pages)
 
 	## store
@@ -246,8 +239,8 @@ class PokeTCG(MyCog):
 			await ctx.send(f'You bought {bought} **{s.name}** packs!')
 			return player.update()
 		desc = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
-		desc += f'You have **${player.cash}**\n'
-		desc += 'Here are the packs available today. To purchasae one, use **.store <slot no.>**\n\n'
+		desc += f'You have **${player.cash:.2f}**\n'
+		desc += 'Here are the packs available today. To purchasae one, use **.store <slot no.> (amount)**\n\n'
 		set_list = [(i, s) for i, s in self.store.items() if i != 'reset']
 		set_list.sort(key=lambda x: x[0])
 		for i, s in set_list:
@@ -263,13 +256,6 @@ class PokeTCG(MyCog):
 	async def player_stats(self, ctx):
 		player = Player.get_player(ctx.author.id)
 		return await self.paginated_embeds(ctx, Page(ctx.author.display_name, player.stats_desc))
-
-	@commands.command(name='options',
-					pass_context=True,
-					description='',
-					brief='')
-	async def player_options(self, ctx):
-		...
 
 	## claimables
 	@commands.command(name='daily',
@@ -290,7 +276,7 @@ class PokeTCG(MyCog):
 			cash = randint(1, 10)
 			player.cash += cash
 			player.total_cash += cash
-			await ctx.send(f'You got **${cash}**!')
+			await ctx.send(f'You got **${cash:.2f}**!')
 		player.daily_reset = dt.now() + td(days=1)
 		return player.update()
 
@@ -299,6 +285,7 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='',
 					brief='')
+	@commands.check(admin_check)
 	async def test_pack(self, ctx, set_id):
 		pack = packs.Pack.from_set(set_id)
 		return await self.paginated_embeds(ctx, pack.pages)
@@ -312,5 +299,5 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		player.cash += amt
 		player.total_cash += amt
-		await ctx.send(f'{ctx.author.display_name} now has **${player.cash}**')
+		await ctx.send(f'{ctx.author.display_name} now has **${player.cash:.2f}**')
 		return player.update()

@@ -140,11 +140,11 @@ class Card:
 	@property
 	def page(self):
 		desc = ''
-		desc += f'{self.rarity}\n'
+		desc += f'**{self.rarity}**\n'
 		desc += f'_{self.supertype}_\n'
 		desc += f'{self.number}/{self.set.total} {self.set.name}\n'
-		desc += f'Sells for: {self.price:.2f}\n'
-		desc += f'ID: {self.id}\n'
+		desc += f'**Sells for:** {self.price:.2f}\n'
+		desc += f'**ID:** {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)
 
 	def __eq__(self, c):

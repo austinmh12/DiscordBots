@@ -91,9 +91,9 @@ class Player:
 
 	@property
 	def stats_desc(self):
-		desc = f'**Wallet:** ${self.cash:.2f} | **Total Earned:** ${self.total_cash:.2f}\n'
+		desc = f'**Wallet:** ${self.cash:.2f} | **Total Earned:** ${self.total_cash:.2f}\n\n'
 		desc += f'**Current Packs:** {sum(self.packs.values())}\n'
-		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n'
-		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n'
+		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n\n'
+		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n\n'
 		desc += f'Daily reset in **{format_remaining_time(self.daily_reset)}**'
 		return desc
