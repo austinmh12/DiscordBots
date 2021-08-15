@@ -180,7 +180,7 @@ class PokeTCG(MyCog):
 			total_sold += player_card.amount
 			total_cash += card_ids.get(player_card.card) * player_card.amount
 			player_card.amount = 0
-		Card.add_or_update_cards_from_player_cards(player, player_cards)
+		Card.add_or_update_cards_from_player_cards(player, cards_to_sell)
 		player.cash += total_cash
 		player.total_cash += total_cash
 		player.cards_sold += total_sold
@@ -192,7 +192,53 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def sell_dups(self, ctx, rares: typing.Optional[str] = 'false'):
-		...
+		player = Player.get_player(ctx.author.id)
+		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
+		player_cards = Card.get_player_cards(player)
+		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
+		cards = Card.get_cards_with_query(f'({q})')
+		card_ids = {c.id: c for c in cards}
+		cards_to_sell = [c for c in player_cards if c.amount > 1]
+		total_sold = 0
+		total_cash = 0
+		for player_card in cards_to_sell:
+			if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
+				continue
+			total_sold += player_card.amount - 1
+			total_cash += card_ids.get(player_card.card).price * (player_card.amount - 1)
+			player_card.amount = 1
+		Card.add_or_update_cards_from_player_cards(player, cards_to_sell)
+		player.cash += total_cash
+		player.total_cash += total_cash
+		player.cards_sold += total_sold
+		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
+		return player.update()
+
+	@sell_main.command(name='all',
+					pass_context=True,
+					description='',
+					brief='')
+	async def sell_all(self, ctx, rares: typing.Optional[str] = 'false'):
+		player = Player.get_player(ctx.author.id)
+		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
+		player_cards = Card.get_player_cards(player)
+		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
+		cards = Card.get_cards_with_query(f'({q})')
+		card_ids = {c.id: c for c in cards}
+		total_sold = 0
+		total_cash = 0
+		for player_card in player_cards:
+			if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
+				continue
+			total_sold += player_card.amount
+			total_cash += card_ids.get(player_card.card).price * player_card.amount
+			player_card.amount = 0
+		Card.add_or_update_cards_from_player_cards(player, player_cards)
+		player.cash += total_cash
+		player.total_cash += total_cash
+		player.cards_sold += total_sold
+		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
+		return player.update()
 
 	## sets
 	@commands.command(name='sets',
@@ -233,7 +279,8 @@ class PokeTCG(MyCog):
 	@commands.command(name='openpack',
 					pass_context=True,
 					description='',
-					brief='')
+					brief='',
+					aliases=['op'])
 	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
@@ -242,13 +289,8 @@ class PokeTCG(MyCog):
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
 		if set_id not in player.packs:
 			return await ctx.send('Looks like you don\'t have a pack from that set')
-		packs = []
-		opened = 0
-		while opened < player.packs[set_id] and opened < amt:
-			pack = Packs.Pack.from_set(set_id)
-			packs.extend(pack)
-			opened += 1
-		pack = Packs.Pack(set_id, packs)
+		amt = 1 if amt < 1 else amt
+		pack = Packs.generate_packs(set_.id, min(amt, player.packs[set_id]))
 		Card.add_or_update_cards_from_pack(player, pack)
 		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:

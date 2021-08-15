@@ -3,6 +3,7 @@ from .. import Page, log, sql, chunk
 from . import api_call
 from .sets import Set
 from .player import Player, get_player
+from collections import Counter
 
 # contants
 UPDATE_CARDS = '''update cards
@@ -66,6 +67,7 @@ def add_or_update_card(player, card):
 
 def add_or_update_cards_from_pack(player, pack):
 	player_cards = get_player_cards(player)
+	amounts = Counter(pack)
 	unique = list(set(pack))
 	new = [c for c in unique if c not in player_cards]
 	updating = [c for c in unique if c not in new]
@@ -76,7 +78,7 @@ def add_or_update_cards_from_pack(player, pack):
 			sql_str = 'insert into cards values '
 			for c in nc:
 				sql_str += ' (?,?,?),'
-				vals.extend((player.discord_id, c.id, 1))
+				vals.extend((player.discord_id, c.id, amounts[c]))
 			sql('poketcg', sql_str[:-1], vals)
 	if updating:
 		sql('poketcg', 'drop table if exists tmp_cards')
@@ -88,7 +90,7 @@ def add_or_update_cards_from_pack(player, pack):
 			sql_str = 'insert into tmp_cards values '
 			for u in uc:
 				sql_str += ' (?,?,?),'
-				amt = card_map.get(u.id).amount + 1
+				amt = card_map.get(u.id).amount + amounts[u]
 				vals.extend((player.discord_id, u.id, amt))
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)
