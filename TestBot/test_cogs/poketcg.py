@@ -128,7 +128,19 @@ class PokeTCG(MyCog):
 				page.footer = f'{idx + 1}/{len(player_cards)}'
 			await msg.edit(embed=page.embed)
 
-	@commands.command(name='sellcard',
+	@commands.group(name='sell',
+					pass_context=True,
+					invoke_without_command=True,
+					description='',
+					brief='')
+	async def sell_main(self, ctx):
+		msg = 'Here are the available selling commands:\n'
+		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
+		msg += '**.sell under [value - Default: _1.00_]** to sell all cards worth less than the value entered.\n'
+		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards. Doesn\'t sell rares by default.'
+		return await ctx.send(msg)
+
+	@sell_main.command(name='card',
 					pass_context=True,
 					description='',
 					brief='')
@@ -147,6 +159,20 @@ class PokeTCG(MyCog):
 		await ctx.send(f'You sold {sold} **{card.name}** for ${card.price * sold:.2f}')
 		player.update()
 		player_card.update()
+
+	@sell_main.command(name='under',
+					pass_context=True,
+					description='',
+					brief='')
+	async def sell_under(self, ctx, value: typing.Optional[float] = 1.00):
+		...
+
+	@sell_main.command(name='dups',
+					pass_context=True,
+					description='',
+					brief='')
+	async def sell_dups(self, ctx, rares: typing.Optional[str] = 'false'):
+		...
 
 	## sets
 	@commands.command(name='sets',
