@@ -241,6 +241,21 @@ class PokeTCG(MyCog):
 		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
 		return player.update()
 
+	@commands.command(name='search',
+					pass_context=True,
+					description='',
+					brief='')
+	async def search_cards(self, ctx, *query):
+		query = ' '.join(query) if isinstance(query, tuple) else query
+		cards = Card.get_cards_with_query(query)
+		if not cards:
+			msg = 'I couldn\'t find any cards, perhaps try using the following resources:\n'
+			msg += '**Basic searching:** https://pokemontcg.guru/\n'
+			msg += '**Advanced searching:** https://pokemontcg.guru/advanced\n'
+			msg += '**Searching syntax:** http://www.lucenetutorial.com/lucene-query-syntax.html'
+			return await ctx.send(msg)
+		return await self.paginated_embeds(ctx, [c.page for c in cards])
+
 	## sets
 	@commands.command(name='sets',
 					pass_context=True,
@@ -289,7 +304,7 @@ class PokeTCG(MyCog):
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
 		if set_id not in player.packs:
-			return await ctx.send('Looks like you don\'t have a pack from that set')
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** packs.")
 		amt = 1 if amt < 1 else amt
 		opened = min(amt, player.packs[set_id])
 		pack = Packs.generate_packs(set_.id, opened)
@@ -301,6 +316,51 @@ class PokeTCG(MyCog):
 		player.total_cards += len(pack)
 		player.update()
 		return await self.paginated_embeds(ctx, pack.pages)
+
+	## boxes
+	@commands.command(name='boosterboxes',
+					pass_context=True,
+					description='',
+					brief='')
+	async def get_player_boosters(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		...
+
+	@commands.command(name='openbooster',
+					pass_context=True,
+					description='',
+					brief='')
+	async def open_booster(self, ctx, set_id, amt: typing.Optional[int] = 1):
+		player = Player.get_player(ctx.author.id)
+		set_id = set_id.lower()
+		set_ = Sets.get_set(set_id)
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		if set_id not in player.packs:
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** booster boxes.")
+		amt = 1 if amt < 1 else amt
+
+	@commands.command(name='trainerboxes',
+					pass_context=True,
+					description='',
+					brief='')
+	async def get_player_trainers(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		...
+
+	@commands.command(name='opentrainer',
+					pass_context=True,
+					description='',
+					brief='')
+	async def open_trainer(self, ctx, set_id, amt: typing.Optional[int] = 1):
+		player = Player.get_player(ctx.author.id)
+		set_id = set_id.lower()
+		set_ = Sets.get_set(set_id)
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		if set_id not in player.packs:
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** trainer boxes.")
+		amt = 1 if amt < 1 else amt
 
 	## store
 	@commands.command(name='store',
