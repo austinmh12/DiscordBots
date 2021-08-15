@@ -168,7 +168,9 @@ class PlayerCard:
 		return page
 
 	def update(self):
-		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
+		if self.amount != 0:
+			return sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
+		return sql('poketcg', 'delete from cards where discord_id = ? and card_id = ?', (self.player.discord_id, self.card))
 
 	def __eq__(self, c):
 		if isinstance(c, Card):

@@ -143,7 +143,7 @@ class Card:
 		desc += f'**{self.rarity}**\n'
 		desc += f'_{self.supertype}_\n'
 		desc += f'{self.number}/{self.set.total} {self.set.name}\n'
-		desc += f'**Sells for:** {self.price:.2f}\n'
+		desc += f'**Sells for:** ${self.price:.2f}\n'
 		desc += f'**ID:** {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)
 
@@ -168,7 +168,9 @@ class PlayerCard:
 		return page
 
 	def update(self):
-		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
+		if self.amount != 0:
+			return sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
+		return sql('poketcg', 'delete from cards where discord_id = ? and card_id = ?', (self.player.discord_id, self.card))
 
 	def __eq__(self, c):
 		if isinstance(c, Card):
