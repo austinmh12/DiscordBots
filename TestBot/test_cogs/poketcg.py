@@ -79,6 +79,8 @@ class PokeTCG(MyCog):
 	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'id'):
 		player = Player.get_player(ctx.author.id)
 		player_cards = Card.get_player_cards(player)
+		if not player_cards:
+			return await ctx.send('You have no cards')
 		sort_by = 'id' if sort_by not in ['id', 'amount', 'price'] else sort_by
 		if sort_by == 'id':
 			player_cards.sort(key=lambda x: x.card)
@@ -174,7 +176,7 @@ class PokeTCG(MyCog):
 		cards_to_sell = [c for c in player_cards if card_ids.get(c.card) < value]
 		total_sold = 0
 		total_cash = 0
-		for player_card in player_cards:
+		for player_card in cards_to_sell:
 			total_sold += player_card.amount
 			total_cash += card_ids.get(player_card.card) * player_card.amount
 			player_card.amount = 0
