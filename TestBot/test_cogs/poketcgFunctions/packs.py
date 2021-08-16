@@ -94,7 +94,7 @@ def generate_trainers(set_id, amount):
 	pack_cards.extend(promos_in_pack)
 	return Pack(set_id, pack_cards)
 
-def generate_booster(set_id, amount):
+def generate_boosters(set_id, amount):
 	return generate_packs(set_id, amount * 36)
 
 class Pack:

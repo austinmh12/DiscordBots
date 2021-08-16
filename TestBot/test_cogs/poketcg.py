@@ -16,7 +16,7 @@ from .poketcgFunctions import packs as Packs
 from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 
-version = '1.0.0'
+version = '1.1.0'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -193,21 +193,25 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='',
 					brief='')
-	async def sell_under(self, ctx, value: typing.Optional[float] = 1.00):
+	async def sell_under(self, ctx, value: typing.Optional[float] = 1.00, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		value = 0.00 if value < 0 else value
+		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player)
-		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
-		cards = Card.get_cards_with_query(f'({q})')
-		card_ids = {c.id: c.price for c in cards}
-		cards_to_sell = [c for c in player_cards if card_ids.get(c.card) < value]
 		total_sold = 0
 		total_cash = 0
-		for player_card in cards_to_sell:
-			total_sold += player_card.amount
-			total_cash += card_ids.get(player_card.card) * player_card.amount
-			player_card.amount = 0
-		Card.add_or_update_cards_from_player_cards(player, cards_to_sell)
+		for player_card_chunk in chunk(player_cards, 250):
+			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
+			cards = Card.get_cards_with_query(f'({q})')
+			card_ids = {c.id: c for c in cards}
+			cards_to_sell = [c for c in player_cards if card_ids.get(c.card).price < value]
+			for player_card in cards_to_sell:
+				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
+					continue
+				total_sold += player_card.amount
+				total_cash += card_ids.get(player_card.card).price * player_card.amount
+				player_card.amount = 0
+		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
 		player.cards_sold += total_sold
@@ -222,19 +226,20 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player)
-		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
-		cards = Card.get_cards_with_query(f'({q})')
-		card_ids = {c.id: c for c in cards}
-		cards_to_sell = [c for c in player_cards if c.amount > 1]
 		total_sold = 0
 		total_cash = 0
-		for player_card in cards_to_sell:
-			if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
-				continue
-			total_sold += player_card.amount - 1
-			total_cash += card_ids.get(player_card.card).price * (player_card.amount - 1)
-			player_card.amount = 1
-		Card.add_or_update_cards_from_player_cards(player, cards_to_sell)
+		for player_card_chunk in chunk(player_cards, 250):
+			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
+			cards = Card.get_cards_with_query(f'({q})')
+			card_ids = {c.id: c for c in cards}
+			cards_to_sell = [c for c in player_card_chunk if c.amount > 1]
+			for player_card in cards_to_sell:
+				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
+					continue
+				total_sold += player_card.amount - 1
+				total_cash += card_ids.get(player_card.card).price * (player_card.amount - 1)
+				player_card.amount = 1
+		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
 		player.cards_sold += total_sold
@@ -249,17 +254,18 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player)
-		q = ' OR '.join([f'id:{pc.card}' for pc in player_cards])
-		cards = Card.get_cards_with_query(f'({q})')
-		card_ids = {c.id: c for c in cards}
 		total_sold = 0
 		total_cash = 0
-		for player_card in player_cards:
-			if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
-				continue
-			total_sold += player_card.amount
-			total_cash += card_ids.get(player_card.card).price * player_card.amount
-			player_card.amount = 0
+		for player_card_chunk in chunk(player_cards, 250):
+			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
+			cards = Card.get_cards_with_query(f'({q})')
+			card_ids = {c.id: c for c in cards}
+			for player_card in player_card_chunk:
+				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
+					continue
+				total_sold += player_card.amount
+				total_cash += card_ids.get(player_card.card).price * player_card.amount
+				player_card.amount = 0
 		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
@@ -366,15 +372,15 @@ class PokeTCG(MyCog):
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
-		if set_id not in player.trainers:
+		if set_id not in player.boosters:
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** booster boxes.")
 		amt = 1 if amt < 1 else amt
-		opened = min(amt, player.trainers[set_id])
+		opened = min(amt, player.boosters[set_id])
 		pack = Packs.generate_boosters(set_.id, opened)
 		Card.add_or_update_cards_from_pack(player, pack)
-		player.trainers[set_id] -= opened
-		if player.trainers[set_id] == 0:
-			del player.trainers[set_id]
+		player.boosters[set_id] -= opened
+		if player.boosters[set_id] == 0:
+			del player.boosters[set_id]
 		player.packs_opened += opened * 36
 		player.total_cards += len(pack)
 		player.update()
