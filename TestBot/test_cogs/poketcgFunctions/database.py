@@ -1,4 +1,4 @@
-from .. import sql
+from .. import sql, log
 
 def initialise_db():
 	sql('poketcg', '''create table players (
@@ -30,7 +30,31 @@ def initialise_db():
 		)'''
 	)
 
-def migrate_db():
-	...
+def get_version():
+	df = sql('poketcg', 'select * from version')
+	if df.empty:
+		return ''
+	return df.to_dict('records')[0]['version']
 
-migration_steps = {}
+def update_version(version):
+	sql('poketcg', 'delete from version')
+	sql('poketcg', 'insert into version values (?)', (version,))
+
+def migrate_db(version):
+	current = get_version()
+	log.debug(current)
+	log.debug(version)
+	if version != get_version():
+		log.info('Migrating database')
+		for step in migration_steps:
+			sql('poketcg', step)
+		update_version(version)
+
+migration_steps = [
+	"alter table players add column collections text default '{}'",
+	"alter table players add column collections_bought integer default 0",
+	"alter table players add column trainers text default '{}'",
+	"alter table players add column trainers_bought integer default 0",
+	"alter table players add column boosters text default '{}'",
+	"alter table players add column boosters_bought integer default 0"
+]

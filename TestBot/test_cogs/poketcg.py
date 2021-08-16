@@ -35,6 +35,7 @@ class PokeTCG(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
 			log.info('Initialising database.')
 			initialise_db()
+		migrate_db(version)
 
 	# Utilities
 
@@ -42,12 +43,36 @@ class PokeTCG(MyCog):
 		ret = {}
 		sets = Sets.get_sets()
 		store_sets =[]
+		store_collections = []
+		store_trainers = []
+		store_boosters = []
 		while len(store_sets) < 5:
 			s = choice(sets)
 			if s in store_sets:
 				s = choice(sets)
 			store_sets.append(s)
+		while len(store_collections) < 5:
+			s = choice(sets)
+			if s in store_collections:
+				s = choice(sets)
+			store_collections.append(s)
+		while len(store_trainers) < 5:
+			s = choice(sets)
+			if s in store_trainers:
+				s = choice(sets)
+			store_trainers.append(s)
+		while len(store_boosters) < 5:
+			s = choice(sets)
+			if s in store_boosters:
+				s = choice(sets)
+			store_boosters.append(s)
 		for i, s in enumerate(store_sets, start=1):
+			ret[i] = s
+		for i, s in enumerate(store_collections, start=6):
+			ret[i] = s
+		for i, s in enumerate(store_trainers, start=11):
+			ret[i] = s
+		for i, s in enumerate(store_boosters, start=16):
 			ret[i] = s
 		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 		return ret
@@ -324,7 +349,10 @@ class PokeTCG(MyCog):
 					brief='')
 	async def get_player_boosters(self, ctx):
 		player = Player.get_player(ctx.author.id)
-		...
+		desc = 'Use **.openbooster <set_id> (amount)** to open booster boxes\n'
+		for set_id, amount in player.boosters.items():
+			desc += f'**{set_id}** - {amount}\n'
+		return await self.paginated_embeds(ctx, Page('Your Booster Boxes', desc))
 
 	@commands.command(name='openbooster',
 					pass_context=True,
@@ -346,7 +374,10 @@ class PokeTCG(MyCog):
 					brief='')
 	async def get_player_trainers(self, ctx):
 		player = Player.get_player(ctx.author.id)
-		...
+		desc = 'Use **.opentrainer <set_id> (amount)** to open trainer boxes\n'
+		for set_id, amount in player.trainers.items():
+			desc += f'**{set_id}** - {amount}\n'
+		return await self.paginated_embeds(ctx, Page('Your Trainer Boxes', desc))
 
 	@commands.command(name='opentrainer',
 					pass_context=True,
@@ -368,7 +399,10 @@ class PokeTCG(MyCog):
 					brief='')
 	async def get_player_collections(self, ctx):
 		player = Player.get_player(ctx.author.id)
-		...
+		desc = 'Use **.opencollection <set_id> (amount)** to open collections\n'
+		for set_id, amount in player.collections.items():
+			desc += f'**{set_id}** - {amount}\n'
+		return await self.paginated_embeds(ctx, Page('Your Collections', desc))
 
 	@commands.command(name='opencollection',
 					pass_context=True,
@@ -376,7 +410,13 @@ class PokeTCG(MyCog):
 					brief='')
 	async def open_collection(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
-		...
+		set_id = set_id.lower()
+		set_ = Sets.get_set(set_id)
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		if set_id not in player.packs:
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** trainer boxes.")
+		amt = 1 if amt < 1 else amt
 
 	## store
 	@commands.command(name='store',
@@ -385,34 +425,84 @@ class PokeTCG(MyCog):
 					brief='')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
-		slot = slot if 1 <= slot <= 5 else 0
+		slot = slot if 1 <= slot <= 20 else 0
 		if not self.store:
 			self.store = self.generate_store()
 		if self.store.get('reset') < dt.now():
 			self.store = self.generate_store()
 		if slot:
+			if 6 <= slot <= 10:
+				price_mult = 2.5
+			elif 11 <= slot <= 15:
+				price_mult = 10
+			elif 16 <= slot <= 20:
+				price_mult = 30
+			else:
+				price_mult = 1
 			s = self.store.get(slot)
-			if player.cash < s.pack_price:
-				return await ctx.send(f'You don\'t have enough... You need **${s.pack_price - player.cash}** more.')
+			if player.cash < s.pack_price * price_mult:
+				return await ctx.send(f'You don\'t have enough... You need **${s.pack_price * price_mult - player.cash:.2f}** more.')
 			bought = 0
-			while player.cash >= s.pack_price and bought < amt:
-				player.cash -= s.pack_price
+			while player.cash >= s.pack_price * price_mult and bought < amt:
+				player.cash -= s.pack_price * price_mult
 				bought += 1
-			if s.id not in player.packs:
-				player.packs[s.id] = 0
-			player.packs[s.id] += bought
-			player.packs_bought += bought
-			await ctx.send(f'You bought {bought} **{s.name}** packs!')
+			if 6 <= slot <= 10:
+				if s.id not in player.collections:
+					player.collections[s.id] = 0
+				player.collections[s.id] += bought
+				player.collections_bought += bought
+			elif 11 <= slot <= 15:
+				if s.id not in player.trainers:
+					player.trainers[s.id] = 0
+				player.trainers[s.id] += bought
+				player.trainers_bought += bought
+			elif 16 <= slot <= 20:
+				if s.id not in player.boosters:
+					player.boosters[s.id] = 0
+				player.boosters[s.id] += bought
+				player.boosters_bought += bought
+			else:
+				if s.id not in player.packs:
+					player.packs[s.id] = 0
+				player.packs[s.id] += bought
+				player.packs_bought += bought
+			if 6 <= slot <= 10:
+				type_ = 'collections'
+			elif 11 <= slot <= 15:
+				type_ = 'trainer boxes'
+			elif 16 <= slot <= 20:
+				type_ = 'booster boxes'
+			else:
+				type_ = 'packs'
+			await ctx.send(f'You bought {bought} **{s.name}** {type_}!')
 			return player.update()
-		desc = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
-		desc += f'You have **${player.cash:.2f}**\n'
-		desc += 'Here are the packs available today. To purchasae one, use **.store <slot no.> (amount)**\n\n'
+		header = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
+		header += f'You have **${player.cash:.2f}**\n'
+		header += 'Here are the packs available today. To purchasae one, use **.store <slot no.> (amount)**\n\n'
 		set_list = [(i, s) for i, s in self.store.items() if i != 'reset']
 		set_list.sort(key=lambda x: x[0])
-		for i, s in set_list:
+		pages = []
+		desc = ''
+		for i, s in set_list[:5]:
 			desc += f'**{i}:** {s.name} (_{s.id}_) - ${s.pack_price:.2f}\n'
-		page = Page('Card Store', desc, footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
-		return await self.paginated_embeds(ctx, page)
+		page = Page('Card Store - Packs', f'{header}\n{desc}', footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
+		pages.append(page)
+		desc = ''
+		for i, s in set_list[5:10]:
+			desc += f'**{i}:** {s.name} (_{s.id}_) - ${s.pack_price * 2.5:.2f}\n'
+		page = Page('Card Store - Collections', f'{header}\n{desc}', footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
+		pages.append(page)
+		desc = ''
+		for i, s in set_list[10:15]:
+			desc += f'**{i}:** {s.name} (_{s.id}_) - ${s.pack_price * 10:.2f}\n'
+		page = Page('Card Store - Trainer Boxes', f'{header}\n{desc}', footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
+		pages.append(page)
+		desc = ''
+		for i, s in set_list[15:]:
+			desc += f'**{i}:** {s.name} (_{s.id}_) - ${s.pack_price * 30:.2f}\n'
+		page = Page('Card Store - Booster Boxes', f'{header}\n{desc}', footer=f'Resets in {format_remaining_time(self.store.get("reset"))}')
+		pages.append(page)
+		return await self.paginated_embeds(ctx, pages)
 
 	## player
 	@commands.command(name='stats',
