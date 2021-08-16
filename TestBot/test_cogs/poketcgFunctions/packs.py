@@ -68,6 +68,35 @@ def generate_packs(set_id, amount):
 	pack.extend(rares)
 	return Pack(set_id, pack)
 
+def generate_collections(set_id, amount):
+	pack = generate_packs(set_id, amount * 4)
+	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+	promos = [c for c in cards if c.rarity == 'Promo']
+	if not promos:
+		promos = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
+	promos_in_pack = []
+	while len(promos_in_pack) < amount:
+		promos_in_pack.append(choice(promos))
+	pack_cards = pack.cards
+	pack_cards.extend(promos_in_pack)
+	return Pack(set_id, pack_cards)
+
+def generate_trainers(set_id, amount):
+	pack = generate_packs(set_id, amount * 12)
+	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+	promos = [c for c in cards if c.rarity == 'Promo']
+	if not promos:
+		promos = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
+	promos_in_pack = []
+	while len(promos_in_pack) < amount:
+		promos_in_pack.append(choice(promos))
+	pack_cards = pack.cards
+	pack_cards.extend(promos_in_pack)
+	return Pack(set_id, pack_cards)
+
+def generate_booster(set_id, amount):
+	return generate_packs(set_id, amount * 36)
+
 class Pack:
 	def __init__(self, set_id, cards):
 		self.set_id = set_id

@@ -100,7 +100,8 @@ class PokeTCG(MyCog):
 	@commands.command(name='mycards',
 					pass_context=True,
 					description='',
-					brief='')
+					brief='',
+					aliases=['mc'])
 	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'id'):
 		player = Player.get_player(ctx.author.id)
 		player_cards = Card.get_player_cards(player)
@@ -357,16 +358,27 @@ class PokeTCG(MyCog):
 	@commands.command(name='openbooster',
 					pass_context=True,
 					description='',
-					brief='')
+					brief='',
+					aliases=['ob'])
 	async def open_booster(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
-		if set_id not in player.packs:
+		if set_id not in player.trainers:
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** booster boxes.")
 		amt = 1 if amt < 1 else amt
+		opened = min(amt, player.trainers[set_id])
+		pack = Packs.generate_boosters(set_.id, opened)
+		Card.add_or_update_cards_from_pack(player, pack)
+		player.trainers[set_id] -= opened
+		if player.trainers[set_id] == 0:
+			del player.trainers[set_id]
+		player.packs_opened += opened * 36
+		player.total_cards += len(pack)
+		player.update()
+		return await self.paginated_embeds(ctx, pack.pages)
 
 	@commands.command(name='trainerboxes',
 					pass_context=True,
@@ -382,16 +394,27 @@ class PokeTCG(MyCog):
 	@commands.command(name='opentrainer',
 					pass_context=True,
 					description='',
-					brief='')
+					brief='',
+					aliases=['ot'])
 	async def open_trainer(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
-		if set_id not in player.packs:
+		if set_id not in player.trainers:
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** trainer boxes.")
 		amt = 1 if amt < 1 else amt
+		opened = min(amt, player.trainers[set_id])
+		pack = Packs.generate_trainers(set_.id, opened)
+		Card.add_or_update_cards_from_pack(player, pack)
+		player.trainers[set_id] -= opened
+		if player.trainers[set_id] == 0:
+			del player.trainers[set_id]
+		player.packs_opened += opened * 12
+		player.total_cards += len(pack)
+		player.update()
+		return await self.paginated_embeds(ctx, pack.pages)
 
 	@commands.command(name='collections',
 					pass_context=True,
@@ -407,16 +430,27 @@ class PokeTCG(MyCog):
 	@commands.command(name='opencollection',
 					pass_context=True,
 					description='',
-					brief='')
+					brief='',
+					aliases=['oc'])
 	async def open_collection(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		set_id = set_id.lower()
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
-		if set_id not in player.packs:
-			return await ctx.send(f"Looks like you don't have any **{set_.name}** trainer boxes.")
+		if set_id not in player.collections:
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** collections.")
 		amt = 1 if amt < 1 else amt
+		opened = min(amt, player.collections[set_id])
+		pack = Packs.generate_collections(set_.id, opened)
+		Card.add_or_update_cards_from_pack(player, pack)
+		player.collections[set_id] -= opened
+		if player.collections[set_id] == 0:
+			del player.collections[set_id]
+		player.packs_opened += opened * 4
+		player.total_cards += len(pack)
+		player.update()
+		return await self.paginated_embeds(ctx, pack.pages)
 
 	## store
 	@commands.command(name='store',

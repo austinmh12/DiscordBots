@@ -29,7 +29,7 @@ class Set:
 		self.id = id
 		self.name = name
 		self.series = series
-		self.total = total
+		self.total = kwargs.get('printedTotal', total)
 		self.images = images
 		self.release_date = dt.strptime(kwargs.get('releaseDate'), '%Y/%m/%d')
 
