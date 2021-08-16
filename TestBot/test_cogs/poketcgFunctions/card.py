@@ -153,7 +153,7 @@ class Card:
 					amt = price['1stEditionNormal']['mid']
 		else:
 			price = kwargs.get('cardmarket', {}).get('prices', {})
-			amt = price['averageSellPrice']
+			amt = price.get('averageSellPrice', None)
 		self.price = 0.01 if amt is None else amt 
 
 	@property

@@ -59,13 +59,9 @@ def generate_packs(set_id, amount):
 		return Pack(set_id, pack)
 	while len(pack) < 6 * amount:
 		c = choice(commons)
-		if c in pack:
-			continue
 		pack.append(c)
 	while len(pack) < 9 * amount:
 		u = choice(uncommons)
-		if u in pack:
-			continue
 		pack.append(u)
 	rare_weight = [rarity_mapping.get(r.rarity) for r in rares]
 	rares = choices(rares, weights=rare_weight, k=amount)
