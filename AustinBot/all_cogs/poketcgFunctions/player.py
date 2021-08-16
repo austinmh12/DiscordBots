@@ -18,6 +18,12 @@ def add_player(discord_id):
 		0,
 		25,
 		0,
+		0,
+		{},
+		0,
+		{},
+		0,
+		{},
 		0
 	)
 	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?)', player.creation_row)
@@ -34,7 +40,13 @@ class Player:
 		packs_bought,
 		total_cash,
 		total_cards,
-		cards_sold
+		cards_sold,
+		collections,
+		collections_bought,
+		trainers,
+		trainers_bought,
+		boosters,
+		boosters_bought
 	):
 		self.discord_id = discord_id
 		self.cash = cash
@@ -45,6 +57,13 @@ class Player:
 		self.total_cash = total_cash
 		self.total_cards = total_cards
 		self.cards_sold = cards_sold
+		self.collections = collections if isinstance(collections, dict) else json.loads(collections)
+		self.collections_bought = collections_bought
+		self.trainers = trainers if isinstance(trainers, dict) else json.loads(trainers)
+		self.trainers_bought = trainers_bought
+		self.boosters = boosters if isinstance(boosters, dict) else json.loads(boosters)
+		self.boosters_bought = boosters_bought
+
 		self.cached = self.to_dict().copy()
 
 	@property
@@ -58,7 +77,13 @@ class Player:
 			self.packs_bought,
 			round(self.total_cash, 2),
 			self.total_cards,
-			self.cards_sold
+			self.cards_sold,
+			json.dumps(self.collections),
+			self.collections_bought,
+			json.dumps(self.trainers),
+			self.trainers_bought,
+			json.dumps(self.boosters),
+			self.boosters_bought
 		)
 
 	def to_dict(self):
@@ -71,7 +96,13 @@ class Player:
 			'packs_bought': self.packs_bought,
 			'total_cash': round(self.total_cash, 2),
 			'total_cards': self.total_cards,
-			'cards_sold': self.cards_sold
+			'cards_sold': self.cards_sold,
+			'collections': json.dumps(self.collections),
+			'collections_bought': self.collections_bought,
+			'trainers': json.dumps(self.trainers),
+			'trainers_bought': self.trainers_bought,
+			'boosters': json.dumps(self.boosters),
+			'boosters_bought': self.boosters_bought
 		}
 
 	def update(self):

@@ -3,6 +3,7 @@ from .. import Page, log, sql, chunk
 from . import api_call
 from .sets import Set
 from .player import Player, get_player
+from collections import Counter
 
 # contants
 UPDATE_CARDS = '''update cards
@@ -29,7 +30,7 @@ def get_cards_with_query(q):
 		return cards		
 	except Exception as e:
 		log.debug(json.dumps(data))
-		log.error(str(e))
+		log.error(str(e), exc_info=True)
 		return []
 
 def get_card_by_id(card_id):
@@ -65,24 +66,21 @@ def add_or_update_card(player, card):
 		sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (player.discord_id, card.id, player_card.amount + 1))
 
 def add_or_update_cards_from_pack(player, pack):
-	log.debug('getting player cards')
 	player_cards = get_player_cards(player)
-	log.debug('sorting cards into bins')
+	amounts = Counter(pack)
 	unique = list(set(pack))
 	new = [c for c in unique if c not in player_cards]
 	updating = [c for c in unique if c not in new]
 	if new:
-		log.debug('adding new cards')
 		new_chunks = chunk(new, 249)
 		for nc in new_chunks:
 			vals = []
 			sql_str = 'insert into cards values '
 			for c in nc:
 				sql_str += ' (?,?,?),'
-				vals.extend((player.discord_id, c.id, 1))
+				vals.extend((player.discord_id, c.id, amounts[c]))
 			sql('poketcg', sql_str[:-1], vals)
 	if updating:
-		log.debug('updating existing cards')
 		sql('poketcg', 'drop table if exists tmp_cards')
 		sql('poketcg', 'create table tmp_cards (discord_id integer, card_id text, amount integer)')
 		card_map = {c.card: c for c in player_cards}
@@ -92,18 +90,36 @@ def add_or_update_cards_from_pack(player, pack):
 			sql_str = 'insert into tmp_cards values '
 			for u in uc:
 				sql_str += ' (?,?,?),'
-				amt = card_map.get(u.id).amount + 1
+				amt = card_map.get(u.id).amount + amounts[u]
 				vals.extend((player.discord_id, u.id, amt))
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)
 
-
-
-def remove_card(player, card, amount=1):
-	...
-
-def sell_card(player, card, amount=1):
-	...
+def add_or_update_cards_from_player_cards(player, player_cards):
+	new = [pc for pc in player_cards if pc.amount == -1]
+	updating = [pc for pc in player_cards if pc not in new]
+	if new:
+		new_chunks = chunk(new, 249)
+		for nc in new_chunks:
+			vals = []
+			sql_str = 'insert into cards values '
+			for c in nc:
+				sql_str += ' (?,?,?),'
+				vals.extend((player.discord_id, c.card, 1))
+			sql('poketcg', sql_str[:-1], vals)
+	if updating:
+		sql('poketcg', 'drop table if exists tmp_cards')
+		sql('poketcg', 'create table tmp_cards (discord_id integer, card_id text, amount integer)')
+		updating_chunks = chunk(updating, 249)
+		for uc in updating_chunks:
+			vals = []
+			sql_str = 'insert into tmp_cards values '
+			for u in uc:
+				sql_str += ' (?,?,?),'
+				vals.extend((player.discord_id, u.card, u.amount))
+			sql('poketcg', sql_str[:-1], vals)
+		sql('poketcg', UPDATE_CARDS)
+	sql('poketcg', 'delete from cards where amount = 0')
 
 class Card:
 	colour = (243, 205, 11)
@@ -117,25 +133,28 @@ class Card:
 		self.image = images['large']
 		self.rarity = kwargs.get('rarity', '?')
 		price = kwargs.get('tcgplayer', {}).get('prices', {})
-		if 'normal' in price:
-			amt = price['normal']['market']
-			if amt is None:
-				amt = price['normal']['mid']
-		elif 'holofoil' in price:
-			amt = price['holofoil']['market']
-			if amt is None:
-				amt = price['holofoil']['mid']
-		elif 'reverseHolofoil' in price:
-			amt = price['reverseHolofoil']['market']
-			if amt is None:
-				amt = price['reverseHolofoil']['mid']
-		elif '1stEditionNormal' in price:
-			amt = price['1stEditionNormal']['market']
-			if amt is None:
-				amt = price['1stEditionNormal']['mid']
+		amt = None
+		if price:
+			if 'normal' in price:
+				amt = price['normal']['market']
+				if amt is None:
+					amt = price['normal']['mid']
+			elif 'holofoil' in price:
+				amt = price['holofoil']['market']
+				if amt is None:
+					amt = price['holofoil']['mid']
+			elif 'reverseHolofoil' in price:
+				amt = price['reverseHolofoil']['market']
+				if amt is None:
+					amt = price['reverseHolofoil']['mid']
+			elif '1stEditionNormal' in price:
+				amt = price['1stEditionNormal']['market']
+				if amt is None:
+					amt = price['1stEditionNormal']['mid']
 		else:
-			amt = 0.01
-		self.price = amt
+			price = kwargs.get('cardmarket', {}).get('prices', {})
+			amt = price.get('averageSellPrice', None)
+		self.price = 0.01 if amt is None else amt 
 
 	@property
 	def page(self):
@@ -143,7 +162,7 @@ class Card:
 		desc += f'**{self.rarity}**\n'
 		desc += f'_{self.supertype}_\n'
 		desc += f'{self.number}/{self.set.total} {self.set.name}\n'
-		desc += f'**Sells for:** {self.price:.2f}\n'
+		desc += f'**Sells for:** ${self.price:.2f}\n'
 		desc += f'**ID:** {self.id}\n'
 		return Page(self.name, desc, self.colour, image=self.image)
 
