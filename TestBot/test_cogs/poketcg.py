@@ -102,59 +102,21 @@ class PokeTCG(MyCog):
 					description='',
 					brief='',
 					aliases=['mc'])
-	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'id'):
+	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'name'):
 		player = Player.get_player(ctx.author.id)
 		player_cards = Card.get_player_cards(player)
 		if not player_cards:
 			return await ctx.send('You have no cards')
-		sort_by = 'id' if sort_by not in ['id', 'amount', 'price'] else sort_by
+		sort_by = 'name' if sort_by not in ['id', 'amount', 'price', 'name'] else sort_by
 		if sort_by == 'id':
-			player_cards.sort(key=lambda x: x.card)
-		if sort_by == 'price':
-			q = ' OR '.join([f'id:{p.card}' for p in player_cards])
-			cards = Card.get_cards_with_query(f'({q})')
-			log.debug(len(cards))
-			cards.sort(key=lambda x: x.price, reverse=True)
-			card_ids = {c.id: cards.index(c) for c in cards}
-			player_cards.sort(key=lambda x: card_ids.get(x.card, 999))
+			player_cards.sort(key=lambda x: x.id)
+		elif sort_by == 'price':
+			player_cards.sort(key=lambda x: x.price, reverse=True)
+		elif sort_by == 'name':
+			player_cards.sort(key=lambda x: x.name)
 		else:
 			player_cards.sort(key=lambda x: x.amount, reverse=True)
-		idx = 0
-		page = Card.get_card_by_id(player_cards[idx].card).page
-		page.desc += f'Owned: {player_cards[idx].amount}'
-		if len(player_cards) > 1:
-			page.footer = f'{idx + 1}/{len(player_cards)}'
-		msg = await ctx.send(embed=page.embed)
-		if len(player_cards) > 1:
-			await msg.add_reaction(BACK)
-			await msg.add_reaction(NEXT)
-
-		def is_left_right(m):
-			return all([
-				m.emoji.name in [BACK, NEXT],
-				m.member.id != self.bot.user.id,
-				m.message_id == msg.id,
-				m.member == ctx.author
-			])
-
-		while True:
-			try:
-				react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=60)
-			except asyncio.TimeoutError:
-				log.debug('Timeout, breaking')
-				await msg.clear_reactions()
-				break
-			if react.emoji.name == NEXT:
-				await msg.remove_reaction(NEXT, react.member)
-				idx = (idx + 1) % len(player_cards)
-			else:
-				await msg.remove_reaction(BACK, react.member)
-				idx = (idx - 1) % len(player_cards)
-			page = Card.get_card_by_id(player_cards[idx].card).page
-			page.desc += f'**Owned:** {player_cards[idx].amount}'
-			if len(player_cards) > 1:
-				page.footer = f'{idx + 1}/{len(player_cards)}'
-			await msg.edit(embed=page.embed)
+		return await self.paginated_embeds(ctx, [pc.page for pc in player_cards])
 
 	@commands.group(name='sell',
 					pass_context=True,
@@ -164,7 +126,7 @@ class PokeTCG(MyCog):
 	async def sell_main(self, ctx):
 		msg = 'Here are the available selling commands:\n'
 		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
-		msg += '**.sell under [value - Default: _1.00_]** to sell all cards worth less than the value entered.\n'
+		msg += '**.sell under [value - Default: _1.00_] [rares - Default: _false_]** to sell all cards worth less than the value entered.\n'
 		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards until 1 remains. Doesn\'t sell rares by default.\n'
 		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default.'
 		return await ctx.send(msg)
@@ -179,13 +141,12 @@ class PokeTCG(MyCog):
 		if not player_card:
 			return await ctx.send('You don\'t have a card with that ID \\:(')
 		amt = 1 if amt < 1 else amt
-		card = Card.get_card_by_id(player_card.card)
 		sold = min(amt, player_card.amount)
 		player_card.amount -= sold
 		player.cards_sold += sold
-		player.cash += card.price * sold
-		player.total_cash += card.price * sold
-		await ctx.send(f'You sold {sold} **{card.name}** for ${card.price * sold:.2f}')
+		player.cash += player_card.price * sold
+		player.total_cash += player_card.price * sold
+		await ctx.send(f'You sold {sold} **{player_card.name}** for ${player_card.price * sold:.2f}')
 		player.update()
 		player_card.update()
 
@@ -200,17 +161,13 @@ class PokeTCG(MyCog):
 		player_cards = Card.get_player_cards(player)
 		total_sold = 0
 		total_cash = 0
-		for player_card_chunk in chunk(player_cards, 250):
-			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
-			cards = Card.get_cards_with_query(f'({q})')
-			card_ids = {c.id: c for c in cards}
-			cards_to_sell = [c for c in player_cards if card_ids.get(c.card).price < value]
-			for player_card in cards_to_sell:
-				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
-					continue
-				total_sold += player_card.amount
-				total_cash += card_ids.get(player_card.card).price * player_card.amount
-				player_card.amount = 0
+		cards_to_sell = [c for c in player_cards if c.price < value]
+		for player_card in cards_to_sell:
+			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
+				continue
+			total_sold += player_card.amount
+			total_cash += player_card.price * player_card.amount
+			player_card.amount = 0
 		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
@@ -228,17 +185,13 @@ class PokeTCG(MyCog):
 		player_cards = Card.get_player_cards(player)
 		total_sold = 0
 		total_cash = 0
-		for player_card_chunk in chunk(player_cards, 250):
-			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
-			cards = Card.get_cards_with_query(f'({q})')
-			card_ids = {c.id: c for c in cards}
-			cards_to_sell = [c for c in player_card_chunk if c.amount > 1]
-			for player_card in cards_to_sell:
-				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
-					continue
-				total_sold += player_card.amount - 1
-				total_cash += card_ids.get(player_card.card).price * (player_card.amount - 1)
-				player_card.amount = 1
+		cards_to_sell = [c for c in player_cards if c.amount > 1]
+		for player_card in cards_to_sell:
+			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
+				continue
+			total_sold += player_card.amount - 1
+			total_cash += player_card.price * (player_card.amount - 1)
+			player_card.amount = 1
 		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
@@ -256,16 +209,12 @@ class PokeTCG(MyCog):
 		player_cards = Card.get_player_cards(player)
 		total_sold = 0
 		total_cash = 0
-		for player_card_chunk in chunk(player_cards, 250):
-			q = ' OR '.join([f'id:{pc.card}' for pc in player_card_chunk])
-			cards = Card.get_cards_with_query(f'({q})')
-			card_ids = {c.id: c for c in cards}
-			for player_card in player_card_chunk:
-				if rares == 'false' and card_ids.get(player_card.card).rarity not in ['Common', 'Uncommon']:
-					continue
-				total_sold += player_card.amount
-				total_cash += card_ids.get(player_card.card).price * player_card.amount
-				player_card.amount = 0
+		for player_card in player_cards:
+			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
+				continue
+			total_sold += player_card.amount
+			total_cash += player_card.price * player_card.amount
+			player_card.amount = 0
 		Card.add_or_update_cards_from_player_cards(player, player_cards)
 		player.cash += total_cash
 		player.total_cash += total_cash
