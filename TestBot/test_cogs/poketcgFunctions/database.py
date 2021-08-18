@@ -50,11 +50,20 @@ def migrate_db(version):
 			sql('poketcg', step)
 		update_version(version)
 
+# 1.1.0
+# migration_steps = [
+# 	"alter table players add column collections text default '{}'",
+# 	"alter table players add column collections_bought integer default 0",
+# 	"alter table players add column trainers text default '{}'",
+# 	"alter table players add column trainers_bought integer default 0",
+# 	"alter table players add column boosters text default '{}'",
+# 	"alter table players add column boosters_bought integer default 0"
+# ]
+
+# 1.2.0
 migration_steps = [
-	"alter table players add column collections text default '{}'",
-	"alter table players add column collections_bought integer default 0",
-	"alter table players add column trainers text default '{}'",
-	"alter table players add column trainers_bought integer default 0",
-	"alter table players add column boosters text default '{}'",
-	"alter table players add column boosters_bought integer default 0"
+	"alter table players add column daily_packs integer default 50",
+	"alter table players add column quiz_questions integer default 5",
+	"alter table players add column current_multiplier integer default 1",
+	"alter table players add column quiz_correct integer default 0"
 ]
