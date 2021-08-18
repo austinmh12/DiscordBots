@@ -16,7 +16,7 @@ from .poketcgFunctions import packs as Packs
 from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 
-version = '1.2.1'
+version = '1.2.2'
 
 def query_builder(q):
 	if isinstance(q, tuple):

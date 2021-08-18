@@ -44,31 +44,80 @@ def migrate_db(version):
 	current = get_version()
 	log.debug(current)
 	log.debug(version)
-	if version != get_version():
+	versions = list(migration_steps.keys())
+	versions.sort()
+	while current < version:
 		log.info('Migrating database')
-		for step in migration_steps:
-			sql('poketcg', step)
+		idx = versions.index(current) + 1
+		sql('poketcg', migration_steps[versions[idx]])
 		update_version(version)
+		current = get_version()
 
-# 1.1.0
-# migration_steps = [
-# 	"alter table players add column collections text default '{}'",
-# 	"alter table players add column collections_bought integer default 0",
-# 	"alter table players add column trainers text default '{}'",
-# 	"alter table players add column trainers_bought integer default 0",
-# 	"alter table players add column boosters text default '{}'",
-# 	"alter table players add column boosters_bought integer default 0"
-# ]
-
-# 1.2.0
-migration_steps = [
-	"alter table players add column daily_packs integer default 50",
-	"alter table players add column quiz_questions integer default 5",
-	"alter table players add column current_multiplier integer default 1",
-	"alter table players add column quiz_correct integer default 0"
-]
-
-# 1.2.1
-migration_steps = [
-	""
-]
+migration_steps = {
+	'1.1.0': [
+		"alter table players add column collections text default '{}'",
+		"alter table players add column collections_bought integer default 0",
+		"alter table players add column trainers text default '{}'",
+		"alter table players add column trainers_bought integer default 0",
+		"alter table players add column boosters text default '{}'",
+		"alter table players add column boosters_bought integer default 0"
+	],
+	'1.2.0': [
+		"alter table players add column daily_packs integer default 50",
+		"alter table players add column quiz_questions integer default 5",
+		"alter table players add column current_multiplier integer default 1",
+		"alter table players add column quiz_correct integer default 0"
+	],
+	'1.2.2': [
+		"""create table tmp_player (
+			discord_id integer
+			,cash integer
+			,daily_reset integer
+			,packs text
+			,packs_opened integer
+			,packs_bought integer
+			,total_cash integer
+			,total_cards integer
+			,cards_sold integer
+			,daily_packs integer
+			,quiz_questions integer
+			,current_multiplier integer
+			,quiz_correct integer
+		) """,
+		"""insert into tmp_player select
+			discord_id
+			,cash
+			,daily_reset
+			,packs
+			,packs_opened
+			,packs_bought
+			,total_cash
+			,total_cards
+			,cards_sold
+			,daily_packs
+			,quiz_questions
+			,current_multiplier
+			,quiz_correct
+		from
+			players
+		""",
+		'drop table players',
+		"""create table players (
+			discord_id integer
+			,cash integer
+			,daily_reset integer
+			,packs text
+			,packs_opened integer
+			,packs_bought integer
+			,total_cash integer
+			,total_cards integer
+			,cards_sold integer
+			,daily_packs integer
+			,quiz_questions integer
+			,current_multiplier integer
+			,quiz_correct integer
+		) """,
+		'insert into players select * from tmp_player',
+		'drop table tmp_player'
+	]
+}

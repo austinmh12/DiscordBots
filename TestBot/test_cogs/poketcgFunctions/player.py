@@ -19,12 +19,6 @@ def add_player(discord_id):
 		25,
 		0,
 		0,
-		{},
-		0,
-		{},
-		0,
-		{},
-		0,
 		50,
 		5,
 		1,
@@ -45,12 +39,6 @@ class Player:
 		total_cash,
 		total_cards,
 		cards_sold,
-		collections,
-		collections_bought,
-		trainers,
-		trainers_bought,
-		boosters,
-		boosters_bought,
 		daily_packs,
 		quiz_questions,
 		current_multiplier,
@@ -65,12 +53,6 @@ class Player:
 		self.total_cash = total_cash
 		self.total_cards = total_cards
 		self.cards_sold = cards_sold
-		self.collections = collections if isinstance(collections, dict) else json.loads(collections)
-		self.collections_bought = collections_bought
-		self.trainers = trainers if isinstance(trainers, dict) else json.loads(trainers)
-		self.trainers_bought = trainers_bought
-		self.boosters = boosters if isinstance(boosters, dict) else json.loads(boosters)
-		self.boosters_bought = boosters_bought
 		self.daily_packs = daily_packs
 		self.quiz_questions = quiz_questions
 		self.current_multiplier = current_multiplier
@@ -90,12 +72,6 @@ class Player:
 			round(self.total_cash, 2),
 			self.total_cards,
 			self.cards_sold,
-			json.dumps(self.collections),
-			self.collections_bought,
-			json.dumps(self.trainers),
-			self.trainers_bought,
-			json.dumps(self.boosters),
-			self.boosters_bought,
 			self.daily_packs,
 			self.quiz_questions,
 			self.current_multiplier,
@@ -113,12 +89,6 @@ class Player:
 			'total_cash': round(self.total_cash, 2),
 			'total_cards': self.total_cards,
 			'cards_sold': self.cards_sold,
-			'collections': json.dumps(self.collections),
-			'collections_bought': self.collections_bought,
-			'trainers': json.dumps(self.trainers),
-			'trainers_bought': self.trainers_bought,
-			'boosters': json.dumps(self.boosters),
-			'boosters_bought': self.boosters_bought,
 			'daily_packs': self.daily_packs,
 			'quiz_questions': self.quiz_questions,
 			'current_multiplier': self.current_multiplier,
