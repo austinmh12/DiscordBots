@@ -24,9 +24,13 @@ def add_player(discord_id):
 		{},
 		0,
 		{},
+		0,
+		50,
+		5,
+		1,
 		0
 	)
-	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?)', player.creation_row)
+	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?)', player.creation_row)
 	return player
 
 class Player:
@@ -46,7 +50,11 @@ class Player:
 		trainers,
 		trainers_bought,
 		boosters,
-		boosters_bought
+		boosters_bought,
+		daily_packs,
+		quiz_questions,
+		current_multiplier,
+		quiz_correct
 	):
 		self.discord_id = discord_id
 		self.cash = cash
@@ -63,6 +71,10 @@ class Player:
 		self.trainers_bought = trainers_bought
 		self.boosters = boosters if isinstance(boosters, dict) else json.loads(boosters)
 		self.boosters_bought = boosters_bought
+		self.daily_packs = daily_packs
+		self.quiz_questions = quiz_questions
+		self.current_multiplier = current_multiplier
+		self.quiz_correct = quiz_correct
 
 		self.cached = self.to_dict().copy()
 
@@ -83,7 +95,11 @@ class Player:
 			json.dumps(self.trainers),
 			self.trainers_bought,
 			json.dumps(self.boosters),
-			self.boosters_bought
+			self.boosters_bought,
+			self.daily_packs,
+			self.quiz_questions,
+			self.current_multiplier,
+			self.quiz_correct
 		)
 
 	def to_dict(self):
@@ -102,7 +118,11 @@ class Player:
 			'trainers': json.dumps(self.trainers),
 			'trainers_bought': self.trainers_bought,
 			'boosters': json.dumps(self.boosters),
-			'boosters_bought': self.boosters_bought
+			'boosters_bought': self.boosters_bought,
+			'daily_packs': self.daily_packs,
+			'quiz_questions': self.quiz_questions,
+			'current_multiplier': self.current_multiplier,
+			'quiz_correct': self.quiz_correct
 		}
 
 	def update(self):

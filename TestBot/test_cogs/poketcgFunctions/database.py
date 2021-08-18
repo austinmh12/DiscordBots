@@ -67,3 +67,8 @@ migration_steps = [
 	"alter table players add column current_multiplier integer default 1",
 	"alter table players add column quiz_correct integer default 0"
 ]
+
+# 1.2.1
+migration_steps = [
+	""
+]
