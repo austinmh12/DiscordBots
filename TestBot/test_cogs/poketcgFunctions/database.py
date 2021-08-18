@@ -44,14 +44,15 @@ def migrate_db(version):
 	current = get_version()
 	log.debug(current)
 	log.debug(version)
-	versions = list(migration_steps.keys())
-	versions.sort()
-	while current < version:
-		log.info('Migrating database')
-		idx = versions.index(current) + 1
-		sql('poketcg', migration_steps[versions[idx]])
-		update_version(version)
-		current = get_version()
+	if version <= current:
+		return
+	log.debug('Migrating database')
+	migration_versions = [k for k in migration_steps if k > current]
+	migration_versions.sort()
+	for migration_version in migration_versions:
+		for step in migration_version:
+			sql('poketcg', step)
+	update_version(version)
 
 migration_steps = {
 	'1.1.0': [
