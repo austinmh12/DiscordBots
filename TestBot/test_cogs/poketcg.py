@@ -1,5 +1,5 @@
 from . import log, BASE_PATH, Page, MyCog, chunk, sql, format_remaining_time, BACK, NEXT
-from discord import File
+from discord import File, Member
 from discord.ext import commands, tasks
 import asyncio
 from random import randint, choice, choices, random
@@ -430,40 +430,3 @@ class PokeTCG(MyCog):
 			log.info('Refreshing daily packs')
 			sql('poketcg', 'update players set daily_packs = 50')
 			self.date = dt.now().date()
-
-	# Test Functions
-	@commands.command(name='testpack',
-					pass_context=True,
-					description='',
-					brief='')
-	@commands.check(admin_check)
-	async def test_pack(self, ctx, set_id):
-		pack = packs.Pack.from_set(set_id)
-		return await self.paginated_embeds(ctx, pack.pages)
-
-	@commands.command(name='addcash',
-					pass_context=True,
-					description='',
-					brief='')
-	@commands.check(admin_check)
-	async def add_cash(self, ctx, amt: typing.Optional[int] = 100):
-		player = Player.get_player(ctx.author.id)
-		player.cash += amt
-		player.total_cash += amt
-		await ctx.send(f'{ctx.author.display_name} now has **${player.cash:.2f}**')
-		return player.update()
-
-	@commands.command(name='testquiz',
-					pass_context=True)
-	@commands.check(admin_check)
-	async def adminquiz(self, ctx):
-		q = Quiz.generate_random_quiz()
-		return await ctx.send(file=q.silhouette)
-
-	@commands.command(name='addpacks',
-					pass_context=True)
-	@commands.check(austin_check)
-	async def adminpacks(self, ctx, player: Member, set_id, amt):
-		player = Player.get_player(player.id)
-		player.packs[set_id] = amt
-		player.update()

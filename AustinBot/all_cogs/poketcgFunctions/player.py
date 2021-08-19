@@ -2,6 +2,12 @@ from .. import Page, sql, format_remaining_time
 from datetime import datetime as dt
 import json
 
+def get_players():
+	df = sql('poketcg', 'select * from players')
+	if df.empty:
+		return []
+	return [Player(**d) for d in df.to_dict('records')]
+
 def get_player(discord_id):
 	df = sql('poketcg', 'select * from players where discord_id = ?', (discord_id,))
 	if df.empty:
@@ -19,14 +25,13 @@ def add_player(discord_id):
 		25,
 		0,
 		0,
-		{},
+		50,
+		5,
+		1,
 		0,
-		{},
-		0,
-		{},
-		0
+		dt.now()
 	)
-	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?)', player.creation_row)
+	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', player.creation_row)
 	return player
 
 class Player:
@@ -41,12 +46,11 @@ class Player:
 		total_cash,
 		total_cards,
 		cards_sold,
-		collections,
-		collections_bought,
-		trainers,
-		trainers_bought,
-		boosters,
-		boosters_bought
+		daily_packs,
+		quiz_questions,
+		current_multiplier,
+		quiz_correct,
+		quiz_reset
 	):
 		self.discord_id = discord_id
 		self.cash = cash
@@ -57,12 +61,11 @@ class Player:
 		self.total_cash = total_cash
 		self.total_cards = total_cards
 		self.cards_sold = cards_sold
-		self.collections = collections if isinstance(collections, dict) else json.loads(collections)
-		self.collections_bought = collections_bought
-		self.trainers = trainers if isinstance(trainers, dict) else json.loads(trainers)
-		self.trainers_bought = trainers_bought
-		self.boosters = boosters if isinstance(boosters, dict) else json.loads(boosters)
-		self.boosters_bought = boosters_bought
+		self.daily_packs = daily_packs
+		self.quiz_questions = quiz_questions
+		self.current_multiplier = current_multiplier
+		self.quiz_correct = quiz_correct
+		self.quiz_reset = quiz_reset if isinstance(quiz_reset, dt) else dt.fromtimestamp(quiz_reset)
 
 		self.cached = self.to_dict().copy()
 
@@ -78,12 +81,11 @@ class Player:
 			round(self.total_cash, 2),
 			self.total_cards,
 			self.cards_sold,
-			json.dumps(self.collections),
-			self.collections_bought,
-			json.dumps(self.trainers),
-			self.trainers_bought,
-			json.dumps(self.boosters),
-			self.boosters_bought
+			self.daily_packs,
+			self.quiz_questions,
+			self.current_multiplier,
+			self.quiz_correct,
+			self.quiz_reset.timestamp()
 		)
 
 	def to_dict(self):
@@ -97,12 +99,11 @@ class Player:
 			'total_cash': round(self.total_cash, 2),
 			'total_cards': self.total_cards,
 			'cards_sold': self.cards_sold,
-			'collections': json.dumps(self.collections),
-			'collections_bought': self.collections_bought,
-			'trainers': json.dumps(self.trainers),
-			'trainers_bought': self.trainers_bought,
-			'boosters': json.dumps(self.boosters),
-			'boosters_bought': self.boosters_bought
+			'daily_packs': self.daily_packs,
+			'quiz_questions': self.quiz_questions,
+			'current_multiplier': self.current_multiplier,
+			'quiz_correct': self.quiz_correct,
+			'quiz_reset': self.quiz_reset.timestamp()
 		}
 
 	def update(self):
@@ -126,5 +127,7 @@ class Player:
 		desc += f'**Current Packs:** {sum(self.packs.values())}\n'
 		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n\n'
 		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n\n'
+		desc += f'**Quiz Questions Answered:** {self.quiz_correct}\n\n'
+		desc += f'Quiz resets in **{format_remaining_time(self.quiz_reset)}**\n'
 		desc += f'Daily reset in **{format_remaining_time(self.daily_reset)}**'
 		return desc

@@ -44,8 +44,7 @@ class Set:
 
 	@property
 	def pack_price(self):
-		base_price = 4.50
-		return base_price + (dt.now().year - self.release_date.year) * 0.50
+		return round(3.75 * 1.1 ** (dt.now().year - self.release_date.year), 2)
 
 	def __str__(self):
 		return f'**{self.name}** _{self.id}_'

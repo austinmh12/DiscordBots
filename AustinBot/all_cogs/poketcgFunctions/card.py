@@ -47,13 +47,21 @@ def get_player_cards(player):
 	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ?', (player.discord_id,))
 	if df.empty:
 		return []
-	return [PlayerCard(player, **d) for d in df.to_dict('records')]
+	player_cards = []
+	for df_chunk in chunk(df.to_dict('records'), 250):
+		df_chunk.sort(key=lambda x: x['card_id'])
+		q = ' OR '.join([f'id:{dc["card_id"]}' for dc in df_chunk])
+		cards = get_cards_with_query(f'({q})')
+		cards.sort(key=lambda x: x.id)
+		player_cards.extend([(player, c, d['amount']) for c, d in zip(cards, df_chunk)])
+	return [PlayerCard(*pc) for pc in player_cards]
 
 def get_player_card(player, card_id):
 	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
 	if df.empty:
 		return None
-	return PlayerCard(player, **df.to_dict('records')[0])
+	card = get_card_by_id(card_id)
+	return PlayerCard(player, card, df[0]["amount"])
 
 def add_or_update_card(player, card):
 	# TODO: revamp this garbage
@@ -90,7 +98,7 @@ def add_or_update_cards_from_pack(player, pack):
 			sql_str = 'insert into tmp_cards values '
 			for u in uc:
 				sql_str += ' (?,?,?),'
-				amt = card_map.get(u.id).amount + amounts[u]
+				amt = card_map.get(u).amount + amounts[u]
 				vals.extend((player.discord_id, u.id, amt))
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)
@@ -105,7 +113,7 @@ def add_or_update_cards_from_player_cards(player, player_cards):
 			sql_str = 'insert into cards values '
 			for c in nc:
 				sql_str += ' (?,?,?),'
-				vals.extend((player.discord_id, c.card, 1))
+				vals.extend((player.discord_id, c.id, 1))
 			sql('poketcg', sql_str[:-1], vals)
 	if updating:
 		sql('poketcg', 'drop table if exists tmp_cards')
@@ -116,7 +124,7 @@ def add_or_update_cards_from_player_cards(player, player_cards):
 			sql_str = 'insert into tmp_cards values '
 			for u in uc:
 				sql_str += ' (?,?,?),'
-				vals.extend((player.discord_id, u.card, u.amount))
+				vals.extend((player.discord_id, u.id, u.amount))
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)
 	sql('poketcg', 'delete from cards where amount = 0')
@@ -168,7 +176,7 @@ class Card:
 
 	def __eq__(self, c):
 		if isinstance(c, PlayerCard):
-			return self.id == c.card
+			return self.id == c.card.id
 		return self.id == c.id
 
 	def __hash__(self):
@@ -181,6 +189,22 @@ class PlayerCard:
 		self.amount = amount
 
 	@property
+	def name(self):
+		return self.card.name
+
+	@property
+	def id(self):
+		return self.card.id
+
+	@property
+	def price(self):
+		return self.card.price
+
+	@property
+	def rarity(self):
+		return self.card.rarity
+
+	@property
 	def page(self):
 		page = self.card.page
 		page.desc += f'Owned: {self.amount}'
@@ -188,13 +212,13 @@ class PlayerCard:
 
 	def update(self):
 		if self.amount != 0:
-			return sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card))
-		return sql('poketcg', 'delete from cards where discord_id = ? and card_id = ?', (self.player.discord_id, self.card))
+			return sql('poketcg', 'update cards set amount = ? where discord_id = ? and card_id = ?', (self.amount, self.player.discord_id, self.card.id))
+		return sql('poketcg', 'delete from cards where discord_id = ? and card_id = ?', (self.player.discord_id, self.card.id))
 
 	def __eq__(self, c):
 		if isinstance(c, Card):
-			return self.card == c.id
+			return self.card == c
 		return self.card == pc.card
 
 	def __hash__(self):
-		return hash(self.card_id)
+		return hash(self.card)
