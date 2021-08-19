@@ -98,7 +98,7 @@ def add_or_update_cards_from_pack(player, pack):
 			sql_str = 'insert into tmp_cards values '
 			for u in uc:
 				sql_str += ' (?,?,?),'
-				amt = card_map.get(u.id).amount + amounts[u]
+				amt = card_map.get(u).amount + amounts[u]
 				vals.extend((player.discord_id, u.id, amt))
 			sql('poketcg', sql_str[:-1], vals)
 		sql('poketcg', UPDATE_CARDS)

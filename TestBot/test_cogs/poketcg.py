@@ -32,10 +32,12 @@ class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.store = self.generate_store()
+		self.date = dt.now().date()
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
 			log.info('Initialising database.')
 			initialise_db()
 		migrate_db(version)
+		self.refresh_daily_packs.start()
 
 	# Utilities
 
@@ -240,7 +242,8 @@ class PokeTCG(MyCog):
 					brief='')
 	async def get_player_packs(self, ctx):
 		player = Player.get_player(ctx.author.id)
-		desc = 'Use **.openpack <set_id> (amount)** to open packs\n'
+		desc = f'You have **{player.daily_packs}** packs left to open today\n'
+		desc += 'Use **.openpack <set_id> (amount)** to open packs\n'
 		for set_id, amount in player.packs.items():
 			desc += f'**{set_id}** - {amount}\n'
 		return await self.paginated_embeds(ctx, Page('Your packs', desc))
@@ -252,6 +255,8 @@ class PokeTCG(MyCog):
 					aliases=['op'])
 	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
+		if player.daily_packs == 0:
+			return await ctx.send('You\'re out of packs for today!')
 		set_id = set_id.lower()
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
@@ -259,9 +264,10 @@ class PokeTCG(MyCog):
 		if set_id not in player.packs:
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** packs.")
 		amt = 1 if amt < 1 else amt
-		opened = min(amt, player.packs[set_id])
+		opened = min(amt, player.packs[set_id], player.daily_packs)
 		pack = Packs.generate_packs(set_.id, opened)
 		Card.add_or_update_cards_from_pack(player, pack)
+		player.daily_packs -= opened
 		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:
 			del player.packs[set_id]
@@ -380,8 +386,9 @@ class PokeTCG(MyCog):
 	# Tasks
 	@tasks.loop(seconds=60)
 	async def refresh_daily_packs(self):
-		log.info('refreshing daily packs')
-		sql('poketcg', 'update players set daily_packs = 50')
+		if self.date < dt.now().date():
+			log.info('Refreshing daily packs')
+			sql('poketcg', 'update players set daily_packs = 50')
 
 	# Test Functions
 
