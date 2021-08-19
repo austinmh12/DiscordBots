@@ -51,6 +51,20 @@ class PokeTCG(MyCog):
 		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 		return ret
 
+	def sell_cards(self, player, player_cards, keep):
+		total_sold = 0
+		total_cash = 0
+		for player_card in player_cards:
+			total_sold += player_card.amount - keep
+			total_cash += player_card.price * (player_card.amount - keep)
+			player_card.amount = keep
+		Card.add_or_update_cards_from_player_cards(player, player_cards)
+		player.cash += total_cash
+		player.total_cash += total_cash
+		player.cards_sold += total_sold
+		player.update()
+		return total_sold, total_cash
+
 	# Commands
 	## cards
 	@commands.command(name='cards',
@@ -133,21 +147,11 @@ class PokeTCG(MyCog):
 		value = 0.00 if value < 0 else value
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player)
-		total_sold = 0
-		total_cash = 0
 		cards_to_sell = [c for c in player_cards if c.price < value]
-		for player_card in cards_to_sell:
-			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
-				continue
-			total_sold += player_card.amount
-			total_cash += player_card.price * player_card.amount
-			player_card.amount = 0
-		Card.add_or_update_cards_from_player_cards(player, player_cards)
-		player.cash += total_cash
-		player.total_cash += total_cash
-		player.cards_sold += total_sold
-		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
-		return player.update()
+		if rares == 'false':
+			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
+		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
+		return await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
 
 	@sell_main.command(name='dups',
 					pass_context=True,
@@ -157,21 +161,11 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player)
-		total_sold = 0
-		total_cash = 0
 		cards_to_sell = [c for c in player_cards if c.amount > 1]
-		for player_card in cards_to_sell:
-			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
-				continue
-			total_sold += player_card.amount - 1
-			total_cash += player_card.price * (player_card.amount - 1)
-			player_card.amount = 1
-		Card.add_or_update_cards_from_player_cards(player, player_cards)
-		player.cash += total_cash
-		player.total_cash += total_cash
-		player.cards_sold += total_sold
-		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
-		return player.update()
+		if rares == 'false':
+			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
+		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 1)
+		return await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
 
 	@sell_main.command(name='all',
 					pass_context=True,
@@ -180,21 +174,11 @@ class PokeTCG(MyCog):
 	async def sell_all(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
-		player_cards = Card.get_player_cards(player)
-		total_sold = 0
-		total_cash = 0
-		for player_card in player_cards:
-			if rares == 'false' and player_card.rarity not in ['Common', 'Uncommon']:
-				continue
-			total_sold += player_card.amount
-			total_cash += player_card.price * player_card.amount
-			player_card.amount = 0
-		Card.add_or_update_cards_from_player_cards(player, player_cards)
-		player.cash += total_cash
-		player.total_cash += total_cash
-		player.cards_sold += total_sold
-		await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
-		return player.update()
+		cards_to_sell = Card.get_player_cards(player)
+		if rares == 'false':
+			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
+		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
+		return await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
 
 	@commands.command(name='search',
 					pass_context=True,
