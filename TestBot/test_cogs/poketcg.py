@@ -306,6 +306,7 @@ class PokeTCG(MyCog):
 			if s.id not in player.packs:
 				player.packs[s.id] = 0
 			player.packs[s.id] += bought * pack_count
+			player.total_cards += len(promos)
 			player.update()
 			await ctx.send(f'You bought {bought} **{s.name}** packs!')
 			if promos:
