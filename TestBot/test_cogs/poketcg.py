@@ -29,6 +29,9 @@ def query_builder(q):
 def admin_check(ctx):
 	return ctx.message.author.guild_permissions.administrator
 
+def austin_check(ctx):
+	return ctx.message.author.id == 223616191246106624
+
 class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
@@ -456,3 +459,11 @@ class PokeTCG(MyCog):
 	async def adminquiz(self, ctx):
 		q = Quiz.generate_random_quiz()
 		return await ctx.send(file=q.silhouette)
+
+	@commands.command(name='addpacks',
+					pass_context=True)
+	@commands.check(austin_check)
+	async def adminpacks(self, ctx, player: Member, set_id, amt):
+		player = Player.get_player(player.id)
+		player.packs[set_id] = amt
+		player.update()
