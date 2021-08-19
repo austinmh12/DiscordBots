@@ -38,24 +38,36 @@ class Quiz:
 		return File(b, filename='quizsilhouette.PNG')
 
 	@property
+	def revealed(self):
+		image_data = r.get(self.image)
+		im = Image.open(BytesIO(image_data.content))
+		b = BytesIO()
+		im.save(b, format='PNG')
+		b.seek(0)
+		return File(b, filename=f'{self.guess_name}.PNG')
+
+	@property
 	def guess_name(self):
 		# Get rid of -male -female, and -
-		...
+		ret = self.name.replace('-male', '')
+		ret = ret.replace('-female', '')
+		ret = ret.replace('-', ' ')
+		return ret
 
 	def get_gen(self, nat_id):
 		if nat_id <= 151:
-			return 1
+			return '1'
 		elif 151 < nat_id <= 251:
-			return 2
+			return '2'
 		elif 251 < nat_id <= 386:
-			return 3
+			return '3'
 		elif 368 < nat_id <= 493:
-			return 4
+			return '4'
 		elif 493 < nat_id <= 649:
-			return 5
+			return '5'
 		elif 649 < nat_id <= 721:
-			return 6
+			return '6'
 		elif 721 < nat_id <= 809:
-			return 7
+			return '7'
 		else:
-			return 8
+			return '8'

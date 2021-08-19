@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.2.2'
+version = '1.2.3'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -369,6 +369,57 @@ class PokeTCG(MyCog):
 		player.daily_reset = dt.now() + td(days=1)
 		return player.update()
 
+	## quizzes
+	@commands.command(name='quiz',
+					pass_context=True,
+					description='',
+					brief='')
+	async def quiz(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		if player.quiz_reset < dt.now():
+			player.quiz_questions = 5
+			player.current_multiplier = 1
+		if player.quiz_questions == 0:
+			return await ctx.send(f'You\'ve used up all your quiz attempts. Resets in **{format_remaining_time(player.quiz_reset)}**')
+
+		def is_same_user_channel(m):
+			return m.channel == ctx.channel and m.author == ctx.author
+
+		q = Quiz.generate_random_quiz()
+		msg = await ctx.send('Who\'s that Pokemon?!', file=q.silhouette)
+		try:
+			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=10)
+		except asyncio.TimeoutError:
+			await msg.delete()
+			await ctx.send('You ran out of time', file=q.revealed)
+		guess = reply.content.lower() if reply else None
+		if guess == q.guess_name:
+			mult = player.current_multiplier
+			reward = .1 * mult
+			player.cash += reward
+			player.total_cash += reward
+			player.current_multiplier = min(mult + 1, 5)
+			player.quiz_correct += 1
+			content = f'Correct! It\'s **{q.guess_name.capitalize()}**\n'
+			content += f'You earned **${reward:.2f}** and your multiplier is now **{player.current_multiplier}**'
+			await msg.delete()
+			await ctx.send(content, file=q.revealed)
+		elif guess == q.gen:
+			mult = player.current_multiplier
+			reward = .1 * mult
+			player.cash += reward
+			player.total_cash += reward
+			content = f'Sure, it\'s from **Gen {q.gen}**. It\'s **{q.guess_name.capitalize()}**\n'
+			content += f'You earned **${reward:.2f}**'
+			await msg.delete()
+			await ctx.send(content, file=q.revealed)
+		else:
+			await msg.delete()
+			await ctx.send(f'Wrong! It\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
+		player.quiz_questions -= 1
+		player.quiz_reset = dt.now() + td(hours=2)
+		return player.update()
+
 	# Tasks
 	@tasks.loop(seconds=60)
 	async def refresh_daily_packs(self):
@@ -378,7 +429,6 @@ class PokeTCG(MyCog):
 			self.date = dt.now().date()
 
 	# Test Functions
-
 	@commands.command(name='testpack',
 					pass_context=True,
 					description='',
@@ -400,7 +450,7 @@ class PokeTCG(MyCog):
 		await ctx.send(f'{ctx.author.display_name} now has **${player.cash:.2f}**')
 		return player.update()
 
-	@commands.command(name='quiz',
+	@commands.command(name='testquiz',
 					pass_context=True)
 	@commands.check(admin_check)
 	async def adminquiz(self, ctx):

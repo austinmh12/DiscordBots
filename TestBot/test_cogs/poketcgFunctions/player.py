@@ -2,6 +2,12 @@ from .. import Page, sql, format_remaining_time
 from datetime import datetime as dt
 import json
 
+def get_players():
+	df = sql('poketcg', 'select * from players')
+	if df.empty:
+		return []
+	return [Player(**d) for d in df.to_dict('records')]
+
 def get_player(discord_id):
 	df = sql('poketcg', 'select * from players where discord_id = ?', (discord_id,))
 	if df.empty:
@@ -22,9 +28,10 @@ def add_player(discord_id):
 		50,
 		5,
 		1,
-		0
+		0,
+		dt.now()
 	)
-	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?)', player.creation_row)
+	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', player.creation_row)
 	return player
 
 class Player:
@@ -42,7 +49,8 @@ class Player:
 		daily_packs,
 		quiz_questions,
 		current_multiplier,
-		quiz_correct
+		quiz_correct,
+		quiz_reset
 	):
 		self.discord_id = discord_id
 		self.cash = cash
@@ -57,6 +65,7 @@ class Player:
 		self.quiz_questions = quiz_questions
 		self.current_multiplier = current_multiplier
 		self.quiz_correct = quiz_correct
+		self.quiz_reset = quiz_reset if isinstance(quiz_reset, dt) else dt.fromtimestamp(quiz_reset)
 
 		self.cached = self.to_dict().copy()
 
@@ -75,7 +84,8 @@ class Player:
 			self.daily_packs,
 			self.quiz_questions,
 			self.current_multiplier,
-			self.quiz_correct
+			self.quiz_correct,
+			self.quiz_reset.timestamp()
 		)
 
 	def to_dict(self):
@@ -92,7 +102,8 @@ class Player:
 			'daily_packs': self.daily_packs,
 			'quiz_questions': self.quiz_questions,
 			'current_multiplier': self.current_multiplier,
-			'quiz_correct': self.quiz_correct
+			'quiz_correct': self.quiz_correct,
+			'quiz_reset': self.quiz_reset.timestamp()
 		}
 
 	def update(self):
@@ -116,5 +127,7 @@ class Player:
 		desc += f'**Current Packs:** {sum(self.packs.values())}\n'
 		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n\n'
 		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n\n'
+		desc += f'**Quiz Questions Answered:** {self.quiz_correct}\n\n'
+		desc += f'Quiz resets in **{format_remaining_time(self.quiz_reset)}**\n'
 		desc += f'Daily reset in **{format_remaining_time(self.daily_reset)}**'
 		return desc

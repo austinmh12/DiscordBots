@@ -29,6 +29,7 @@ def initialise_db():
 			version text
 		)'''
 	)
+	sql('poketcg', 'insert into version values (?)', ('1.0.0',))
 
 def get_version():
 	df = sql('poketcg', 'select * from version')
@@ -50,7 +51,7 @@ def migrate_db(version):
 	migration_versions = [k for k in migration_steps if k > current]
 	migration_versions.sort()
 	for migration_version in migration_versions:
-		for step in migration_version:
+		for step in migration_steps[migration_version]:
 			sql('poketcg', step)
 	update_version(version)
 
@@ -120,5 +121,8 @@ migration_steps = {
 		) """,
 		'insert into players select * from tmp_player',
 		'drop table tmp_player'
+	],
+	'1.2.3': [
+		'alter table players add column quiz_reset integer default 1629401801.1'
 	]
 }
