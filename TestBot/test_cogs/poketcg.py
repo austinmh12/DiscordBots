@@ -15,6 +15,7 @@ from .poketcgFunctions import sets as Sets
 from .poketcgFunctions import packs as Packs
 from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
+from .poketcgFunctions import quiz as Quiz
 
 version = '1.2.2'
 
@@ -397,3 +398,10 @@ class PokeTCG(MyCog):
 		player.total_cash += amt
 		await ctx.send(f'{ctx.author.display_name} now has **${player.cash:.2f}**')
 		return player.update()
+
+	@commands.command(name='quiz',
+					pass_context=True)
+	@commands.check(admin_check)
+	async def adminquiz(self, ctx):
+		q = Quiz.generate_random_quiz()
+		return await ctx.send(file=q.silhouette)
