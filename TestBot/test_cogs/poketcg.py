@@ -375,6 +375,7 @@ class PokeTCG(MyCog):
 		if self.date < dt.now().date():
 			log.info('Refreshing daily packs')
 			sql('poketcg', 'update players set daily_packs = 50')
+			self.date = dt.now().date()
 
 	# Test Functions
 
