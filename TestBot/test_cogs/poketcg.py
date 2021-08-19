@@ -377,6 +377,13 @@ class PokeTCG(MyCog):
 		player.daily_reset = dt.now() + td(days=1)
 		return player.update()
 
+	# Tasks
+	@tasks.loop(seconds=60)
+	async def refresh_daily_packs(self):
+		log.info('refreshing daily packs')
+		sql('poketcg', 'update players set daily_packs = 50')
+
+	# Test Functions
 
 	@commands.command(name='testpack',
 					pass_context=True,
