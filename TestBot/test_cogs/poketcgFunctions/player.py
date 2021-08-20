@@ -127,6 +127,7 @@ class Player:
 		desc += f'**Current Packs:** {sum(self.packs.values())}\n'
 		desc += f'**Opened Packs:** {self.packs_opened} | **Bought Packs:** {self.packs_bought}\n\n'
 		desc += f'**Total Cards:** {self.total_cards} | **Cards Sold:** {self.cards_sold}\n\n'
+		desc += f'**Quiz Questions Remaining:** {self.quiz_questions}\n'
 		desc += f'**Quiz Questions Answered:** {self.quiz_correct}\n\n'
 		desc += f'Quiz resets in **{format_remaining_time(self.quiz_reset)}**\n'
 		desc += f'Daily reset in **{format_remaining_time(self.daily_reset)}**'

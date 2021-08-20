@@ -394,7 +394,7 @@ class PokeTCG(MyCog):
 			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=10)
 		except asyncio.TimeoutError:
 			await msg.delete()
-			await ctx.send('You ran out of time', file=q.revealed)
+			await ctx.send(f'You ran out of time, it\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
 		guess = reply.content.lower() if reply else None
 		if guess == q.guess_name:
 			mult = player.current_multiplier
@@ -420,7 +420,8 @@ class PokeTCG(MyCog):
 			await msg.delete()
 			await ctx.send(f'Wrong! It\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
 		player.quiz_questions -= 1
-		player.quiz_reset = dt.now() + td(hours=2)
+		if player.quiz_reset < dt.now():
+			player.quiz_reset = dt.now() + td(hours=2)
 		return player.update()
 
 	# Tasks
