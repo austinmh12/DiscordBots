@@ -30,6 +30,7 @@ class Set:
 		self.name = name
 		self.series = series
 		self.total = kwargs.get('printedTotal', total)
+		self.total_set = kwargs.get('total', total)
 		self.images = images
 		self.release_date = dt.strptime(kwargs.get('releaseDate'), '%Y/%m/%d')
 
@@ -48,3 +49,6 @@ class Set:
 
 	def __str__(self):
 		return f'**{self.name}** _{self.id}_'
+
+	def __eq__(self, s):
+		return self.id == s.id

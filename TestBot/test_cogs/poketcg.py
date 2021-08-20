@@ -42,6 +42,7 @@ class PokeTCG(MyCog):
 			initialise_db()
 		migrate_db(version)
 		self.refresh_daily_packs.start()
+		self.cache = {}
 
 	# Utilities
 
@@ -96,7 +97,7 @@ class PokeTCG(MyCog):
 					aliases=['mc'])
 	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'name'):
 		player = Player.get_player(ctx.author.id)
-		player_cards = Card.get_player_cards(player)
+		player_cards = Card.get_player_cards(player, self.cache)
 		if not player_cards:
 			return await ctx.send('You have no cards')
 		sort_by = 'name' if sort_by not in ['id', 'amount', 'price', 'name'] else sort_by
@@ -132,6 +133,7 @@ class PokeTCG(MyCog):
 		player_card = Card.get_player_card(player, card_id)
 		if not player_card:
 			return await ctx.send('You don\'t have a card with that ID \\:(')
+		self.cache.update({player_card.card.id: player_card.card})
 		amt = 1 if amt < 1 else amt
 		sold = min(amt, player_card.amount)
 		player_card.amount -= sold
@@ -150,7 +152,7 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		value = 0.00 if value < 0 else value
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
-		player_cards = Card.get_player_cards(player)
+		player_cards = Card.get_player_cards(player, self.cache)
 		cards_to_sell = [c for c in player_cards if c.price < value]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
@@ -164,7 +166,7 @@ class PokeTCG(MyCog):
 	async def sell_dups(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
-		cards_to_sell = Card.get_duplicate_player_cards(player)
+		cards_to_sell = Card.get_duplicate_player_cards(player, self.cache)
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 1)
@@ -177,7 +179,7 @@ class PokeTCG(MyCog):
 	async def sell_all(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
-		cards_to_sell = Card.get_player_cards(player)
+		cards_to_sell = Card.get_player_cards(player, self.cache)
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
@@ -188,14 +190,17 @@ class PokeTCG(MyCog):
 					description='',
 					brief='')
 	async def search_cards(self, ctx, *query):
+		msg = 'I couldn\'t find any cards, perhaps try using the following resources:\n'
+		msg += '**Basic searching:** https://pokemontcg.guru/\n'
+		msg += '**Advanced searching:** https://pokemontcg.guru/advanced\n'
+		msg += '**Searching syntax:** http://www.lucenetutorial.com/lucene-query-syntax.html'
 		query = ' '.join(query) if isinstance(query, tuple) else query
+		if not query:
+			return await ctx.send(msg)
 		cards = Card.get_cards_with_query(query)
 		if not cards:
-			msg = 'I couldn\'t find any cards, perhaps try using the following resources:\n'
-			msg += '**Basic searching:** https://pokemontcg.guru/\n'
-			msg += '**Advanced searching:** https://pokemontcg.guru/advanced\n'
-			msg += '**Searching syntax:** http://www.lucenetutorial.com/lucene-query-syntax.html'
 			return await ctx.send(msg)
+		self.cache.update({c.id: c for c in cards})
 		return await self.paginated_embeds(ctx, [c.page for c in cards])
 
 	## sets
@@ -252,8 +257,9 @@ class PokeTCG(MyCog):
 			return await ctx.send(f"Looks like you don't have any **{set_.name}** packs.")
 		amt = 1 if amt < 1 else amt
 		opened = min(amt, player.packs[set_id], player.daily_packs)
-		pack = Packs.generate_packs(set_.id, opened)
-		Card.add_or_update_cards_from_pack(player, pack)
+		pack = Packs.generate_packs(set_.id, opened, self.cache)
+		self.cache.update({c.id: c for c in pack.cards})
+		Card.add_or_update_cards_from_pack(player, pack, self.cache)
 		player.daily_packs -= opened
 		player.packs[set_id] -= opened
 		if player.packs[set_id] == 0:
@@ -305,9 +311,10 @@ class PokeTCG(MyCog):
 			await ctx.send(f'You bought {bought * pack_count} **{s.name}** packs!')
 			if promo_count:
 				cards = Card.get_cards_with_query(f'set.id:{s.id} -rarity:common AND -rarity:uncommon')
+				self.cache.update({c.id: c for c in cards})
 				promos = choices(cards, k=bought)
 				player.total_cards += len(promos)
-				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos))
+				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos), self.cache)
 				player.update()
 				return await self.paginated_embeds(ctx, [p.page for p in promos])
 			return player.update()
@@ -429,3 +436,27 @@ class PokeTCG(MyCog):
 			log.info('Refreshing daily packs')
 			sql('poketcg', 'update players set daily_packs = 50')
 			self.date = dt.now().date()
+
+	## TMP
+	@commands.command(name='cache',
+					pass_context=True)
+	async def showcache(self, ctx):
+		if self.cache:
+			return await self.paginated_embeds(ctx, [c.page for c in self.cache.values()])
+		return await ctx.send('Cache is empty.')
+
+	@commands.command(name='addcash',
+					pass_context=True)
+	async def addcash(self, ctx, amt: int):
+		player = Player.get_player(ctx.author.id)
+		player.cash += amt
+		player.update()
+		return await ctx.send(f'{player.cash}')
+
+	@commands.command(name='resetpacks',
+					pass_context=True)
+	async def resetpacks(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		player.daily_packs = 50
+		player.update()
+		return await ctx.send('Packs reset')

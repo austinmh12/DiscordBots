@@ -1,5 +1,5 @@
 from random import choice, choices
-from .sets import Set
+from .sets import Set, get_set
 from .card import Card, get_cards_with_query
 from .. import log
 
@@ -26,9 +26,18 @@ rarity_mapping = {
 	'LEGEND': 3
 }
 
-def generate_packs(set_id, amount):
+def generate_packs(set_id, amount, cache):
 	pack = []
-	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+	set_ = get_set(set_id.lower())
+	set_cards_in_cache = [c for c in cache.values() if c.set == set_]
+	log.debug(len(set_cards_in_cache))
+	log.debug(set_.total_set)
+	if len(set_cards_in_cache) >= set_.total_set:
+		log.debug('All cards in cache')
+		cards = set_cards_in_cache
+	else:
+		cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+		cache.update({c.id: c for c in cards})
 	rares = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
 	uncommons = [c for c in cards if c.rarity == 'Uncommon']
 	commons = [c for c in cards if c.rarity == 'Common']
