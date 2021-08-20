@@ -35,6 +35,7 @@ def austin_check(ctx):
 class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
+		self.cache = {}
 		self.store = self.generate_store()
 		self.date = dt.now().date()
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
@@ -42,7 +43,6 @@ class PokeTCG(MyCog):
 			initialise_db()
 		migrate_db(version)
 		self.refresh_daily_packs.start()
-		self.cache = {}
 
 	# Utilities
 
@@ -52,7 +52,10 @@ class PokeTCG(MyCog):
 		set_weights = [s.release_date.year - 1998 for s in sets]
 		store_sets = choices(sets, weights=set_weights, k=10)
 		for i, set_ in enumerate(store_sets, start=1):
+			log.info(f'Caching cards for set: {set_.id}')
 			ret[i] = set_
+			cards = Card.get_cards_with_query(f'set.id:{set_.id}')
+			self.cache.update({c.id: c for c in cards})
 		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 		return ret
 
