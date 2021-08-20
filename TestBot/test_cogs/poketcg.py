@@ -296,23 +296,21 @@ class PokeTCG(MyCog):
 			if player.cash < s.pack_price * price_mult:
 				return await ctx.send(f'You don\'t have enough... You need **${s.pack_price * price_mult - player.cash:.2f}** more.')
 			bought = 0
-			else:
-				cards = []
 			while player.cash >= s.pack_price * price_mult and bought < amt:
 				player.cash -= s.pack_price * price_mult
 				bought += 1
 			if s.id not in player.packs:
 				player.packs[s.id] = 0
 			player.packs[s.id] += bought * pack_count
-			player.total_cards += len(promos)
-			player.update()
 			await ctx.send(f'You bought {bought * pack_count} **{s.name}** packs!')
 			if promo_count:
 				cards = Card.get_cards_with_query(f'set.id:{s.id} -rarity:common AND -rarity:uncommon')
 				promos = choices(cards, k=bought)
+				player.total_cards += len(promos)
 				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos))
+				player.update()
 				return await self.paginated_embeds(ctx, [p.page for p in promos])
-			return
+			return player.update()
 		header = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
 		header += f'You have **${player.cash:.2f}**\n'
 		header += 'Here are the packs available today. To purchasae one, use **.store <slot no.> (amount)**\n\n'
