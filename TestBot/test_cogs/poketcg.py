@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.2.4'
+version = '1.2.5'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -118,9 +118,9 @@ class PokeTCG(MyCog):
 	async def sell_main(self, ctx):
 		msg = 'Here are the available selling commands:\n'
 		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
-		msg += '**.sell under [value - Default: _1.00_] [rares - Default: _false_]** to sell all cards worth less than the value entered.\n'
+		msg += '**.sell under [value - Default: _1.00_] [rares - Default: _false_]** to sell all cards worth less than the value entered. ***WARNING: SLOW***\n'
 		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards until 1 remains. Doesn\'t sell rares by default.\n'
-		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default.'
+		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default. ***WARNING: SLOW***'
 		return await ctx.send(msg)
 
 	@sell_main.command(name='card',
