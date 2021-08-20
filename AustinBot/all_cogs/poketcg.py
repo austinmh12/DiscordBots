@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.2.3'
+version = '1.2.4'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -312,7 +312,7 @@ class PokeTCG(MyCog):
 			player.packs[s.id] += bought * pack_count
 			player.total_cards += len(promos)
 			player.update()
-			await ctx.send(f'You bought {bought} **{s.name}** packs!')
+			await ctx.send(f'You bought {bought * pack_count} **{s.name}** packs!')
 			if promos:
 				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos))
 				return await self.paginated_embeds(ctx, [p.page for p in promos])
@@ -360,10 +360,10 @@ class PokeTCG(MyCog):
 			return await ctx.send(f'Your next daily reward is in **{format_remaining_time(player.daily_reset)}**')
 		if random() < .1:
 			set_ = choice(Sets.get_sets())
-			if s.id not in player.packs:
-				player.packs[s.id] = 0
-			player.packs[s.id] += 1
-			await ctx.send(f'You got a{"n" if s.name[0] in "aeiou" else ""} **{s.name}** pack!')
+			if set_.id not in player.packs:
+				player.packs[set_.id] = 0
+			player.packs[set_.id] += 1
+			await ctx.send(f'You got a{"n" if set_.name[0] in "aeiou" else ""} **{set_.name}** pack!')
 		else:
 			cash = randint(1, 10)
 			player.cash += cash
@@ -395,6 +395,10 @@ class PokeTCG(MyCog):
 		except asyncio.TimeoutError:
 			await msg.delete()
 			await ctx.send(f'You ran out of time, it\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
+			player.quiz_questions -= 1
+			if player.quiz_reset < dt.now():
+				player.quiz_reset = dt.now() + td(hours=2)
+			return player.update()
 		guess = reply.content.lower() if reply else None
 		if guess == q.guess_name:
 			mult = player.current_multiplier
