@@ -56,6 +56,19 @@ def get_player_cards(player):
 		player_cards.extend([(player, c, d['amount']) for c, d in zip(cards, df_chunk)])
 	return [PlayerCard(*pc) for pc in player_cards]
 
+def get_duplicate_player_cards(player):
+	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ? and amount > 1', (player.discord_id,))
+	if df.empty:
+		return []
+	player_cards = []
+	for df_chunk in chunk(df.to_dict('records'), 250):
+		df_chunk.sort(key=lambda x: x['card_id'])
+		q = ' OR '.join([f'id:{dc["card_id"]}' for dc in df_chunk])
+		cards = get_cards_with_query(f'({q})')
+		cards.sort(key=lambda x: x.id)
+		player_cards.extend([(player, c, d['amount']) for c, d in zip(cards, df_chunk)])
+	return [PlayerCard(*pc) for pc in player_cards]
+
 def get_player_card(player, card_id):
 	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
 	if df.empty:

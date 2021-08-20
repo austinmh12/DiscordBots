@@ -164,8 +164,7 @@ class PokeTCG(MyCog):
 	async def sell_dups(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
-		player_cards = Card.get_player_cards(player)
-		cards_to_sell = [c for c in player_cards if c.amount > 1]
+		cards_to_sell = Card.get_duplicate_player_cards(player)
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 1)
