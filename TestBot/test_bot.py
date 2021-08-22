@@ -68,7 +68,7 @@ async def sheesha(ctx, e: typing.Optional[int] = 4, user: typing.Optional[Member
 	return await ctx.send(f'***SHEE{"e"*e}***eeesh')
 
 @client.command()
-async def help(ctx, cog_name: typing.Optional[str] = 'PokeRoulette'):
+async def help(ctx, cog_name: typing.Optional[str] = 'PokeTCG'):
 	cog = client.cogs.get(cog_name, None)
 	if not cog:
 		return

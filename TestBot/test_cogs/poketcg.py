@@ -36,6 +36,7 @@ class PokeTCG(MyCog):
 	def __init__(self, bot):
 		self.bot = bot
 		self.cache = {}
+		self.cached_store_packs = 0
 		self.store = self.generate_store()
 		self.date = dt.now().date()
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
@@ -43,7 +44,7 @@ class PokeTCG(MyCog):
 			initialise_db()
 		migrate_db(version)
 		self.refresh_daily_packs.start()
-
+		self.cache_store_packs.start()
 	# Utilities
 
 	def generate_store(self):
@@ -52,10 +53,7 @@ class PokeTCG(MyCog):
 		set_weights = [s.release_date.year - 1998 for s in sets]
 		store_sets = choices(sets, weights=set_weights, k=10)
 		for i, set_ in enumerate(store_sets, start=1):
-			log.info(f'Caching cards for set: {set_.id}')
 			ret[i] = set_
-			cards = Card.get_cards_with_query(f'set.id:{set_.id}')
-			self.cache.update({c.id: c for c in cards})
 		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 		return ret
 
@@ -74,30 +72,13 @@ class PokeTCG(MyCog):
 		return total_sold, total_cash
 
 	# Commands
-	## cards
-	@commands.command(name='cards',
-					pass_context=True,
-					description='',
-					brief='')
-	async def get_cards(self, ctx, *name):
-		cards = Card.get_cards_with_query(f'name:{query_builder(name)}')
-		return await self.paginated_embeds(ctx, [c.page for c in cards])
-
-	@commands.command(name='card',
-					pass_context=True,
-					description='',
-					brief='')
-	async def get_card(self, ctx, card_id):
-		card = Card.get_card_by_id(card_id)
-		if card is None:
-			return await ctx.send('I couldn\'t find a card with that ID \\:(')
-		return await self.paginated_embeds(ctx, card.page)
-
+	## Cards
 	@commands.command(name='mycards',
 					pass_context=True,
-					description='',
-					brief='',
-					aliases=['mc'])
+					description='Displays all of your cards',
+					brief='Your cards',
+					aliases=['mc'],
+					usage='[sort_by - Default: name]')
 	async def get_player_cards(self, ctx, sort_by: typing.Optional[str] = 'name'):
 		player = Player.get_player(ctx.author.id)
 		player_cards = Card.get_player_cards(player, self.cache)
@@ -117,8 +98,8 @@ class PokeTCG(MyCog):
 	@commands.group(name='sell',
 					pass_context=True,
 					invoke_without_command=True,
-					description='',
-					brief='')
+					description='Lets you sell your cards',
+					brief='Sell cards')
 	async def sell_main(self, ctx):
 		msg = 'Here are the available selling commands:\n'
 		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
@@ -129,8 +110,9 @@ class PokeTCG(MyCog):
 
 	@sell_main.command(name='card',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Sells a specific card',
+					brief='Sells a card',
+					usage='<card id> [amount - Default: 1]')
 	async def sell_card(self, ctx, card_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		player_card = Card.get_player_card(player, card_id)
@@ -149,8 +131,9 @@ class PokeTCG(MyCog):
 
 	@sell_main.command(name='under',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Sells card that are worth less than a given amount',
+					brief='Sells cards under a specific value',
+					usage='[value - Default: 1.00] [rares - Default: false]')
 	async def sell_under(self, ctx, value: typing.Optional[float] = 1.00, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		value = 0.00 if value < 0 else value
@@ -164,8 +147,10 @@ class PokeTCG(MyCog):
 
 	@sell_main.command(name='dups',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Sells all of your duplicate cards',
+					brief='Sells duplicate cards',
+					aliases=['dupes', 'dup'],
+					usage='[rares - Default: false]')
 	async def sell_dups(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
@@ -177,8 +162,9 @@ class PokeTCG(MyCog):
 
 	@sell_main.command(name='all',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Sells all your cards',
+					brief='Sell all cards',
+					usage='[rares - Default: false]')
 	async def sell_all(self, ctx, rares: typing.Optional[str] = 'false'):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
@@ -190,8 +176,8 @@ class PokeTCG(MyCog):
 
 	@commands.command(name='search',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Search for cards',
+					brief='Search for cards')
 	async def search_cards(self, ctx, *query):
 		msg = 'I couldn\'t find any cards, perhaps try using the following resources:\n'
 		msg += '**Basic searching:** https://pokemontcg.guru/\n'
@@ -209,8 +195,8 @@ class PokeTCG(MyCog):
 	## sets
 	@commands.command(name='sets',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Show all of the sets',
+					brief='Show all sets')
 	async def get_sets(self, ctx):
 		sets = Sets.get_sets()
 		sets.sort(key=lambda x: x.name)
@@ -222,8 +208,9 @@ class PokeTCG(MyCog):
 
 	@commands.command(name='set',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Show the details of a set',
+					brief='Show set details',
+					usage='<set id>')
 	async def get_set(self, ctx, set_id):
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
@@ -233,8 +220,9 @@ class PokeTCG(MyCog):
 	## packs
 	@commands.command(name='packs',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Show the packs that you own',
+					brief='Your packs',
+					aliases=['p'])
 	async def get_player_packs(self, ctx):
 		player = Player.get_player(ctx.author.id)
 		desc = f'You have **{player.daily_packs}** packs left to open today\n'
@@ -245,9 +233,10 @@ class PokeTCG(MyCog):
 
 	@commands.command(name='openpack',
 					pass_context=True,
-					description='',
-					brief='',
-					aliases=['op'])
+					description='Open packs that you own',
+					brief='Open packs',
+					aliases=['op'],
+					usage='<set id> [amount - Default: 1]')
 	async def open_pack(self, ctx, set_id, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		if player.daily_packs == 0:
@@ -275,15 +264,18 @@ class PokeTCG(MyCog):
 	## store
 	@commands.command(name='store',
 					pass_context=True,
-					description='',
-					brief='')
+					description='The store, shows available items for purchase',
+					brief='The store',
+					usage='[slot - Default: 0] [amount - Default 1]')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		slot = slot if 1 <= slot <= 10 else 0
 		if not self.store:
 			self.store = self.generate_store()
+			self.cached_store_packs = 0
 		if self.store.get('reset') < dt.now():
 			self.store = self.generate_store()
+			self.cached_store_packs = 0
 		if slot:
 			if slot <= 4:
 				price_mult = 1
@@ -323,7 +315,7 @@ class PokeTCG(MyCog):
 			return player.update()
 		header = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
 		header += f'You have **${player.cash:.2f}**\n'
-		header += 'Here are the packs available today. To purchasae one, use **.store <slot no.> (amount)**\n\n'
+		header += 'Here are the packs available today. To purchase one, use **.store <slot no.> (amount)**\n\n'
 		set_list = [(i, s) for i, s in self.store.items() if i != 'reset']
 		set_list.sort(key=lambda x: x[0])
 		desc = ''
@@ -347,8 +339,8 @@ class PokeTCG(MyCog):
 	## player
 	@commands.command(name='stats',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Shows your stats',
+					brief='Your stats')
 	async def player_stats(self, ctx):
 		player = Player.get_player(ctx.author.id)
 		return await self.paginated_embeds(ctx, Page(ctx.author.display_name, player.stats_desc))
@@ -356,8 +348,8 @@ class PokeTCG(MyCog):
 	## claimables
 	@commands.command(name='daily',
 					pass_context=True,
-					description='',
-					brief='')
+					description='A daily reward',
+					brief='A daily reward')
 	async def daily(self, ctx):
 		player = Player.get_player(ctx.author.id)
 		if player.daily_reset > dt.now():
@@ -379,8 +371,8 @@ class PokeTCG(MyCog):
 	## quizzes
 	@commands.command(name='quiz',
 					pass_context=True,
-					description='',
-					brief='')
+					description='Who\'s that Pokemon!',
+					brief='Who\'s that Pokemon!')
 	async def quiz(self, ctx):
 		player = Player.get_player(ctx.author.id)
 		if player.quiz_reset < dt.now():
@@ -439,6 +431,15 @@ class PokeTCG(MyCog):
 			log.info('Refreshing daily packs')
 			sql('poketcg', 'update players set daily_packs = 50')
 			self.date = dt.now().date()
+
+	@tasks.loop(seconds=60)
+	async def cache_store_packs(self):
+		if self.cached_store_packs < 10:
+			set_ = self.store[self.cached_store_packs + 1]
+			log.info(f'Caching cards for set: {set_.id}')
+			cards = Card.get_cards_with_query(f'set.id:{set_.id}')
+			self.cache.update({c.id: c for c in cards})
+			self.cached_store_packs += 1
 
 	## TMP
 	@commands.command(name='cache',
