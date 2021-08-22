@@ -18,6 +18,8 @@ from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
 version = '1.3.0'
+SAVE = '\U0001f4be' # 879127873116577823
+REMOVE = '\u274c'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -37,6 +39,8 @@ class PokeTCG(MyCog):
 		self.bot = bot
 		self.cache = {}
 		self.cached_store_packs = 0
+		self.player_card_chunks = Card.get_player_card_count() // 250 + 1
+		self.cached_player_card_chunks = 0
 		self.store = self.generate_store()
 		self.date = dt.now().date()
 		if not os.path.exists(f'{BASE_PATH}/poketcg.db'):
@@ -45,6 +49,7 @@ class PokeTCG(MyCog):
 		migrate_db(version)
 		self.refresh_daily_packs.start()
 		self.cache_store_packs.start()
+		self.cache_player_cards.start()
 	# Utilities
 
 	def generate_store(self):
@@ -93,7 +98,58 @@ class PokeTCG(MyCog):
 			player_cards.sort(key=lambda x: x.name)
 		else:
 			player_cards.sort(key=lambda x: x.amount, reverse=True)
-		return await self.paginated_embeds(ctx, [pc.page for pc in player_cards])
+		# Custom version of the paginated embeds
+		idx = 0
+		content = ''
+		emb = player_cards[idx].page.embed
+		if len(player_cards) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(player_cards)}')
+		msg = await ctx.send(content, embed=emb)
+		if len(player_cards) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+			def is_left_right_add_remove(m):
+				return all([
+					(m.emoji.name in [BACK, NEXT, SAVE, REMOVE]),
+					m.member.id != self.bot.user.id,
+					m.message_id == msg.id,
+					m.member.id == ctx.author.id
+				])
+
+			while True:
+				if player_cards[idx].id in player.savelist:
+					await msg.remove_reaction(SAVE, self.bot.user)
+					await msg.add_reaction(REMOVE)
+				else:
+					await msg.remove_reaction(REMOVE, self.bot.user)
+					await msg.add_reaction(SAVE)
+				try:
+					react = await self.bot.wait_for('raw_reaction_add', check=is_left_right_add_remove, timeout=60)
+				except asyncio.TimeoutError:
+					log.debug('Timeout, breaking')
+					await msg.clear_reactions()
+					break
+				if react.emoji.name == NEXT:
+					idx = (idx + 1) % len(player_cards)
+					await msg.remove_reaction(NEXT, react.member)
+				elif react.emoji.name == SAVE:
+					await msg.remove_reaction(SAVE, react.member)
+					content = f'**{player_cards[idx].name}** added to your savelist'
+					player.savelist.append(player_cards[idx].id)
+					player.savelist = list(set(player.savelist))
+					player.update()
+				elif react.emoji.name == REMOVE:
+					await msg.remove_reaction(REMOVE, react.member)
+					content = f'**{player_cards[idx].name}** removed from your savelist'
+					player.savelist.remove(player_cards[idx].id)
+					player.update()
+				else:
+					idx = (idx - 1) % len(player_cards)
+					await msg.remove_reaction(BACK, react.member)
+				emb = player_cards[idx].page.embed
+				emb.set_footer(text=f'{idx + 1}/{len(player_cards)}')
+				await msg.edit(content=content, embed=emb)
 
 	@commands.group(name='sell',
 					pass_context=True,
@@ -526,7 +582,7 @@ class PokeTCG(MyCog):
 			sql('poketcg', 'update players set daily_packs = 50')
 			self.date = dt.now().date()
 
-	@tasks.loop(seconds=60)
+	@tasks.loop(seconds=30)
 	async def cache_store_packs(self):
 		if self.cached_store_packs < 10:
 			set_ = self.store[self.cached_store_packs + 1]
@@ -534,6 +590,14 @@ class PokeTCG(MyCog):
 			cards = Card.get_cards_with_query(f'set.id:{set_.id}')
 			self.cache.update({c.id: c for c in cards})
 			self.cached_store_packs += 1
+
+	@tasks.loop(seconds=60, count=Card.get_player_card_count() // 250 + 1)
+	async def cache_player_cards(self):
+		start = 250 * self.cached_player_card_chunks
+		end = 250 * (self.cached_player_card_chunks + 1)
+		log.info(f'Caching player cards {start} to {end}')
+		Card.get_player_card_chunk(start, end, self.cache)
+		self.cached_player_card_chunks += 1
 
 	## TMP
 	@commands.command(name='cache',

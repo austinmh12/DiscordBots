@@ -49,6 +49,29 @@ def get_card_by_id(card_id):
 		log.debug(json.dumps(data))
 		return None
 
+def get_player_card_count():
+	df = sql('poketcg', 'select distinct card_id from cards')
+	return df.shape[0]
+
+def get_player_card_chunk(start, end, cache):
+	df = sql('poketcg', 'select distinct card_id from cards limit ?, ?', (start, end))
+	if df.empty:
+		return []
+	player_cards = []
+	items_not_in_cache = []
+	for d in df.to_dict('records'):
+		card = cache.get(d['card_id'], None)
+		if not card:
+			items_not_in_cache.append(d)
+	for items_chunk in chunk(items_not_in_cache, 250):
+		items_chunk.sort(key=lambda x: x['card_id'])
+		q = ' OR '.join([f'id:{dc["card_id"]}' for dc in items_chunk])
+		cards = get_cards_with_query(f'({q})')
+		cards.sort(key=lambda x: x.id)
+		player_cards.extend([PlayerCard(None, c, 0) for c, d in zip(cards, items_chunk)])
+		cache.update({c.id: c for c in cards})
+	return player_cards
+
 def get_player_cards(player, cache):
 	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ?', (player.discord_id,))
 	if df.empty:
