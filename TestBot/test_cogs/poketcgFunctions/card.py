@@ -92,11 +92,11 @@ def get_duplicate_player_cards(player, cache):
 	return player_cards
 
 def get_player_card(player, card_id):
-	df = sql('poketcg', 'select card_id, amount from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
+	df = sql('poketcg', 'select amount from cards where discord_id = ? and card_id = ?', (player.discord_id, card_id))
 	if df.empty:
 		return None
 	card = get_card_by_id(card_id)
-	return PlayerCard(player, card, df[0]["amount"])
+	return PlayerCard(player, card, df.to_dict('records')[0]["amount"])
 
 def add_or_update_card(player, card):
 	# TODO: revamp this garbage

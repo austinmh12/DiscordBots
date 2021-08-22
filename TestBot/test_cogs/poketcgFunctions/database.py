@@ -124,5 +124,8 @@ migration_steps = {
 	],
 	'1.2.3': [
 		'alter table players add column quiz_reset integer default 1629401801.1'
+	],
+	'1.3.0': [
+		"alter table players add column savelist text default '[]'"
 	]
 }

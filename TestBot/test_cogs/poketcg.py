@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.2.5'
+version = '1.3.0'
 
 def query_builder(q):
 	if isinstance(q, tuple):
@@ -119,6 +119,8 @@ class PokeTCG(MyCog):
 		if not player_card:
 			return await ctx.send('You don\'t have a card with that ID \\:(')
 		self.cache.update({player_card.card.id: player_card.card})
+		if player_card.id in player.savelist:
+			return await ctx.send(f'You sold 0 **{player_card.name}** for ${0:.2f}')
 		amt = 1 if amt < 1 else amt
 		sold = min(amt, player_card.amount)
 		player_card.amount -= sold
@@ -140,6 +142,7 @@ class PokeTCG(MyCog):
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player, self.cache)
 		cards_to_sell = [c for c in player_cards if c.price < value]
+		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
@@ -155,6 +158,7 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		cards_to_sell = Card.get_duplicate_player_cards(player, self.cache)
+		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 1)
@@ -169,10 +173,33 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		cards_to_sell = Card.get_player_cards(player, self.cache)
+		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
 		return await ctx.send(f'You sold **{total_sold}** cards for **${total_cash:.2f}**')
+
+	@sell_main.command(name='packs',
+					pass_context=True,
+					description='Sells packs that you have',
+					brief='Sells packs',
+					usage='<set id> [amount - Default: 1]')
+	async def sell_packs(self, ctx, set_id, amt: typing.Optional[int] = 1):
+		player = Player.get_player(ctx.author.id)
+		set_ = Sets.get_set(set_id.lower())
+		if set_ is None:
+			return await ctx.send('I couldn\'t find a set with that ID \\:(')
+		if set_.id not in player.packs:
+			return await ctx.send(f"Looks like you don't have any **{set_.name}** packs.")
+		amt = 1 if amt < 1 else amt
+		sold = min(amt, player.packs[set_.id])
+		player.packs[set_.id] -= sold
+		if player.packs[set_.id] == 0:
+			del player.packs[set_.id]
+		player.cash += set_.pack_price * sold
+		player.total_cash += set_.pack_price * sold
+		player.update()
+		return await ctx.send(f'You sold **{sold} {set_.name}** packs for **${set_.pack_price * sold:.2f}**')
 
 	@commands.command(name='search',
 					pass_context=True,
@@ -266,7 +293,7 @@ class PokeTCG(MyCog):
 					pass_context=True,
 					description='The store, shows available items for purchase',
 					brief='The store',
-					usage='[slot - Default: 0] [amount - Default 1]')
+					usage='[slot - Default: 0] [amount - Default: 1]')
 	async def card_store(self, ctx, slot: typing.Optional[int] = 0, amt: typing.Optional[int] = 1):
 		player = Player.get_player(ctx.author.id)
 		slot = slot if 1 <= slot <= 10 else 0
@@ -423,6 +450,73 @@ class PokeTCG(MyCog):
 		if player.quiz_reset < dt.now():
 			player.quiz_reset = dt.now() + td(hours=2)
 		return player.update()
+
+	## savelist
+	@commands.group(name='savelist',
+					pass_context=True,
+					invoke_without_command=True,
+					description='Add specific cards to your savelist to avoid selling them',
+					brief='Save cards from selling',
+					aliases=['sl'])
+	async def savelist_main(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		if not player.savelist:
+			return await ctx.send('You have no cards in your savelist, use **.savelist add <card id>** to add a card')
+		cards = []
+		cards_not_in_cache = []
+		for card_id in player.savelist:
+			card = self.cache.get(card_id, None)
+			if not card:
+				cards_not_in_cache.append(card_id)
+				continue
+			cards.append(card)
+		q = ' OR '.join([f'id:{card_id}' for card_id in cards_not_in_cache])
+		cards_not_in_cache = Card.get_cards_with_query(f'({q})')
+		cards.extend(cards_not_in_cache)
+		self.cache.update({c.id: c for c in cards_not_in_cache})
+		return await self.paginated_embeds(ctx, [c.page for c in cards])
+
+	@savelist_main.command(name='add',
+						pass_context=True,
+						description='Add a card to your savelist',
+						brief='Add card to savelist',
+						usage='<card id>')
+	async def savelist_add(self, ctx, card_id):
+		player = Player.get_player(ctx.author.id)
+		card = Card.get_card_by_id(card_id)
+		if card is None:
+			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		player.savelist.append(card.id)
+		player.savelist = list(set(player.savelist))
+		player.update()
+		return await ctx.send(f'**{card.name}** (_{card.id}_) added to your savelist')
+
+	@savelist_main.command(name='remove',
+						pass_context=True,
+						description='Remove a card from your savelist',
+						brief='Remove card from savelist',
+						usage='<card id>')
+	async def savelist_remove(self, ctx, card_id):
+		player = Player.get_player(ctx.author.id)
+		card = Card.get_card_by_id(card_id)
+		if card is None:
+			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		try:
+			player.savelist.remove(card.id)
+			player.update()
+			return await ctx.send(f'**{card.name}** (_{card.id}_) removed from your savelist')
+		except ValueError:
+			return await ctx.send(f'**{card.name}** (_{card.id}_) isn\'t in your savelist')
+
+	@savelist_main.command(name='clear',
+						pass_context=True,
+						description='Clears your savelist',
+						brief='Clears your savelist')
+	async def savelist_clear(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		player.savelist = []
+		player.update()
+		return await ctx.send('Your savelist has been cleared')
 
 	# Tasks
 	@tasks.loop(seconds=60)
