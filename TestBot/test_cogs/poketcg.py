@@ -390,7 +390,7 @@ class PokeTCG(MyCog):
 			if promo_count:
 				cards = Card.get_cards_with_query(f'set.id:{s.id} -rarity:common AND -rarity:uncommon')
 				self.cache.update({c.id: c for c in cards})
-				promos = choices(cards, k=bought)
+				promos = choices(cards, weights=[Packs.rarity_mapping.get(c.rarity, 50) for c in cards], k=bought)
 				player.total_cards += len(promos)
 				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos), self.cache)
 				player.update()
