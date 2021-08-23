@@ -34,13 +34,13 @@ class Set:
 		self.images = images
 		self.release_date = dt.strptime(kwargs.get('releaseDate'), '%Y/%m/%d')
 
-	@property
-	def page(self):
+	def page(self, player_cards):
 		desc = ''
 		desc += f'**Series:** {self.series}\n'
 		desc += f'**Total cards:** {self.total}\n'
 		desc += f'**Pack Price:** ${self.pack_price:.2f}\n'
-		desc += f'**ID:** {self.id}'
+		desc += f'**ID:** {self.id}\n\n'
+		desc += f'You have **{player_cards}/{self.total_set}** cards'
 		return Page(self.name, desc, image=self.images['logo'], thumbnail=self.images['symbol'])
 
 	@property

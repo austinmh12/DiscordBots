@@ -295,10 +295,14 @@ class PokeTCG(MyCog):
 					brief='Show set details',
 					usage='<set id>')
 	async def get_set(self, ctx, set_id):
+		player = Player.get_player(ctx.author.id)
 		set_ = Sets.get_set(set_id)
 		if set_ is None:
 			return await ctx.send('I couldn\'t find a set with that ID \\:(')
-		return await self.paginated_embeds(ctx, set_.page)
+		cards = Card.get_player_cards(player, self.cache)
+		set_cards = len([c for c in cards if c.card.set == set_])
+		page = set_.page(set_cards)
+		return await self.paginated_embeds(ctx, page)
 
 	## packs
 	@commands.command(name='packs',
