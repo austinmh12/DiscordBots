@@ -647,25 +647,25 @@ class PokeTCG(MyCog):
 		self.cached_player_card_chunks += 1
 
 	## TMP
-	@commands.command(name='cache',
-					pass_context=True)
-	async def showcache(self, ctx):
-		if self.cache:
-			return await self.paginated_embeds(ctx, [c.page for c in self.cache.values()])
-		return await ctx.send('Cache is empty.')
+	# @commands.command(name='cache',
+	# 				pass_context=True)
+	# async def showcache(self, ctx):
+	# 	if self.cache:
+	# 		return await self.paginated_embeds(ctx, [c.page for c in self.cache.values()])
+	# 	return await ctx.send('Cache is empty.')
 
-	@commands.command(name='addcash',
-					pass_context=True)
-	async def addcash(self, ctx, amt: int):
-		player = Player.get_player(ctx.author.id)
-		player.cash += amt
-		player.update()
-		return await ctx.send(f'{player.cash}')
+	# @commands.command(name='addcash',
+	# 				pass_context=True)
+	# async def addcash(self, ctx, amt: int):
+	# 	player = Player.get_player(ctx.author.id)
+	# 	player.cash += amt
+	# 	player.update()
+	# 	return await ctx.send(f'{player.cash}')
 
-	@commands.command(name='resetpacks',
-					pass_context=True)
-	async def resetpacks(self, ctx):
-		player = Player.get_player(ctx.author.id)
-		player.daily_packs = 50
-		player.update()
-		return await ctx.send('Packs reset')
+	# @commands.command(name='resetpacks',
+	# 				pass_context=True)
+	# async def resetpacks(self, ctx):
+	# 	player = Player.get_player(ctx.author.id)
+	# 	player.daily_packs = 50
+	# 	player.update()
+	# 	return await ctx.send('Packs reset')
