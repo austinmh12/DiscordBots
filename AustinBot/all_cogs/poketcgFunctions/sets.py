@@ -30,16 +30,17 @@ class Set:
 		self.name = name
 		self.series = series
 		self.total = kwargs.get('printedTotal', total)
+		self.total_set = kwargs.get('total', total)
 		self.images = images
 		self.release_date = dt.strptime(kwargs.get('releaseDate'), '%Y/%m/%d')
 
-	@property
-	def page(self):
+	def page(self, player_cards):
 		desc = ''
 		desc += f'**Series:** {self.series}\n'
 		desc += f'**Total cards:** {self.total}\n'
 		desc += f'**Pack Price:** ${self.pack_price:.2f}\n'
-		desc += f'**ID:** {self.id}'
+		desc += f'**ID:** {self.id}\n\n'
+		desc += f'You have **{player_cards}/{self.total_set}** cards'
 		return Page(self.name, desc, image=self.images['logo'], thumbnail=self.images['symbol'])
 
 	@property
@@ -48,3 +49,6 @@ class Set:
 
 	def __str__(self):
 		return f'**{self.name}** _{self.id}_'
+
+	def __eq__(self, s):
+		return self.id == s.id

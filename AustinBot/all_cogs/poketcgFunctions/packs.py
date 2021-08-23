@@ -1,5 +1,5 @@
 from random import choice, choices
-from .sets import Set
+from .sets import Set, get_set
 from .card import Card, get_cards_with_query
 from .. import log
 
@@ -26,76 +26,31 @@ rarity_mapping = {
 	'LEGEND': 3
 }
 
-def generate_pack(set_id):
+def generate_packs(set_id, amount, cache):
 	pack = []
-	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
-	rares = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
-	uncommons = [c for c in cards if c.rarity == 'Uncommon']
-	commons = [c for c in cards if c.rarity == 'Common']
-	while len(pack) < 6:
-		c = choice(commons)
-		if c in pack:
-			continue
-		pack.append(c)
-	while len(pack) < 9:
-		u = choice(uncommons)
-		if u in pack:
-			continue
-		pack.append(u)
-	rare_weight = [rarity_mapping.get(r.rarity) for r in rares]
-	rare = choices(rares, weights=rare_weight, k=1)[0]
-	pack.append(rare)
-	return Pack(set_id, pack)
-
-def generate_packs(set_id, amount):
-	pack = []
-	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+	set_ = get_set(set_id.lower())
+	set_cards_in_cache = [c for c in cache.values() if c.set == set_]
+	log.debug(len(set_cards_in_cache))
+	log.debug(set_.total_set)
+	if len(set_cards_in_cache) >= set_.total_set:
+		log.debug('All cards in cache')
+		cards = set_cards_in_cache
+	else:
+		cards = get_cards_with_query(f'set.id:{set_id.lower()}')
+		cache.update({c.id: c for c in cards})
 	rares = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
 	uncommons = [c for c in cards if c.rarity == 'Uncommon']
 	commons = [c for c in cards if c.rarity == 'Common']
 	if not all([len(rares) > 0, len(uncommons) > 0, len(commons) > 0]):
 		while len(pack) < amount: # Promo packs are 1 card
-			pack.append(choice(cards))
+			pack = choices(card, k=amount)
 		return Pack(set_id, pack)
-	while len(pack) < 6 * amount:
-		c = choice(commons)
-		pack.append(c)
-	while len(pack) < 9 * amount:
-		u = choice(uncommons)
-		pack.append(u)
+	pack.extend(choices(commons, k=6 * amount))
+	pack.extend(choices(uncommons, k=3 * amount))
 	rare_weight = [rarity_mapping.get(r.rarity) for r in rares]
 	rares = choices(rares, weights=rare_weight, k=amount)
 	pack.extend(rares)
 	return Pack(set_id, pack)
-
-def generate_collections(set_id, amount):
-	pack = generate_packs(set_id, amount * 4)
-	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
-	promos = [c for c in cards if c.rarity == 'Promo']
-	if not promos:
-		promos = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
-	promos_in_pack = []
-	while len(promos_in_pack) < amount:
-		promos_in_pack.append(choice(promos))
-	pack_cards = pack.cards
-	pack_cards.extend(promos_in_pack)
-	return Pack(set_id, pack_cards)
-
-def generate_trainers(set_id, amount):
-	pack = generate_packs(set_id, amount * 12)
-	cards = get_cards_with_query(f'set.id:{set_id.lower()}')
-	promos = [c for c in cards if c.rarity == 'Promo']
-	if not promos:
-		promos = [c for c in cards if c.rarity not in ['Common', 'Uncommon', 'Promo']]
-	promos_in_pack = []
-	while len(promos_in_pack) < amount:
-		promos_in_pack.append(choice(promos))
-	pack_cards = pack.cards
-	pack_cards.extend(promos_in_pack)
-	return Pack(set_id, pack_cards)
-
-def generate_boosters(set_id, amount):
-	return generate_packs(set_id, amount * 36)
 
 class Pack:
 	def __init__(self, set_id, cards):
