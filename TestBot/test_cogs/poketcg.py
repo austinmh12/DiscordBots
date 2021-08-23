@@ -578,6 +578,49 @@ class PokeTCG(MyCog):
 		player.update()
 		return await ctx.send('Your savelist has been cleared')
 
+	## Trading
+	@commands.command(name='trade',
+					pass_context=True,
+					description='Trade cards with another player',
+					brief='Trade cards',
+					usage='<@player> <card id>')
+	async def trade_card(self, ctx, _tradee: Member, card_id: str):
+		player = Player.get_player(ctx.author.id)
+		tradee = Player.get_player(_tradee.id)
+		card = Card.get_card_by_id(card_id.lower())
+		if not card:
+			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		player_cards = Card.get_player_cards(player, self.cache)
+		if card not in player_cards:
+			return await ctx.send(f'You don\'t have **{card.name}**')
+
+		def is_player_same_channel(msg):
+			return msg.channel == ctx.channel and msg.author == ctx.author
+
+		def is_tradee_same_channel(msg):
+			return msg.channel == ctx.channel and msg.author == _tradee
+
+		await ctx.send(f'<@{_tradee.id}>, what card do you want to trade for **{card.name}**', embed=card.page.embed)
+		try:
+			reply = await self.bot.wait_for('message', check=is_tradee_same_channel, timeout=30)
+		except asyncio.TimeoutError:
+			return await ctx.send('Sorry, you ran out of time.')
+		trade_card = Card.get_card_by_id(reply.content.lower())
+		if not trade_card:
+			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		tradee_cards = Card.get_player_cards(tradee, self.cache)
+		if trade_card not in tradee_cards:
+			return await ctx.send(f'You don\'t have **{trade_card.name}**')
+		await ctx.send(f'**{ctx.author.display_name}** traded **{card.name}** to **{_tradee.display_name}** for **{trade_card.name}**')
+		Card.add_or_update_cards_from_pack(player, Packs.Pack('', [trade_card]), self.cache)
+		Card.add_or_update_cards_from_pack(tradee, Packs.Pack('', [card]), self.cache)
+		player_card = player_cards[player_cards.index(card)]
+		player_card.amount -= 1
+		player_card.update()
+		tradee_card = tradee_cards[tradee_cards.index(trade_card)]
+		tradee_card.amount -= 1
+		tradee_card.update()
+
 	# Tasks
 	@tasks.loop(seconds=60)
 	async def refresh_daily_packs(self):
