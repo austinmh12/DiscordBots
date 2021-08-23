@@ -626,7 +626,7 @@ class PokeTCG(MyCog):
 	async def refresh_daily_packs(self):
 		if self.date < dt.now().date():
 			log.info('Refreshing daily packs')
-			sql('poketcg', 'update players set daily_packs = 50')
+			sql('poketcg', 'update players set daily_packs = 100')
 			self.date = dt.now().date()
 
 	@tasks.loop(seconds=30)
