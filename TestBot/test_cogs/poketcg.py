@@ -159,9 +159,10 @@ class PokeTCG(MyCog):
 	async def sell_main(self, ctx):
 		msg = 'Here are the available selling commands:\n'
 		msg += '**.sell card <card id> [amount - Default: _1_]** to sell a specific card.\n'
-		msg += '**.sell under [value - Default: _1.00_] [rares - Default: _false_]** to sell all cards worth less than the value entered. ***WARNING: SLOW***\n'
+		msg += '**.sell under [value - Default: _1.00_] [rares - Default: _false_]** to sell all cards worth less than the value entered.\n'
 		msg += '**.sell dups [rares - Default: _false_]** to sell all duplicate cards until 1 remains. Doesn\'t sell rares by default.\n'
-		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default. ***WARNING: SLOW***'
+		msg += '**.sell all [rares - Default: _false_]** to sell all cards. Doesn\'t sell rares by default.\n'
+		msg += '**.sell packs <set id> [amount - Default: 1]** to sell a pack.'
 		return await ctx.send(msg)
 
 	@sell_main.command(name='card',
