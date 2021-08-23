@@ -470,7 +470,7 @@ class PokeTCG(MyCog):
 		q = Quiz.generate_random_quiz()
 		msg = await ctx.send('Who\'s that Pokemon?!', file=q.silhouette)
 		try:
-			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=10)
+			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=15)
 		except asyncio.TimeoutError:
 			await msg.delete()
 			await ctx.send(f'You ran out of time, it\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
