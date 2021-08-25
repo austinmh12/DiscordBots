@@ -43,7 +43,7 @@ def generate_packs(set_id, amount, cache):
 	commons = [c for c in cards if c.rarity == 'Common']
 	if not all([len(rares) > 0, len(uncommons) > 0, len(commons) > 0]):
 		while len(pack) < amount: # Promo packs are 1 card
-			pack = choices(card, k=amount)
+			pack = choices(cards, k=amount)
 		return Pack(set_id, pack)
 	pack.extend(choices(commons, k=6 * amount))
 	pack.extend(choices(uncommons, k=3 * amount))
