@@ -554,6 +554,12 @@ class PokeTCG(MyCog):
 			content += f'You earned **${reward:.2f}**'
 			await msg.delete()
 			await ctx.send(content, file=q.revealed)
+		elif guess == 'pikachu' and q.guess_name == 'clefairy':
+			player.cash += 100
+			player.total_cash += 100
+			content = f'It\'s **{q.guess_name.capitalize()}**\n***FUCK***\n'
+			await msg.delete()
+			await ctx.send(content, file=q.revealed)
 		else:
 			await msg.delete()
 			await ctx.send(f'Wrong! It\'s **{q.guess_name.capitalize()}** from **Gen {q.gen}**', file=q.revealed)
