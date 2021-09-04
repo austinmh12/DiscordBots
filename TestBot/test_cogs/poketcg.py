@@ -837,9 +837,9 @@ class PokeTCG(MyCog):
 	# 	player.update()
 	# 	return await ctx.send('Packs reset')
 
-	@commands.command(name='resetquiz',
-					pass_context=True)
-	async def resetquiz(self, ctx):
-		player = Player.get_player(ctx.author.id)
-		player.quiz_reset = dt(1999, 1, 1)
-		player.update()
+	# @commands.command(name='resetquiz',
+	# 				pass_context=True)
+	# async def resetquiz(self, ctx):
+	# 	player = Player.get_player(ctx.author.id)
+	# 	player.quiz_reset = dt(1999, 1, 1)
+	# 	player.update()
