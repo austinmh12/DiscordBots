@@ -51,6 +51,63 @@ class PokeTCG(MyCog):
 		self.cache_store_packs.start()
 		self.cache_player_cards.start()
 
+	## Version of paginated embeds that takes cards
+	async def card_paginated_embeds(self, ctx, player, cards, content=''):
+		added = False
+		idx = 0
+		content = ''
+		emb = cards[idx].page.embed
+		if len(cards) > 1:
+			emb.set_footer(text=f'{idx + 1}/{len(cards)}')
+		msg = await ctx.send(content, embed=emb)
+		if len(cards) > 1:
+			await msg.add_reaction(BACK)
+			await msg.add_reaction(NEXT)
+
+			def is_left_right_add_remove(m):
+				return all([
+					(m.emoji.name in [BACK, NEXT, SAVE, REMOVE]),
+					m.user_id != self.bot.user.id,
+					m.message_id == msg.id,
+					m.user_id == ctx.author.id
+				])
+
+			while True:
+				if cards[idx].id in player.savelist:
+					await msg.remove_reaction(SAVE, self.bot.user)
+					await msg.add_reaction(REMOVE)
+				else:
+					await msg.remove_reaction(REMOVE, self.bot.user)
+					await msg.add_reaction(SAVE)
+				try:
+					if added:
+						react = await self.bot.wait_for('raw_reaction_remove', check=is_left_right_add_remove, timeout=60)
+						added = False
+					else:
+						react = await self.bot.wait_for('raw_reaction_add', check=is_left_right_add_remove, timeout=60)
+						added = True
+				except asyncio.TimeoutError:
+					await msg.clear_reactions()
+					break
+				if react.emoji.name == NEXT:
+					idx = (idx + 1) % len(cards)
+				elif react.emoji.name == SAVE:
+					await msg.clear_reaction(SAVE)
+					content = f'**{cards[idx].name}** added to your savelist'
+					player.savelist.append(cards[idx].id)
+					player.savelist = list(set(player.savelist))
+					player.update()
+				elif react.emoji.name == REMOVE:
+					await msg.clear_reaction(REMOVE)
+					content = f'**{cards[idx].name}** removed from your savelist'
+					player.savelist.remove(cards[idx].id)
+					player.update()
+				else:
+					idx = (idx - 1) % len(cards)
+				emb = cards[idx].page.embed
+				emb.set_footer(text=f'{idx + 1}/{len(cards)}')
+				await msg.edit(content=content, embed=emb)
+
 	# Utilities
 	def generate_store(self):
 		ret = {}
@@ -156,58 +213,7 @@ class PokeTCG(MyCog):
 			player_cards.sort(key=lambda x: Packs.rarity_mapping.get(x.rarity, 100), reverse='-' in sort_by)
 		else:
 			return
-		# Custom version of the paginated embeds
-		idx = 0
-		content = ''
-		emb = player_cards[idx].page.embed
-		if len(player_cards) > 1:
-			emb.set_footer(text=f'{idx + 1}/{len(player_cards)}')
-		msg = await ctx.send(content, embed=emb)
-		if len(player_cards) > 1:
-			await msg.add_reaction(BACK)
-			await msg.add_reaction(NEXT)
-
-			def is_left_right_add_remove(m):
-				return all([
-					(m.emoji.name in [BACK, NEXT, SAVE, REMOVE]),
-					m.member.id != self.bot.user.id,
-					m.message_id == msg.id,
-					m.member.id == ctx.author.id
-				])
-
-			while True:
-				if player_cards[idx].id in player.savelist:
-					await msg.remove_reaction(SAVE, self.bot.user)
-					await msg.add_reaction(REMOVE)
-				else:
-					await msg.remove_reaction(REMOVE, self.bot.user)
-					await msg.add_reaction(SAVE)
-				try:
-					react = await self.bot.wait_for('raw_reaction_add', check=is_left_right_add_remove, timeout=60)
-				except asyncio.TimeoutError:
-					log.debug('Timeout, breaking')
-					await msg.clear_reactions()
-					break
-				if react.emoji.name == NEXT:
-					idx = (idx + 1) % len(player_cards)
-					await msg.remove_reaction(NEXT, react.member)
-				elif react.emoji.name == SAVE:
-					await msg.remove_reaction(SAVE, react.member)
-					content = f'**{player_cards[idx].name}** added to your savelist'
-					player.savelist.append(player_cards[idx].id)
-					player.savelist = list(set(player.savelist))
-					player.update()
-				elif react.emoji.name == REMOVE:
-					await msg.remove_reaction(REMOVE, react.member)
-					content = f'**{player_cards[idx].name}** removed from your savelist'
-					player.savelist.remove(player_cards[idx].id)
-					player.update()
-				else:
-					idx = (idx - 1) % len(player_cards)
-					await msg.remove_reaction(BACK, react.member)
-				emb = player_cards[idx].page.embed
-				emb.set_footer(text=f'{idx + 1}/{len(player_cards)}')
-				await msg.edit(content=content, embed=emb)
+		return await self.card_paginated_embeds(ctx, player, player_cards)
 
 	@commands.group(name='sell',
 					pass_context=True,
@@ -332,7 +338,7 @@ class PokeTCG(MyCog):
 		if not cards:
 			return await ctx.send(msg)
 		self.cache.update({c.id: c for c in cards})
-		return await self.paginated_embeds(ctx, [c.page for c in cards])
+		return await self.card_paginated_embeds(ctx, Player.get_player(ctx.author.id), cards)
 
 	## sets
 	@commands.command(name='sets',
@@ -457,7 +463,7 @@ class PokeTCG(MyCog):
 				player.total_cards += len(promos)
 				Card.add_or_update_cards_from_pack(player, Packs.Pack(s.id, promos), self.cache)
 				player.update()
-				return await self.paginated_embeds(ctx, [p.page for p in promos])
+				return await self.card_paginated_embeds(ctx, Player.get_player(ctx.author.id), promos)
 			return player.update()
 		header = 'Welcome to the Card Store! Here you can spend cash for Packs of cards\n'
 		header += f'You have **${player.cash:.2f}**\n'
@@ -609,7 +615,7 @@ class PokeTCG(MyCog):
 		cards_not_in_cache = Card.get_cards_with_query(f'({q})')
 		cards.extend(cards_not_in_cache)
 		self.cache.update({c.id: c for c in cards_not_in_cache})
-		return await self.paginated_embeds(ctx, [c.page for c in cards])
+		return await self.card_paginated_embeds(ctx, Player.get_player(ctx.author.id), cards)
 
 	@savelist_main.command(name='add',
 						pass_context=True,
