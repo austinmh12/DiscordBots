@@ -127,5 +127,8 @@ migration_steps = {
 	],
 	'1.3.0': [
 		"alter table players add column savelist text default '[]'"
+	],
+	'1.4.0': [
+		"alter table players add column permanent_mult integer default 0"
 	]
 }

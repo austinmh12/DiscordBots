@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.3.0'
+version = '1.4.0'
 SAVE = '\U0001f4be' # 879127873116577823
 REMOVE = '\u274c'
 
@@ -536,18 +536,24 @@ class PokeTCG(MyCog):
 			return player.update()
 		guess = reply.content.lower() if reply else None
 		if guess == q.guess_name:
-			mult = player.current_multiplier
+			all_five = False
+			mult = player.current_multiplier + player.permanent_mult
 			reward = .1 * mult
 			player.cash += reward
 			player.total_cash += reward
-			player.current_multiplier = min(mult + 1, 5)
+			if player.current_multiplier == 5:
+				player.permanent_mult += 1
+				all_five = True
+			player.current_multiplier = min(player.current_multiplier + 1, 5)
 			player.quiz_correct += 1
 			content = f'Correct! It\'s **{q.guess_name.capitalize()}**\n'
 			content += f'You earned **${reward:.2f}** and your multiplier is now **{player.current_multiplier}**'
+			if all_five:
+				content += f'\n**You got all 5 correct!** Your multiplier is permanently increased by **{player.permanent_mult}**'
 			await msg.delete()
 			await ctx.send(content, file=q.revealed)
 		elif guess == q.gen:
-			mult = player.current_multiplier
+			mult = player.current_multiplier + player.permanent_mult
 			reward = .1 * mult
 			player.cash += reward
 			player.total_cash += reward
@@ -830,3 +836,10 @@ class PokeTCG(MyCog):
 	# 	player.daily_packs = 50
 	# 	player.update()
 	# 	return await ctx.send('Packs reset')
+
+	@commands.command(name='resetquiz',
+					pass_context=True)
+	async def resetquiz(self, ctx):
+		player = Player.get_player(ctx.author.id)
+		player.quiz_reset = dt(1999, 1, 1)
+		player.update()

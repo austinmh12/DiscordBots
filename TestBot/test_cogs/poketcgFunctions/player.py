@@ -30,9 +30,10 @@ def add_player(discord_id):
 		1,
 		0,
 		dt.now(),
-		[]
+		[],
+		0
 	)
-	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', player.creation_row)
+	sql('poketcg', 'insert into players values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', player.to_dict().values())
 	return player
 
 class Player:
@@ -52,7 +53,8 @@ class Player:
 		current_multiplier,
 		quiz_correct,
 		quiz_reset,
-		savelist
+		savelist,
+		permanent_mult
 	):
 		self.discord_id = discord_id
 		self.cash = cash
@@ -69,28 +71,9 @@ class Player:
 		self.quiz_correct = quiz_correct
 		self.quiz_reset = quiz_reset if isinstance(quiz_reset, dt) else dt.fromtimestamp(quiz_reset)
 		self.savelist = savelist if isinstance(savelist, list) else json.loads(savelist)
+		self.permanent_mult = permanent_mult
 
 		self.cached = self.to_dict().copy()
-
-	@property
-	def creation_row(self):
-		return (
-			self.discord_id,
-			round(self.cash, 2),
-			self.daily_reset.timestamp(),
-			json.dumps(self.packs),
-			self.packs_opened,
-			self.packs_bought,
-			round(self.total_cash, 2),
-			self.total_cards,
-			self.cards_sold,
-			self.daily_packs,
-			self.quiz_questions,
-			self.current_multiplier,
-			self.quiz_correct,
-			self.quiz_reset.timestamp(),
-			json.dumps(self.savelist)
-		)
 
 	def to_dict(self):
 		return {
@@ -108,7 +91,8 @@ class Player:
 			'current_multiplier': self.current_multiplier,
 			'quiz_correct': self.quiz_correct,
 			'quiz_reset': self.quiz_reset.timestamp(),
-			'savelist': json.dumps(self.savelist)
+			'savelist': json.dumps(self.savelist),
+			'permanent_mult': self.permanent_mult
 		}
 
 	def update(self):
