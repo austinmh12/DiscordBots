@@ -488,7 +488,11 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		if player.daily_reset > dt.now():
 			return await ctx.send(f'Your next daily reward is in **{format_remaining_time(player.daily_reset)}**')
-		if random() < .1:
+		chance = random()
+		if chance < .01:
+			player.daily_packs = 100
+			await ctx.send(f'***WOAH!!*** Your daily packs were reset! \\:D')
+		elif chance < .15:
 			set_ = choice(Sets.get_sets())
 			if set_.id not in player.packs:
 				player.packs[set_.id] = 0
