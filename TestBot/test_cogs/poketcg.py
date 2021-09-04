@@ -76,6 +76,53 @@ class PokeTCG(MyCog):
 		player.update()
 		return total_sold, total_cash
 
+	def parse_trade_offer_str(self, trade_offer, is_card=True):
+		if is_card:
+			return self._parse_trade_offer_str_card(trade_offer)
+		else:
+			return self._parse_trade_offer_str_pack(trade_offer)
+
+	def _parse_trade_offer_str_card(self, trade_offer):
+		ret = []
+		offers = trade_offer.split('/')
+		card_ids = {}
+		for offer in offers:
+			if ':' in offer:
+				card_id, amount = offer.split(':')
+				amount = int(amount)
+			else:
+				card_id = offer
+				amount = 1
+			log.debug((card_id, amount))
+			card = self.cache.get(card_id, None)
+			if card:
+				ret.append((card, amount))
+			else:
+				card_ids[card_id.lower()] = amount
+		if card_ids:
+			q = ' OR '.join([f'id:{card_id}' for card_id in card_ids])
+			cards = Card.get_cards_with_query(q)
+			for card in cards:
+				ret.append((card, card_ids.get(card.id.lower())))
+		return ret
+
+	def _parse_trade_offer_str_pack(self, trade_offer):
+		ret = []
+		offers = trade_offer.split('/')
+		set_ids = {}
+		for offer in offers:
+			if ':' in offer:
+				set_id, amount = offer.split(':')
+				amount = int(amount)
+			else:
+				set_id = offer
+				amount = 1
+			set_ = Sets.get_set(set_id)
+			if not set_:
+				continue
+			ret.append((set_, amount))
+		return ret
+
 	# Commands
 	## Cards
 	@commands.command(name='mycards',
@@ -579,20 +626,44 @@ class PokeTCG(MyCog):
 		return await ctx.send('Your savelist has been cleared')
 
 	## Trading
-	@commands.command(name='trade',
+	@commands.group(name='trade',
+					pass_context=True,
+					invoke_without_command=True,
+					description='Trade cards with another player',
+					brief='Trade cards')
+	async def trade_main(self, ctx):
+		msg = 'Here are the available trading commands:\n'
+		msg += '**.trade card <@player> <trade offer>** to trade for cards\n'
+		msg += '**.trade pack <@player> <trade offer>** to trade for packs\n\n'
+		msg += 'The **trade offer** is written as **cardID:amount/cardID:amount**\n'
+		msg += 'E.g. to trade a **Jigglypuff** for a **Magikarp** player 1 would use:\n'
+		msg += '**.trade @player2 bwp-bw65**, player 2 would reply **xyp-xy143**\n'
+		msg += 'Trading multiple would make the trade offer: **bwp-bw65/dp2-108:2**\n'
+		msg += 'Which would offer a Jigglypuff and two Zubats.\n\n'
+		msg += 'For trading packs, replace the **card ID** with the **set ID**'
+		return await ctx.send(msg)
+
+	@trade_main.command(name='card',
 					pass_context=True,
 					description='Trade cards with another player',
-					brief='Trade cards',
-					usage='<@player> <card id>')
-	async def trade_card(self, ctx, _tradee: Member, card_id: str):
+					brief='Trade cards')
+	async def trade_card(self, ctx, _tradee: Member, trade_offer: str):
 		player = Player.get_player(ctx.author.id)
 		tradee = Player.get_player(_tradee.id)
-		card = Card.get_card_by_id(card_id.lower())
-		if not card:
-			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		cards = self.parse_trade_offer_str(trade_offer.lower())
+		if not cards:
+			return await ctx.send('I couldn\'t find any cards with that trade offer \\:(')
 		player_cards = Card.get_player_cards(player, self.cache)
-		if card not in player_cards:
-			return await ctx.send(f'You don\'t have **{card.name}**')
+		player_cards = {pc.card: pc for pc in player_cards}
+		player_trade_cards = []
+		for card, amount in cards:
+			pc = player_cards.get(card, None)
+			if pc is None:
+				return await ctx.send(f'You don\'t have any **{card.id}** cards')
+			if amount <= pc.amount:
+				player_trade_cards.append((pc, amount))
+			else:
+				return await ctx.send(f'You don\'t have that many **{card.id}** (you have _{pc.amount}_)')
 
 		def is_player_same_channel(msg):
 			return msg.channel == ctx.channel and msg.author == ctx.author
@@ -600,26 +671,105 @@ class PokeTCG(MyCog):
 		def is_tradee_same_channel(msg):
 			return msg.channel == ctx.channel and msg.author == _tradee
 
-		await ctx.send(f'<@{_tradee.id}>, what card do you want to trade for **{card.name}**', embed=card.page.embed)
+		card_to_trade_msg = ', '.join([f'{tc[0].name}x{tc[1]}' for tc in player_trade_cards])
+		await ctx.send(f'<@{_tradee.id}>, what card do you want to trade for **{card_to_trade_msg}**')
 		try:
-			reply = await self.bot.wait_for('message', check=is_tradee_same_channel, timeout=30)
+			reply = await self.bot.wait_for('message', check=is_tradee_same_channel, timeout=60)
 		except asyncio.TimeoutError:
 			return await ctx.send('Sorry, you ran out of time.')
-		trade_card = Card.get_card_by_id(reply.content.lower())
-		if not trade_card:
-			return await ctx.send('I couldn\'t find a card with that ID \\:(')
+		trade_cards = self.parse_trade_offer_str(reply.content)
+		if not trade_cards:
+			return await ctx.send('I couldn\'t find any cards with that trade offer \\:(')
 		tradee_cards = Card.get_player_cards(tradee, self.cache)
-		if trade_card not in tradee_cards:
-			return await ctx.send(f'You don\'t have **{trade_card.name}**')
-		await ctx.send(f'**{ctx.author.display_name}** traded **{card.name}** to **{_tradee.display_name}** for **{trade_card.name}**')
-		Card.add_or_update_cards_from_pack(player, Packs.Pack('', [trade_card]), self.cache)
-		Card.add_or_update_cards_from_pack(tradee, Packs.Pack('', [card]), self.cache)
-		player_card = player_cards[player_cards.index(card)]
-		player_card.amount -= 1
-		player_card.update()
-		tradee_card = tradee_cards[tradee_cards.index(trade_card)]
-		tradee_card.amount -= 1
-		tradee_card.update()
+		tradee_cards = {pc.card: pc for pc in tradee_cards}
+		tradee_trade_cards = []
+		for card, amount in trade_cards:
+			tc = tradee_cards.get(card, None)
+			if tc is None:
+				return await ctx.send(f'You don\'t have any **{card.id}** cards')
+			if amount <= tc.amount:
+				tradee_trade_cards.append((tc, amount))
+			else:
+				return await ctx.send(f'You don\'t have that many **{card.id}** (you have _{tc.amount}_)')
+		tradee_card_to_trade_msg = ', '.join([f'{tc[0].name}x{tc[1]}' for tc in tradee_trade_cards])
+		await ctx.send(f'**{ctx.author.display_name}** traded **{card_to_trade_msg}** to **{_tradee.display_name}** for **{tradee_card_to_trade_msg}**')
+		player_pack = []
+		tradee_cards_updated = []
+		for ttc, amt in tradee_trade_cards:
+			player_pack.extend([ttc.card] * amt)
+			ttc.amount -= amt
+			tradee_cards_updated.append(ttc)
+		Card.add_or_update_cards_from_pack(player, Packs.Pack('', player_pack), self.cache)
+		Card.add_or_update_cards_from_player_cards(tradee, tradee_cards_updated)
+		tradee_pack = []
+		player_cards_updated = []
+		for ptc, amt in player_trade_cards:
+			tradee_pack.extend([ptc.card] * amt)
+			ptc.amount -= amt
+			player_cards_updated.append(ptc)
+		Card.add_or_update_cards_from_pack(tradee, Packs.Pack('', tradee_pack), self.cache)
+		Card.add_or_update_cards_from_player_cards(player, player_cards_updated)
+
+	@trade_main.command(name='pack',
+					pass_context=True,
+					description='Trade packs with another player',
+					brief='Trade packs')
+	async def trade_pack(self, ctx, _tradee: Member, trade_offer: str):
+		player = Player.get_player(ctx.author.id)
+		tradee = Player.get_player(_tradee.id)
+		sets = self.parse_trade_offer_str(trade_offer.lower(), False)
+		if not sets:
+			return await ctx.send('I couldn\'t find any sets with that trade offer \\:(')
+		player_trade_packs = []
+		for set_, amount in sets:
+			if not set_.id in player.packs:
+				return await ctx.send(f'You don\'t have any of packs from **{set_.name}**')
+			if amount <= player.packs.get(set_.id, 0):
+				player_trade_packs.append((set_, amount))
+			else:
+				return await ctx.send(f'You don\'t have enough of packs from **{set_.name}** (you have _{player.packs.get(set_.id, 0)}_)')
+
+		def is_player_same_channel(msg):
+			return msg.channel == ctx.channel and msg.author == ctx.author
+
+		def is_tradee_same_channel(msg):
+			return msg.channel == ctx.channel and msg.author == _tradee
+
+		pack_to_trade_msg = ', '.join([f'{tp[0].name}x{tp[1]}' for tp in player_trade_packs])
+		await ctx.send(f'<@{_tradee.id}>, what card do you want to trade for **{pack_to_trade_msg}**')
+		try:
+			reply = await self.bot.wait_for('message', check=is_tradee_same_channel, timeout=60)
+		except asyncio.TimeoutError:
+			return await ctx.send('Sorry, you ran out of time.')
+		trade_sets = self.parse_trade_offer_str(reply.content.lower(), False)
+		if not trade_sets:
+			return await ctx.send('I couldn\'t find any sets with that trade offer \\:(')
+		tradee_trade_packs = []
+		for set_, amount in trade_sets:
+			if not set_.id in tradee.packs:
+				return await ctx.send(f'You don\'t have any of packs from **{set_.name}**')
+			if amount <= tradee.packs.get(set_.id, 0):
+				tradee_trade_packs.append((set_, amount))
+			else:
+				return await ctx.send(f'You don\'t have enough of packs from **{set_.name}** (you have _{tradee.packs.get(set_.id, 0)}_)')
+		tradee_pack_to_trade_msg = ', '.join([f'{tp[0].name}x{tp[1]}' for tp in tradee_trade_packs])
+		await ctx.send(f'**{ctx.author.display_name}** traded **{pack_to_trade_msg}** to **{_tradee.display_name}** for **{tradee_pack_to_trade_msg}**')
+		for tts, amt in tradee_trade_packs:
+			if not tts.id in player.packs:
+				player.packs[tts.id] = 0
+			player.packs[tts.id] += amt
+			tradee.packs[tts.id] -= amt
+			if tradee.packs[tts.id] == 0:
+				del tradee.packs[tts.id]
+		for pts, amt in player_trade_packs:
+			if not pts.id in tradee.packs:
+				tradee.packs[pts.id] = 0
+			tradee.packs[pts.id] += amt
+			player.packs[pts.id] -= amt
+			if player.packs[pts.id] == 0:
+				del player.packs[pts.id]
+		player.update()
+		tradee.update()
 
 	# Tasks
 	@tasks.loop(seconds=60)
