@@ -45,11 +45,29 @@ class Quiz:
 
 	@property
 	def guess_name(self):
-		# Get rid of -male -female, and -
-		ret = self.name.replace('-male', '')
-		ret = ret.replace('-female', '')
-		ret = ret.replace('-', ' ')
-		return ret
+		# Replaces -
+		if self.name in ['mr-mime',
+						'mr-rime',
+						'mime-jr',
+						'tapu-koko',
+						'tapu-lele',
+						'tapu-bulu',
+						'tapu-fini']:
+			return self.name.replace('-', ' ')
+		# Keeps -
+		if self.name in ['ho-oh',
+						'porygon-z',
+						'type-null',
+						'jangmo-o',
+						'hakamo-o',
+						'kommo-o']:
+			return self.name
+		# Removes extras
+		if '-' in self.name:
+			return self.name.split('-')[0]
+		# Name is fine
+		else:
+			return self.name
 
 	def get_gen(self, nat_id):
 		if nat_id <= 151:
