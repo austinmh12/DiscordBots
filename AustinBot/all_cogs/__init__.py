@@ -16,7 +16,7 @@ log.addHandler(stream_handler)
 #############
 # Constants #
 #############
-BASE_PATH = './test_cogs'
+BASE_PATH = './all_cogs'
 BACK = '\u2b05\ufe0f' # Left arrow
 NEXT = '\u27a1\ufe0f' # Right arrow
 
