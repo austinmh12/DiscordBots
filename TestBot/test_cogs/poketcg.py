@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.4.0'
+version = '1.4.1'
 SAVE = '\U0001f4be' # 879127873116577823
 REMOVE = '\u274c'
 
@@ -123,6 +123,8 @@ class PokeTCG(MyCog):
 		total_sold = 0
 		total_cash = 0
 		for player_card in player_cards:
+			if player_card.id in player.savelist:
+				keep = 1
 			total_sold += player_card.amount - keep
 			total_cash += player_card.price * (player_card.amount - keep)
 			player_card.amount = keep
@@ -240,8 +242,6 @@ class PokeTCG(MyCog):
 		if not player_card:
 			return await ctx.send('You don\'t have a card with that ID \\:(')
 		self.cache.update({player_card.card.id: player_card.card})
-		if player_card.id in player.savelist:
-			return await ctx.send(f'You sold 0 **{player_card.name}** for ${0:.2f}')
 		amt = 1 if amt < 1 else amt
 		sold = min(amt, player_card.amount)
 		player_card.amount -= sold
@@ -263,7 +263,6 @@ class PokeTCG(MyCog):
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		player_cards = Card.get_player_cards(player, self.cache)
 		cards_to_sell = [c for c in player_cards if c.price < value]
-		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
@@ -279,7 +278,6 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		cards_to_sell = Card.get_duplicate_player_cards(player, self.cache)
-		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 1)
@@ -294,7 +292,6 @@ class PokeTCG(MyCog):
 		player = Player.get_player(ctx.author.id)
 		rares = 'false' if rares.lower() not in ['false', 'true'] else rares
 		cards_to_sell = Card.get_player_cards(player, self.cache)
-		cards_to_sell = [c for c in cards_to_sell if c.id not in player.savelist]
 		if rares == 'false':
 			cards_to_sell = [c for c in cards_to_sell if c.rarity in ['Common', 'Uncommon']]
 		total_sold, total_cash = self.sell_cards(player, cards_to_sell, 0)
