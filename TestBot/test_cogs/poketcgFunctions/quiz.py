@@ -10,9 +10,6 @@ def generate_random_quiz():
 	resp = r.get(f'https://pokeapi.co/api/v2/pokemon/{randint(1, 898)}').json()
 	return Quiz(resp['id'], resp['name'])
 
-def update_player_quiz_stats(player, correct):
-	...
-
 class Quiz:
 	def __init__(self, nat_id, name):
 		self.nat_id = nat_id
