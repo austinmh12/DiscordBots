@@ -125,7 +125,6 @@ class PokeTCG(MyCog):
 		total_sold = 0
 		total_cash = 0
 		for player_card in player_cards:
-			log.debug(player_card.id in player.savelist)
 			keep = 1 if player_card.id in player.savelist else base_keep
 			total_sold += player_card.amount - keep
 			total_cash += player_card.price * (player_card.amount - keep)
