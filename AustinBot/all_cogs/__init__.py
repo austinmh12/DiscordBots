@@ -16,7 +16,7 @@ log.addHandler(stream_handler)
 #############
 # Constants #
 #############
-BASE_PATH = './all_cogs'
+BASE_PATH = './test_cogs'
 BACK = '\u2b05\ufe0f' # Left arrow
 NEXT = '\u27a1\ufe0f' # Right arrow
 
@@ -110,7 +110,7 @@ class MyCog(commands.Cog):
 			def is_left_right(m):
 				return all([
 					(m.emoji.name == BACK or m.emoji.name == NEXT),
-					m.member.id != self.bot.user.id,
+					m.user_id != self.bot.user.id,
 					m.message_id == msg.id
 				])
 

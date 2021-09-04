@@ -17,7 +17,7 @@ from .poketcgFunctions import player as Player
 from .poketcgFunctions.database import initialise_db, migrate_db
 from .poketcgFunctions import quiz as Quiz
 
-version = '1.4.1'
+version = '1.4.2'
 SAVE = '\U0001f4be' # 879127873116577823
 REMOVE = '\u274c'
 
@@ -97,11 +97,13 @@ class PokeTCG(MyCog):
 					player.savelist.append(cards[idx].id)
 					player.savelist = list(set(player.savelist))
 					player.update()
+					added = False if added else True
 				elif react.emoji.name == REMOVE:
 					await msg.clear_reaction(REMOVE)
 					content = f'**{cards[idx].name}** removed from your savelist'
 					player.savelist.remove(cards[idx].id)
 					player.update()
+					added = False if added else True
 				else:
 					idx = (idx - 1) % len(cards)
 				emb = cards[idx].page.embed
@@ -119,12 +121,12 @@ class PokeTCG(MyCog):
 		ret['reset'] = (dt.now() + td(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 		return ret
 
-	def sell_cards(self, player, player_cards, keep):
+	def sell_cards(self, player, player_cards, base_keep):
 		total_sold = 0
 		total_cash = 0
 		for player_card in player_cards:
-			if player_card.id in player.savelist:
-				keep = 1
+			log.debug(player_card.id in player.savelist)
+			keep = 1 if player_card.id in player.savelist else base_keep
 			total_sold += player_card.amount - keep
 			total_cash += player_card.price * (player_card.amount - keep)
 			player_card.amount = keep
@@ -408,7 +410,7 @@ class PokeTCG(MyCog):
 		player.packs_opened += opened
 		player.total_cards += len(pack)
 		player.update()
-		return await self.paginated_embeds(ctx, pack.pages)
+		return await self.card_paginated_embeds(ctx, player, pack.cards)
 
 	## store
 	@commands.command(name='store',

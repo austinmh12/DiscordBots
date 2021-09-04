@@ -110,7 +110,7 @@ class MyCog(commands.Cog):
 			def is_left_right(m):
 				return all([
 					(m.emoji.name == BACK or m.emoji.name == NEXT),
-					m.member.id != self.bot.user.id,
+					m.user_id != self.bot.user.id,
 					m.message_id == msg.id
 				])
 
