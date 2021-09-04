@@ -50,8 +50,8 @@ class PokeTCG(MyCog):
 		self.refresh_daily_packs.start()
 		self.cache_store_packs.start()
 		self.cache_player_cards.start()
-	# Utilities
 
+	# Utilities
 	def generate_store(self):
 		ret = {}
 		sets = Sets.get_sets()
@@ -136,15 +136,26 @@ class PokeTCG(MyCog):
 		player_cards = Card.get_player_cards(player, self.cache)
 		if not player_cards:
 			return await ctx.send('You have no cards')
-		sort_by = 'name' if sort_by not in ['id', 'amount', 'price', 'name'] else sort_by
-		if sort_by == 'id':
-			player_cards.sort(key=lambda x: x.id)
-		elif sort_by == 'price':
-			player_cards.sort(key=lambda x: x.price, reverse=True)
-		elif sort_by == 'name':
+		sort_by = 'name' if not re.match('-?(id|name|amount|price|savelist|rarity)', sort_by) else sort_by
+		# sort_by = 'name' if sort_by not in ['id', 'amount', 'price', 'name'] else sort_by
+		if 'id' in sort_by:
+			player_cards.sort(key=lambda x: x.id, reverse='-' in sort_by)
+		elif 'price' in sort_by:
+			player_cards.sort(key=lambda x: x.price, reverse=not '-' in sort_by)
+		elif 'name' in sort_by:
+			player_cards.sort(key=lambda x: x.name, reverse='-' in sort_by)
+		elif 'amount' in sort_by:
+			player_cards.sort(key=lambda x: x.amount, reverse=not '-' in sort_by)
+		elif 'savelist' in sort_by:
+			if '-' in sort_by:
+				player_cards = [pc for pc in player_cards if pc.card.id not in player.savelist]
+			else:
+				player_cards = [pc for pc in player_cards if pc.card.id in player.savelist]
 			player_cards.sort(key=lambda x: x.name)
+		elif 'rarity' in sort_by:
+			player_cards.sort(key=lambda x: Packs.rarity_mapping.get(x.rarity, 100), reverse='-' in sort_by)
 		else:
-			player_cards.sort(key=lambda x: x.amount, reverse=True)
+			return
 		# Custom version of the paginated embeds
 		idx = 0
 		content = ''
