@@ -117,10 +117,10 @@ class MyCog(commands.Cog):
 			while True:
 				try:
 					if added:
-						react = await self.bot.wait_for('raw_reaction_remove', check=is_left_right_add_remove, timeout=60)
+						react = await self.bot.wait_for('raw_reaction_remove', check=is_left_right, timeout=60)
 						added = False
 					else:
-						react = await self.bot.wait_for('raw_reaction_add', check=is_left_right_add_remove, timeout=60)
+						react = await self.bot.wait_for('raw_reaction_add', check=is_left_right, timeout=60)
 						added = True
 				except asyncio.TimeoutError:
 					log.debug('Timeout, breaking')
