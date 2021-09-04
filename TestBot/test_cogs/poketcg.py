@@ -299,10 +299,10 @@ class PokeTCG(MyCog):
 		player.packs[set_.id] -= sold
 		if player.packs[set_.id] == 0:
 			del player.packs[set_.id]
-		player.cash += set_.pack_price * sold
-		player.total_cash += set_.pack_price * sold
+		player.cash += (set_.pack_price / 3) * sold
+		player.total_cash += (set_.pack_price / 3) * sold
 		player.update()
-		return await ctx.send(f'You sold **{sold} {set_.name}** packs for **${set_.pack_price * sold:.2f}**')
+		return await ctx.send(f'You sold **{sold} {set_.name}** packs for **${(set_.pack_price / 3) * sold:.2f}**')
 
 	@commands.command(name='search',
 					pass_context=True,
