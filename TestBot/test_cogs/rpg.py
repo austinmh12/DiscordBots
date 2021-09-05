@@ -37,7 +37,10 @@ main_hand = '\U0001f5e1\ufe0f'
 off_hand = '\U0001f6e1\ufe0f'
 
 # Functions
-
+def is_same_user_channel(ctx):
+	def check_same_user_channel(msg):
+		return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
+	return check_same_user_channel
 
 # Classes
 class RPGCog(MyCog):
@@ -51,11 +54,6 @@ class RPGCog(MyCog):
 
 	# Utilities
 	async def get_or_ask_user_for_character(self, ctx, player, name):
-
-		# TODO: Replace with global check
-		def is_same_user_channel(msg):
-			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
-		
 		if not name:
 			await ctx.send('Which character?')
 			await self.me(ctx)
@@ -68,12 +66,7 @@ class RPGCog(MyCog):
 			name = reply.content
 		return character.get_character(player, name)
 
-	async def get_or_ask_user_for_area(self, ctx, name):
-
-		# TODO: Replace with global check
-		def is_same_user_channel(msg):
-			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
-		
+	async def get_or_ask_user_for_area(self, ctx, name):		
 		if not name:
 			await ctx.send('Which area?')
 			areas = area.get_areas()
@@ -100,13 +93,8 @@ class RPGCog(MyCog):
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		marked_for_deletion = False
-		if len(character.get_characters(p)) >= 5:
+		if len(character.get_characters(p.id, p.guild_id)) >= 5:
 			return await ctx.send('You can only have 5 characters')
-
-		# TODO: Replace with global check
-		def is_same_user_channel(msg):
-			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
-
 		if not name:
 			await ctx.send('What is your character\'s name?')
 
@@ -116,7 +104,7 @@ class RPGCog(MyCog):
 			except asyncio.TimeoutError:
 				return await ctx.send('You ran out of time.')
 			name = reply.content
-		existing_char = character.get_character(p, name)
+		existing_char = character.get_character(p.id, p.guild_id, name)
 		if existing_char:
 			await ctx.send(f'You have a character named {existing_char.name}, do you want to overwrite them? (y/n)')
 
@@ -179,9 +167,11 @@ class RPGCog(MyCog):
 					brief='Shows your characters')
 	async def me(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		chars = character.get_characters(p)
-		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
-		desc += '__All characters__\n'
+		chars = character.get_characters(p.id, p.guild_id)
+		desc = f'**Current Character:** '
+		if p.current_character:
+			desc += p.current_character.name
+		desc += '\n\n__All characters__\n'
 		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c._death_timer) + " " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
@@ -209,11 +199,6 @@ class RPGCog(MyCog):
 	# TODO: Remove optional parameter
 	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-
-		# TODO: Replace with global check
-		def is_same_user_channel(msg):
-			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
-
 		char = await self.get_or_ask_user_for_character(ctx, p, name)
 		if not char:
 			return await ctx.send(f'You don\'t have a character with the name {name}')
