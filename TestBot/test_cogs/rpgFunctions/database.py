@@ -1,4 +1,4 @@
-from .. import sql
+from .. import sql, log
 
 # TODO: Revert this to the base version and then add the migrations to migrate_db
 def initialise_db():
