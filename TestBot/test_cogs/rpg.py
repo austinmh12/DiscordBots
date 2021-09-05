@@ -15,7 +15,7 @@ from .rpgFunctions import area
 from .rpgFunctions import combat
 from .rpgFunctions import consumable
 from .rpgFunctions import spell
-from .rpgFunctions.database import initialise_db
+from .rpgFunctions.database import initialise_db, migrate_db
 
 # Version
 version = '2.1.1'
@@ -49,21 +49,33 @@ class RPGCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/rpg.db'):
 			log.info('Initialising database.')
 			initialise_db()
-		# TODO: add migrate_db function
+		migrate_db(version)
 		self.heal_all_characters.start()
 
 	# Utilities
+	async def get_reply(self, ctx, message, return_type=str):
+		await ctx.send(message)
+		try:
+			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
+		except asyncio.TimeoutError:
+			await ctx.send('You ran out of time.')
+			return None
+		if return_type == bool:
+			return reply.content.lower() in ['y', 't', 'yes', 'true']
+		elif return_type == int:
+			try:
+				return int(reply.content)
+			except ValueError:
+				return 0
+		else:
+			return reply.content
+
 	async def get_or_ask_user_for_character(self, ctx, player, name):
 		if not name:
-			await ctx.send('Which character?')
-			await self.me(ctx)
-
-			# TODO: Replace with global get_reply function
-			try:
-				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-			except asyncio.TimeoutError:
-				return await ctx.send('You ran out of time.')
-			name = reply.content
+			name = await self.get_reply(ctx, 'Which character?')
+			if name is None:
+				await ctx.send('No name was given')
+				return
 		return character.get_character(player, name)
 
 	async def get_or_ask_user_for_area(self, ctx, name):		
@@ -96,14 +108,9 @@ class RPGCog(MyCog):
 		if len(character.get_characters(p.id, p.guild_id)) >= 5:
 			return await ctx.send('You can only have 5 characters')
 		if not name:
-			await ctx.send('What is your character\'s name?')
-
-			# TODO: Replace with global get_reply
-			try:
-				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-			except asyncio.TimeoutError:
-				return await ctx.send('You ran out of time.')
-			name = reply.content
+			name = await self.get_reply(ctx, 'What is your character\'s name?')
+			if name is None:
+				return await ctx.send('You must provide a name.')
 		existing_char = character.get_character(p.id, p.guild_id, name)
 		if existing_char:
 			await ctx.send(f'You have a character named {existing_char.name}, do you want to overwrite them? (y/n)')
