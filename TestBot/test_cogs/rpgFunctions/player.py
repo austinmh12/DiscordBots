@@ -1,5 +1,5 @@
 from .. import sql, log
-from .character import Character, get_character
+from .character import get_character
 
 #############
 # Functions #
@@ -26,7 +26,7 @@ class Player:
 	):
 		self.id = id
 		self.guild_id = guild_id
-		self.current_character = current_character if isinstance(current_character, Character) else get_character(self, current_character)
+		self.current_character = get_character(id, guild_id, current_character) if isinstance(current_character, str) else current_character
 
 	def update(self):
 		sql('rpg', 'update players set current_character = ? where id = ? and guild_id = ?', (self.current_character.name if self.current_character else '', self.id, self.guild_id))
