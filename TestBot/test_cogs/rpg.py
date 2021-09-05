@@ -7,7 +7,7 @@ import typing
 import os.path
 from datetime import datetime as dt, timedelta as td
 
-from .rpgFunctions import character
+from .rpgFunctions import character as Character
 from .rpgFunctions import profession
 from .rpgFunctions import player as Player
 from .rpgFunctions import equipment
@@ -70,33 +70,16 @@ class RPGCog(MyCog):
 		else:
 			return reply.content
 
-	async def get_or_ask_user_for_character(self, ctx, player, name):
-		if not name:
-			name = await self.get_reply(ctx, 'Which character?')
-			if name is None:
-				await ctx.send('No name was given')
-				return
-		return character.get_character(player, name)
-
-	async def get_or_ask_user_for_area(self, ctx, name):		
-		if not name:
-			await ctx.send('Which area?')
-			areas = area.get_areas()
-			p = Page('Areas', '\n'.join([f'**{a.name}** - Rec. Lvl: {a.recommended_level}' for a in areas]), colour=(150, 150, 150))
-			await ctx.send(embed=p.embed)
-
-			# TODO: Replace with global get_reply function
-			try:
-				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-			except asyncio.TimeoutError:
-				return await ctx.send('You ran out of time.')
-			name = reply.content
-		return area.get_area(name)
-
 	# Listeners
 
 	# Commands
 	## Characters
+	# TODO: Create character group
+	# TODO: Add info command
+	# TODO: Add create command
+	# TODO: Add swap command
+	# TODO: Add delete command
+	# TODO: Add current command
 	@commands.command(name='createcharacter',
 					pass_context=True,
 					description='Create a character to start your journey',
@@ -113,26 +96,14 @@ class RPGCog(MyCog):
 				return await ctx.send('You must provide a name.')
 		existing_char = character.get_character(p.id, p.guild_id, name)
 		if existing_char:
-			await ctx.send(f'You have a character named {existing_char.name}, do you want to overwrite them? (y/n)')
-
-			# TODO: Replace with global get_reply
-			try:
-				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-			except asyncio.TimeoutError:
-				return await ctx.send('You ran out of time.')
-			if reply.content.lower() == 'y':
-				marked_for_deletion = True
-			else:
-				return await ctx.send(f'You will keep {existing_char.name}')
+			msg = f'You have a character named **{existing_char.name}**, do you want to overwrite them? (y/n)'
+			marked_for_deletion = await self.get_reply(ctx, msg, bool)
+			if marked_for_deletion is None:
+				return await ctx.send(f'You will keep **{existing_char.name}**')
 		while prof.lower() not in profession.all_professions:
-			await ctx.send('What is your desired profession?')
-
-			# TODO: Replace with global get_reply
-			try:
-				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-			except asyncio.TimeoutError:
-				return await ctx.send('You ran out of time.')
-			prof = reply.content
+			prof = await self.get_reply(ctx, 'What is your desired profession?')
+			if prof is None:
+				return
 		prof = profession.get_profession(prof)
 		if prof.weight == 'Light':
 			starting_chest = equipment.get_equipment(10)
@@ -162,7 +133,7 @@ class RPGCog(MyCog):
 			prof.starting_off_hand
 		)
 		if existing_char and marked_for_deletion:
-			character.delete_character(p, existing_char.name)
+			character.delete_character(p.id, p.guild_id, existing_char.name)
 		character.add_character(char)
 		p.current_character = char
 		p.update()
@@ -188,12 +159,11 @@ class RPGCog(MyCog):
 					description='Swap your current character',
 					brief='Swap your current character',
 					aliases=['swap'])
-	# TODO: Remove option parameter
-	async def swap_character(self, ctx, name: typing.Optional[str] = ''):
+	async def swap_character(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		char = Character.get_character(p.id, p.guild_id, name)
 		if not char:
-			return await ctx.send(f'You don\'t have a character with the name {name}')
+			return await ctx.send(f'You don\'t have a character with the name **{name}**')
 		p.current_character = char
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
@@ -203,20 +173,13 @@ class RPGCog(MyCog):
 					description='Delete one of your characters',
 					brief='Delete a character',
 					aliases=['delchar', 'dc'])
-	# TODO: Remove optional parameter
-	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
+	async def delete_character(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		char = Character.get_character(p.id, p.guild_id, name)
 		if not char:
-			return await ctx.send(f'You don\'t have a character with the name {name}')
-		await ctx.send(f'Are you sure you want to delete {char.name}? (y/n)')
-
-		# TODO: Replace with global get_reply
-		try:
-			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
-		except asyncio.TimeoutError:
-			return await ctx.send('You ran out of time.')
-		if reply.content.lower() == 'y':
+			return await ctx.send(f'You don\'t have a character with the name **{name}**')
+		delete = await self.get_reply(ctx, f'Are you sure you want to delete **{char.name}**? (y/n)', bool)
+		if delete:
 			if char == p.current_character:
 				p.current_character = ''
 				p.update()
@@ -230,12 +193,11 @@ class RPGCog(MyCog):
 					description='Get information about one of your characters',
 					brief='Get character info',
 					aliases=['getchar', 'gc'])
-	# TODO: Remove optional parameter
-	async def get_character(self, ctx, name: typing.Optional[str] = ''):
+	async def get_character(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		char = await self.get_or_ask_user_for_character(ctx, p, name)
+		char = Character.get_character(p.id, p.guild_id, name)
 		if not char:
-			return await ctx.send(f'You don\'t have a character with the name {name}')
+			return await ctx.send(f'You don\'t have a character with the name **{name}**')
 		return await self.paginated_embeds(ctx, char.pages)
 
 	@commands.command(name='currentcharacter',
@@ -251,13 +213,13 @@ class RPGCog(MyCog):
 
 	## Professions
 	# TODO: Create profession group
-	# TODO: Add details command
+	# TODO: Add info command
 	@commands.command(name='viewprofessions',
 					pass_context=True,
 					description='View all available professions for characters',
 					brief='View professions',
 					aliases=['viewprofs', 'vp'])
-	# TODO: Split into view_professions and view_profession
+	# TODO: Split into view_professions (default) and view_profession (info)
 	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
 		profs = {p.name: p for p in profession.get_professions()}
 		prof = profs.get(name, None)
@@ -267,13 +229,14 @@ class RPGCog(MyCog):
 
 	## Areas
 	# TODO: Create area group
-	# TODO: Add details command
+	# TODO: Add info command
 	# TODO: Add move command
 	@commands.command(name='viewareas',
 					pass_context=True,
 					description='View all the areas you can travel to',
 					brief='View areas',
 					aliases=['va', 'areas'])
+	# TODO: Split into view_areas (default) and view_area (info)
 	async def view_areas(self, ctx, name: typing.Optional[str] = ''):
 		areas = {a.name: a for a in area.get_areas()}
 		a = areas.get(name, None)
@@ -300,111 +263,8 @@ class RPGCog(MyCog):
 	## Combat
 	# TODO: Create combat group
 	# TODO: Add battle command
-
-	# TODO: Remove this command and use findbattles instead
-	@commands.command(name='findbattle',
-					pass_context=True,
-					description='Find a monster to battle in the current area',
-					brief='Find a battle',
-					aliases=['fb'])
-	async def find_battle(self, ctx):
-		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		if p.current_character is None:
-			return await ctx.send('You need a character to battle')
-		if p.current_character.current_area is None:
-			return await ctx.send('You need to be in an area before you can battle')
-		if p.current_character._death_timer > dt.now():
-			return await ctx.send(f'**{p.current_character.name}** is dead for another **{format_remaining_time(p.current_character._death_timer)}**')
-		cb = combat.Combat(p.current_character)
-		msg = await ctx.send(embed=cb.embed)
-		await msg.add_reaction(attack_emoji)
-		if p.current_character._spells:
-			await msg.add_reaction(spell1_emoji)
-		await msg.add_reaction(run_emoji)
-
-		def is_combat_icon(m):
-			return all([
-				(m.emoji.name in [attack_emoji, run_emoji, 'spell1']),
-				m.member.id != self.bot.user.id,
-				m.message_id == msg.id,
-				m.member == ctx.author
-			])
-
-		def is_spell_slot_icon(m):
-			return all([
-				(m.emoji.name in ['spell1', 'spell2', 'spell3', 'spell4']),
-				m.member.id != self.bot.user.id,
-				m.message_id == msg.id,
-				m.member == ctx.author
-			])
-
-		while not cb.winner:
-			try:
-				react = await self.bot.wait_for('raw_reaction_add', check=is_combat_icon, timeout=600)
-			except asyncio.TimeoutError:
-				log.debug('Timeout, breaking')
-				break
-			if react.emoji.name == attack_emoji:
-				await msg.remove_reaction(attack_emoji, react.member)
-				cb.character_combat('Attack')
-			elif react.emoji.name == 'spell1':
-				await msg.clear_reactions()
-				desc = f'**Current MP:** {p.current_character.current_mp}/{p.current_character.stats["INT"]}\n\n'
-				for i, s in enumerate(p.current_character._spells):
-					desc += f'{spell_emojis[i]} **{s.name}** (costs: {s.cost}) (DPS: {s.avg_dmg_with_character_stats(p.current_character)})\n'
-					await msg.add_reaction(spell_emojis[i])
-				await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
-				try:
-					react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=600)
-				except asyncio.TimeoutError:
-					log.debug('Timeout, breaking')
-					await msg.clear_reactions()
-					await msg.add_reaction(attack_emoji)
-					await msg.add_reaction(spell1_emoji)
-					await msg.add_reaction(run_emoji)
-					continue
-				if react.emoji.name == 'spell1':
-					if p.current_character.current_mp < p.current_character._spells[0].cost:
-						await msg.edit(content='You don\'t have the MP to cast this')
-					else:
-						cb.character_combat('Spell', 0)
-				elif react.emoji.name == 'spell2':
-					if p.current_character.current_mp < p.current_character._spells[1].cost:
-						await msg.edit(content='You don\'t have the MP to cast this')
-					else:
-						cb.character_combat('Spell', 1)
-				elif react.emoji.name == 'spell3':
-					if p.current_character.current_mp < p.current_character._spells[2].cost:
-						await msg.edit(content='You don\'t have the MP to cast this')
-					else:
-						cb.character_combat('Spell', 2)
-				else:
-					if p.current_character.current_mp < p.current_character._spells[3].cost:
-						await msg.edit(content='You don\'t have the MP to cast this')
-					else:
-						cb.character_combat('Spell', 3)
-				await msg.clear_reactions()
-				await msg.add_reaction(attack_emoji)
-				await msg.add_reaction(spell1_emoji)
-				await msg.add_reaction(run_emoji)
-			else:
-				await msg.clear_reactions()
-				await msg.edit(content='You run from the battle', embed=None)
-				return p.current_character.update()
-			await msg.edit(content='', embed=cb.embed)
-
-		await msg.clear_reactions()
-		if cb.winner == p.current_character:
-			lvlup = p.current_character.add_exp(cb.exp)
-			p.current_character.gold += cb.loot['gold']
-			p.current_character._inventory['consumables'].extend(cb.loot['consumables'])
-			p.current_character._inventory['equipment'].extend(cb.loot['equipment'])
-			if lvlup:
-				await ctx.send(f'You leveled up to {p.current_character.level}')
-		else:
-			p.current_character._death_timer = dt.now() + td(hours=1)
-		return p.current_character.update()
-
+	# v4.0.0: Add boss command
+	# v4.0.0: Add dungeon command
 	@commands.command(name='findbattles',
 					pass_context=True,
 					description='Find a monster to battle in the current area',
@@ -515,6 +375,10 @@ class RPGCog(MyCog):
 			await msg.edit(embed=cb.embed)
 
 	## Equipment/Inventory
+	# TODO: Create inventory group
+	# TODO: Add equipment command
+	# TODO: Add consumables command
+	# TODO: Add spells command
 	@commands.command(name='equipment',
 					pass_context=True,
 					description='View your equipment',
