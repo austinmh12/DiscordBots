@@ -215,6 +215,7 @@ def generate_random_magic_properties(type, rarity, level):
 ###########
 # Classes #
 ###########
+# TODO: Convert this to an ABC
 class Equipment:
 	def __init__(self,
 				id,

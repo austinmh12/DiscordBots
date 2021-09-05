@@ -22,6 +22,8 @@ def get_monster(name):
 		return None
 	return Monster(**df.to_dict('records')[0])
 
+# TODO: Add add_monster function for admin
+
 ###########
 # Classes #
 ###########

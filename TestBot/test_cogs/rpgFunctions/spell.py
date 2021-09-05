@@ -29,6 +29,8 @@ def get_spell(name):
 		return None
 	return Spell(**df.to_dict('records')[0])
 
+# TODO: Add add_spell function for admin
+
 ###########
 # Classes #
 ###########

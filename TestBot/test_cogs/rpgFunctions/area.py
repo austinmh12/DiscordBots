@@ -26,6 +26,8 @@ def get_area(name):
 		return None
 	return Area(**df.to_dict('records')[0])
 
+# TODO: Add add_area function for admin
+
 def get_item(item_info):
 	if item_info['type'] == 'Simple Weapon':
 		type = choice(simple_weapons)

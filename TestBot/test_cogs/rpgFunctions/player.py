@@ -12,6 +12,7 @@ import json
 #############
 # Functions #
 #############
+# TODO: Make this add the player if they don't exist
 def get_player(id, guild_id):
 	df = sql('rpg', 'select * from players where id = ? and guild_id = ?', (id, guild_id))
 	if df.empty:
@@ -26,6 +27,10 @@ def add_player(id, guild_id):
 ###########
 # Classes #
 ###########
+# TODO: Remove underscore attrs and make them accessible as the type they'll be
+# I.e. make current character a Character object and bank a Bank object
+# Handle the conversions from db in the __init__ and conversions to db in to_dict
+# TODO: Move bank out into it's own class with player.id as its UID
 class Player:
 	def __init__(self,
 				id,
@@ -38,10 +43,12 @@ class Player:
 		self.current_character = current_character if isinstance(current_character, Character) else get_character(self, current_character)
 		self._bank = self.parse_bank(bank) if isinstance(bank, str) else bank
 
+	# TODO: Remove this, unused
 	@classmethod
 	def from_ids(cls, id, guild_id):
 		return get_player(id, guild_id)
 
+	# TODO: Remove this
 	@property
 	def bank(self):
 		ret = {
@@ -51,6 +58,7 @@ class Player:
 		}
 		return json.dumps(ret)
 
+	# TODO: Remove this
 	def parse_bank(self, bank):
 		ret = {'equipment': [], 'consumables': []}
 		for e in inventory['equipment']:
@@ -64,5 +72,6 @@ class Player:
 		ret['gold'] = bank['gold']
 		return ret
 
+	# TODO: Remove bank
 	def update(self):
 		sql('rpg', 'update players set current_character = ?, bank = ? where id = ? and guild_id = ?', (self.current_character.name if self.current_character else '', self.bank, self.id, self.guild_id))

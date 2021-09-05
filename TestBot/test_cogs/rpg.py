@@ -46,9 +46,11 @@ class RPGCog(MyCog):
 		if not os.path.exists(f'{BASE_PATH}/rpg.db'):
 			log.info('Initialising database.')
 			initialise_db()
+		# TODO: add migrate_db function
 		self.heal_all_characters.start()
 
 	# Utilities
+	### TODO: Move to player class
 	def get_or_add_player_from_ctx(self, ctx):
 		id = ctx.author.id
 		guild_id = ctx.author.guild.id
@@ -59,12 +61,15 @@ class RPGCog(MyCog):
 
 	async def get_or_ask_user_for_character(self, ctx, player, name):
 
+		# TODO: Replace with global check
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
 		
 		if not name:
 			await ctx.send('Which character?')
 			await self.me(ctx)
+
+			# TODO: Replace with global get_reply function
 			try:
 				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 			except asyncio.TimeoutError:
@@ -74,6 +79,7 @@ class RPGCog(MyCog):
 
 	async def get_or_ask_user_for_area(self, ctx, name):
 
+		# TODO: Replace with global check
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
 		
@@ -82,6 +88,8 @@ class RPGCog(MyCog):
 			areas = area.get_areas()
 			p = Page('Areas', '\n'.join([f'**{a.name}** - Rec. Lvl: {a.recommended_level}' for a in areas]), colour=(150, 150, 150))
 			await ctx.send(embed=p.embed)
+
+			# TODO: Replace with global get_reply function
 			try:
 				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 			except asyncio.TimeoutError:
@@ -99,16 +107,20 @@ class RPGCog(MyCog):
 					brief='Create a character',
 					aliases=['cc', 'create'])
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		marked_for_deletion = False
 		if len(character.get_characters(p)) >= 5:
 			return await ctx.send('You can only have 5 characters')
 
+		# TODO: Replace with global check
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
 
 		if not name:
 			await ctx.send('What is your character\'s name?')
+
+			# TODO: Replace with global get_reply
 			try:
 				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 			except asyncio.TimeoutError:
@@ -117,6 +129,8 @@ class RPGCog(MyCog):
 		existing_char = character.get_character(p, name)
 		if existing_char:
 			await ctx.send(f'You have a character named {existing_char.name}, do you want to overwrite them? (y/n)')
+
+			# TODO: Replace with global get_reply
 			try:
 				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 			except asyncio.TimeoutError:
@@ -127,6 +141,8 @@ class RPGCog(MyCog):
 				return await ctx.send(f'You will keep {existing_char.name}')
 		while prof.lower() not in profession.all_professions:
 			await ctx.send('What is your desired profession?')
+
+			# TODO: Replace with global get_reply
 			try:
 				reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 			except asyncio.TimeoutError:
@@ -172,6 +188,7 @@ class RPGCog(MyCog):
 					description='Shows your characters',
 					brief='Shows your characters')
 	async def me(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		chars = character.get_characters(p)
 		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
@@ -185,7 +202,9 @@ class RPGCog(MyCog):
 					description='Swap your current character',
 					brief='Swap your current character',
 					aliases=['swap'])
+	# TODO: Remove option parameter
 	async def swap_character(self, ctx, name: typing.Optional[str] = ''):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		char = await self.get_or_ask_user_for_character(ctx, p, name)
 		if not char:
@@ -199,9 +218,12 @@ class RPGCog(MyCog):
 					description='Delete one of your characters',
 					brief='Delete a character',
 					aliases=['delchar', 'dc'])
+	# TODO: Remove optional parameter
 	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 
+		# TODO: Replace with global check
 		def is_same_user_channel(msg):
 			return msg.channel.id == ctx.channel.id and msg.author.id == ctx.author.id
 
@@ -209,6 +231,8 @@ class RPGCog(MyCog):
 		if not char:
 			return await ctx.send(f'You don\'t have a character with the name {name}')
 		await ctx.send(f'Are you sure you want to delete {char.name}? (y/n)')
+
+		# TODO: Replace with global get_reply
 		try:
 			reply = await self.bot.wait_for('message', check=is_same_user_channel, timeout=30)
 		except asyncio.TimeoutError:
@@ -227,7 +251,9 @@ class RPGCog(MyCog):
 					description='Get information about one of your characters',
 					brief='Get character info',
 					aliases=['getchar', 'gc'])
+	# TODO: Remove optional parameter
 	async def get_character(self, ctx, name: typing.Optional[str] = ''):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		char = await self.get_or_ask_user_for_character(ctx, p, name)
 		if not char:
@@ -240,17 +266,21 @@ class RPGCog(MyCog):
 					brief='Get current character info',
 					aliases=['curchar', 'cur', 'char'])
 	async def current_character(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if not p.current_character:
 			return await ctx.send('You don\'t have a character set')
 		return await self.paginated_embeds(ctx, p.current_character.pages)
 
 	## Professions
+	# TODO: Create profession group
+	# TODO: Add details command
 	@commands.command(name='viewprofessions',
 					pass_context=True,
 					description='View all available professions for characters',
 					brief='View professions',
 					aliases=['viewprofs', 'vp'])
+	# TODO: Split into view_professions and view_profession
 	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
 		profs = {p.name: p for p in profession.get_professions()}
 		prof = profs.get(name, None)
@@ -259,6 +289,9 @@ class RPGCog(MyCog):
 		return await self.paginated_embeds(ctx, prof.page)
 
 	## Areas
+	# TODO: Create area group
+	# TODO: Add details command
+	# TODO: Add move command
 	@commands.command(name='viewareas',
 					pass_context=True,
 					description='View all the areas you can travel to',
@@ -277,6 +310,7 @@ class RPGCog(MyCog):
 					brief='Move areas',
 					aliases=['ma', 'move'])
 	async def move_areas(self, ctx, name: typing.Optional[str] = ''):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to move areas')
@@ -288,12 +322,17 @@ class RPGCog(MyCog):
 		return await ctx.send(f'You moved to **{ar.name}**')
 
 	## Combat
+	# TODO: Create combat group
+	# TODO: Add battle command
+
+	# TODO: Remove this command and use findbattles instead
 	@commands.command(name='findbattle',
 					pass_context=True,
 					description='Find a monster to battle in the current area',
 					brief='Find a battle',
 					aliases=['fb'])
 	async def find_battle(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
@@ -397,6 +436,7 @@ class RPGCog(MyCog):
 					brief='Find a battle',
 					aliases=['fbs'])
 	async def find_battles(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
@@ -507,6 +547,7 @@ class RPGCog(MyCog):
 					brief='Equipment',
 					aliases=['eq'])
 	async def _equipment(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an equipment')
@@ -650,6 +691,7 @@ class RPGCog(MyCog):
 					brief='Consumables',
 					aliases=['con'])
 	async def _consumables(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an consumables')
@@ -719,6 +761,7 @@ class RPGCog(MyCog):
 					brief='Unequip items',
 					aliases=['uneq'])
 	async def unequip(self, ctx, slot):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an inventory')
@@ -737,6 +780,7 @@ class RPGCog(MyCog):
 					brief='Show learned spells',
 					aliases=['sp'])
 	async def spells(self, ctx):
+		# TODO: Replace with Player.get_player
 		p = self.get_or_add_player_from_ctx(ctx)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view learned spells')

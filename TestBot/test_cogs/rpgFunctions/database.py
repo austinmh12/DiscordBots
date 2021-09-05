@@ -1,7 +1,8 @@
 from .. import sql
 
+# TODO: Revert this to the base version and then add the migrations to migrate_db
 def initialise_db():
-	sql('rpg', 'create table players (id integer, guild_id integer, current_character text, bank text)')
+	sql('rpg', 'create table players (id integer, guild_id integer, current_character text)')
 	sql('rpg', '''create table professions (
 			name text
 			,primary_stat text
@@ -38,10 +39,7 @@ def initialise_db():
 			,off_hand integer
 			,current_con integer
 			,current_area text
-			,death_timer text
-			,inventory text
-			,current_mp integer
-			,spells text
+			,death_timer integer
 		)'''
 	)
 	sql('rpg', '''create table monsters (
@@ -84,7 +82,6 @@ def initialise_db():
 		)'''
 	)
 	sql('rpg', 'create table areas (name text, recommended_level integer, monsters text, loot_table text)')
-	sql('rpg', 'create table spells (name text, profession text, level integer, min_damage integer, max_damage integer, stat text, cost integer)')
 	sql('rpg', 'create table consumables (id integer, name text, type text, restored integer, stat text, bonus integer)')
 	sql('rpg', '''insert into professions values
 			("Warrior","STR","DEX",10,8,5,7,3,2,1,3,1,7,'Heavy')
@@ -149,7 +146,43 @@ def initialise_db():
 		,('Desert',21,'{"Scorpion":{"min_level":15,"max_level":22},"Lizard":{"min_level":18,"max_level":24},"Snake":{"min_level":18,"max_level":22},"Scarab":{"min_level":16,"max_level":23},"Mummy":{"min_level":20,"max_level":25},"Skeleton":{"min_level":19,"max_level":25},"Crab":{"min_level":19,"max_level":25}}','{"gold":400,"item_chance":0.2,"max_item_count":3,"items":{"Sword":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Longsword":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Claymore":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Shortbow":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Longbow":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Crossbow":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Staff":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Wand":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Dagger":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Knife":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Helmet":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Chest":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Legs":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Boots":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Gloves":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24},"Shield":{"rarities":["Common","Uncommon"],"min_level":17,"max_level":24}},"consumables":{"Health":{"min_level":17,"max_level":24},"Mana":{"min_level":17,"max_level":24}},"unique_items":[]}')
 		,('Volcano',27,'{"Slime":{"min_level":23,"max_level":29},"Firebat":{"min_level":22,"max_level":27},"Lava Eel":{"min_level":24,"max_level":30},"Flame Spirit":{"min_level":25,"max_level":31}}','{"gold":750,"item_chance":0.1,"max_item_count":1,"items":{"Sword":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Longsword":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Claymore":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Shortbow":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Longbow":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Crossbow":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Staff":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Wand":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Dagger":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Knife":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Helmet":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Chest":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Legs":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Boots":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Gloves":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30},"Shield":{"rarities":["Uncommon","Rare"],"min_level":22,"max_level":30}},"consumables":{"Health":{"min_level":22,"max_level":30},"Mana":{"min_level":22,"max_level":30}},"unique_items":[]}');'''
 	)
-	sql('rpg', '''insert into spells values
+	sql('rpg', '''create table version (
+			version text
+		)'''
+	)
+	sql('rpg', 'insert into version values (?)', ('1.0.0',))
+
+def get_version():
+	df = sql('rpg', 'select * from version')
+	if df.empty:
+		return ''
+	return df.to_dict('records')[0]['version']
+
+def update_version(version):
+	sql('rpg', 'delete from version')
+	sql('rpg', 'insert into version values (?)', (version,))
+
+def migrate_db(version):
+	current = get_version()
+	log.debug(current)
+	log.debug(version)
+	if version <= current:
+		return
+	log.debug('Migrating database')
+	migration_versions = [k for k in migration_steps if k > current]
+	migration_versions.sort()
+	for migration_version in migration_versions:
+		for step in migration_steps[migration_version]:
+			sql('poketcg', step)
+	update_version(version)
+
+migration_steps = {
+	'2.0.0': [
+		"alter table characters add column inventory text default '{}'",
+		"alter table characters add column current_mp integer default 0",
+		"alter table characters add column spells text default '[]'",
+		'create table spells (name text, profession text, level integer, min_damage integer, max_damage integer, stat text, cost integer)',
+		'''insert into spells values
 		('Roar','Warrior',3,5,7,'STR',2)
 		,('Frenzy','Warrior',5,10,11,'STR',5)
 		,('Stomp','Warrior',8,15,20,'STR',10)
@@ -169,13 +202,5 @@ def initialise_db():
 		,('Sneak','Rogue',2,7,8,'DEX',3)
 		,('Backstab','Rogue',5,7,12,'DEX',5)
 		,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
-	)
-
-def migrate_database():
-	for sql_command in migration_steps:
-		sql('rpg', sql_command)
-
-migration_steps = [
-	'alter table players add column bank text;',
-	'''update players set bank = '{"gold": 0, "equipment": [], "consumables": []}';'''
-]
+	]
+}

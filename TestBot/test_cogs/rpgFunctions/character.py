@@ -45,6 +45,9 @@ def delete_character(player, name):
 ###########
 # Classes #
 ###########
+# TODO: Remove underscore attrs and make them accessible as the type they'll be
+# I.e. make current death_timer a datetime and inventory a dict
+# Handle the conversions from db in the __init__ and conversions to db in to_dict
 class Character:
 	def __init__(self, 
 				player_id,
@@ -105,10 +108,12 @@ class Character:
 			log.info('Migrating inventory')
 			self._inventory = {'equipment': self._inventory, 'consumables': []}
 
+	# TODO: Remove
 	@property
 	def death_timer(self):
 		return dt.strftime(self._death_timer, '%Y-%m-%d %H:%M:%S')
 
+	# TODO: Remove
 	@property
 	def inventory(self):
 		if isinstance(self._inventory, list):
@@ -119,10 +124,12 @@ class Character:
 		}
 		return json.dumps(ret)
 
+	# TODO: Remove
 	@property
 	def spells(self):
 		return json.dumps([s.name for s in self._spells])
 
+	# TODO: Remove
 	@property
 	def to_row(self):
 		return (
@@ -150,6 +157,7 @@ class Character:
 			self.spells
 		)
 
+	# TODO: Modify to handle database conversions
 	def to_dict(self):
 		return {
 			'player_id': self.player_id,

@@ -13,6 +13,7 @@ all_professions = [
 	'artificer',
 	'paladin'
 ]
+# TODO: Convert this to an Enum
 light_professions = ['Archer', 'Wizard']
 medium_professions = ['Rogue']
 heavy_professions = ['Warrior']
@@ -29,6 +30,8 @@ def get_profession(name):
 	if df.empty:
 		return None
 	return Profession(**df.to_dict('records')[0])
+
+# TODO: Add add_profession function for admin
 
 ###########
 # Classes #

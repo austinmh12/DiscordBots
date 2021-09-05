@@ -47,6 +47,7 @@ def generate_consumable(type, level):
 ###########
 # Classes #
 ###########
+# TODO: Turn this into an ABC
 class Consumable:
 	def __init__(self, id, name, type, **kwargs):
 		self.id = id
