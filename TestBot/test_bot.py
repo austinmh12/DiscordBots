@@ -37,8 +37,8 @@ async def on_ready():
 	log.info('Client is ready.')
 	# log.debug(client.cogs)
 	# log.debug(client.cogs['PokeTCG'].get_commands())
-	for c in client.cogs['PokeTCG'].get_commands():
-		log.debug(c.name)
+	# for c in client.cogs['PokeTCG'].get_commands():
+	# 	log.debug(c.name)
 	# for ch in client.get_all_channels():
 		# log.debug(f'{ch.name} - {ch.id}')
 	# log.debug(client.emojis)

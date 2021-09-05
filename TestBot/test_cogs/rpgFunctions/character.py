@@ -24,14 +24,14 @@ def get_all_characters():
 		return []
 	return [Character(**d) for d in df.to_dict('records')]
 
-def get_characters(player):
-	df = sql('rpg', 'select * from characters where player_id = ? and player_guild_id = ?', (player.id, player.guild_id))
+def get_characters(id, guild_id):
+	df = sql('rpg', 'select * from characters where player_id = ? and player_guild_id = ?', (id, guild_id))
 	if df.empty:
 		return []
 	return [Character(**d) for d in df.to_dict('records')]
 
-def get_character(player, name):
-	df = sql('rpg', 'select * from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
+def get_character(id, guild_id, name):
+	df = sql('rpg', 'select * from characters where player_id = ? and player_guild_id = ? and name = ?', (id, guild_id, name))
 	if df.empty:
 		return None
 	return Character(**df.to_dict('records')[0])
@@ -39,8 +39,8 @@ def get_character(player, name):
 def add_character(character):
 	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
 
-def delete_character(player, name):
-	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (player.id, player.guild_id, name))
+def delete_character(id, guild_id, name):
+	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (id, guild_id, name))
 
 ###########
 # Classes #
