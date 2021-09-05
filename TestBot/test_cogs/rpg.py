@@ -75,26 +75,39 @@ class RPGCog(MyCog):
 	# Commands
 	## Characters
 	# TODO: Create character group
-	# TODO: Add info command
-	# TODO: Add create command
-	# TODO: Add swap command
-	# TODO: Add delete command
-	# TODO: Add current command
-	@commands.command(name='createcharacter',
+	@commands.group(name='character',
 					pass_context=True,
-					description='Create a character to start your journey',
-					brief='Create a character',
-					aliases=['cc', 'create'])
-	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
+					invoke_without_command=True,
+					description='Main command for character related functions',
+					brief='Character related commands',
+					aliases=['char'])
+	async def character_main(self, ctx):
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
+		chars = Character.get_characters(p.id, p.guild_id)
+		desc = f'**Current Character:** '
+		if p.current_character:
+			desc += p.current_character.name
+		desc += '\n\n__All characters__\n'
+		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c._death_timer) + " " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
+		return await self.paginated_embeds(ctx, page)
+
+	# TODO: Add create command
+	@character_main.command(name='create',
+							pass_context=True,
+							description='Create a character',
+							brief='Create a character',
+							aliases=['c'])
+	async def character_create(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		marked_for_deletion = False
-		if len(character.get_characters(p.id, p.guild_id)) >= 5:
+		if len(Character.get_characters(p.id, p.guild_id)) >= 5:
 			return await ctx.send('You can only have 5 characters')
 		if not name:
 			name = await self.get_reply(ctx, 'What is your character\'s name?')
 			if name is None:
 				return await ctx.send('You must provide a name.')
-		existing_char = character.get_character(p.id, p.guild_id, name)
+		existing_char = Character.get_character(p.id, p.guild_id, name)
 		if existing_char:
 			msg = f'You have a character named **{existing_char.name}**, do you want to overwrite them? (y/n)'
 			marked_for_deletion = await self.get_reply(ctx, msg, bool)
@@ -114,7 +127,7 @@ class RPGCog(MyCog):
 		else:
 			starting_chest = equipment.get_equipment(5)
 			starting_legs = equipment.get_equipment(6)
-		char = character.Character(
+		char = Character.Character(
 			p.id, 
 			p.guild_id, 
 			name, 
@@ -133,33 +146,30 @@ class RPGCog(MyCog):
 			prof.starting_off_hand
 		)
 		if existing_char and marked_for_deletion:
-			character.delete_character(p.id, p.guild_id, existing_char.name)
-		character.add_character(char)
+			Character.delete_character(p.id, p.guild_id, existing_char.name)
+		Character.add_character(char)
 		p.current_character = char
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
 
-	@commands.command(name='me',
-					pass_context=True,
-					description='Shows your characters',
-					brief='Shows your characters')
-	async def me(self, ctx):
+	# TODO: Add info command
+	@character_main.command(name='info',
+						pass_context=True,
+						description='Get information about one of your characters',
+						brief='Get character info')
+	async def character_info(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		chars = character.get_characters(p.id, p.guild_id)
-		desc = f'**Current Character:** '
-		if p.current_character:
-			desc += p.current_character.name
-		desc += '\n\n__All characters__\n'
-		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c._death_timer) + " " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
-		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
-		return await self.paginated_embeds(ctx, page)
+		char = Character.get_character(p.id, p.guild_id, name)
+		if not char:
+			return await ctx.send(f'You don\'t have a character with the name **{name}**')
+		return await self.paginated_embeds(ctx, char.pages)
 
-	@commands.command(name='swapcharacter',
-					pass_context=True,
-					description='Swap your current character',
-					brief='Swap your current character',
-					aliases=['swap'])
-	async def swap_character(self, ctx, name):
+	# TODO: Add swap command
+	@character_main.command(name='swap',
+							pass_context=True,
+							description='Swap your current character',
+							brief='Swap your current character')
+	async def character_swap(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		char = Character.get_character(p.id, p.guild_id, name)
 		if not char:
@@ -168,12 +178,13 @@ class RPGCog(MyCog):
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
 
-	@commands.command(name='deletecharacter',
-					pass_context=True,
-					description='Delete one of your characters',
-					brief='Delete a character',
-					aliases=['delchar', 'dc'])
-	async def delete_character(self, ctx):
+	# TODO: Add delete command
+	@character_main.command(name='delete',
+							pass_context=True,
+							description='Delete one of your characters',
+							brief='Delete a character',
+							aliases=['del'])
+	async def character_delete(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		char = Character.get_character(p.id, p.guild_id, name)
 		if not char:
@@ -183,29 +194,18 @@ class RPGCog(MyCog):
 			if char == p.current_character:
 				p.current_character = ''
 				p.update()
-			character.delete_character(p, char.name)
-			return await ctx.send(f'{char.name} has been deleted.')
+			Character.delete_character(p.id, p.guild_id, char.name)
+			return await ctx.send(f'**{char.name}** has been deleted.')
 		else:
-			return await ctx.send(f'You will keep {existing_char.name}')
+			return await ctx.send(f'You will keep **{char.name}**')
 
-	@commands.command(name='getcharacter',
-					pass_context=True,
-					description='Get information about one of your characters',
-					brief='Get character info',
-					aliases=['getchar', 'gc'])
-	async def get_character(self, ctx):
-		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
-		char = Character.get_character(p.id, p.guild_id, name)
-		if not char:
-			return await ctx.send(f'You don\'t have a character with the name **{name}**')
-		return await self.paginated_embeds(ctx, char.pages)
-
-	@commands.command(name='currentcharacter',
-					pass_context=True,
-					description='Get information about your current character',
-					brief='Get current character info',
-					aliases=['curchar', 'cur', 'char'])
-	async def current_character(self, ctx):
+	# TODO: Add current command
+	@character_main.command(name='current',
+							pass_context=True,
+							description='Get information about your current character',
+							brief='Get current character info',
+							aliases=['cur'])
+	async def character_current(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if not p.current_character:
 			return await ctx.send('You don\'t have a character set')
@@ -709,6 +709,6 @@ class RPGCog(MyCog):
 	@tasks.loop(seconds=600)
 	async def heal_all_characters(self):
 		log.info('Healing all characters')
-		characters = character.get_all_characters()
+		characters = Character.get_all_characters()
 		for char in characters:
 			char.heal()
