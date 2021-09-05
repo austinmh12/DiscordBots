@@ -9,7 +9,7 @@ from datetime import datetime as dt, timedelta as td
 
 from .rpgFunctions import character
 from .rpgFunctions import profession
-from .rpgFunctions import player
+from .rpgFunctions import player as Player
 from .rpgFunctions import equipment
 from .rpgFunctions import area
 from .rpgFunctions import combat
@@ -50,15 +50,6 @@ class RPGCog(MyCog):
 		self.heal_all_characters.start()
 
 	# Utilities
-	### TODO: Move to player class
-	def get_or_add_player_from_ctx(self, ctx):
-		id = ctx.author.id
-		guild_id = ctx.author.guild.id
-		p = player.get_player(id, guild_id)
-		if not p:
-			return player.add_player(id, guild_id)
-		return p
-
 	async def get_or_ask_user_for_character(self, ctx, player, name):
 
 		# TODO: Replace with global check
@@ -107,8 +98,7 @@ class RPGCog(MyCog):
 					brief='Create a character',
 					aliases=['cc', 'create'])
 	async def create_character(self, ctx, name: typing.Optional[str] = '', prof: typing.Optional[str] = ''):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		marked_for_deletion = False
 		if len(character.get_characters(p)) >= 5:
 			return await ctx.send('You can only have 5 characters')
@@ -188,8 +178,7 @@ class RPGCog(MyCog):
 					description='Shows your characters',
 					brief='Shows your characters')
 	async def me(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		chars = character.get_characters(p)
 		desc = f'**Current Character:** {p.current_character.name if p.current_character else ""}\n\n'
 		desc += '__All characters__\n'
@@ -204,8 +193,7 @@ class RPGCog(MyCog):
 					aliases=['swap'])
 	# TODO: Remove option parameter
 	async def swap_character(self, ctx, name: typing.Optional[str] = ''):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		char = await self.get_or_ask_user_for_character(ctx, p, name)
 		if not char:
 			return await ctx.send(f'You don\'t have a character with the name {name}')
@@ -220,8 +208,7 @@ class RPGCog(MyCog):
 					aliases=['delchar', 'dc'])
 	# TODO: Remove optional parameter
 	async def delete_character(self, ctx, name: typing.Optional[str] = ''):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 
 		# TODO: Replace with global check
 		def is_same_user_channel(msg):
@@ -253,8 +240,7 @@ class RPGCog(MyCog):
 					aliases=['getchar', 'gc'])
 	# TODO: Remove optional parameter
 	async def get_character(self, ctx, name: typing.Optional[str] = ''):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		char = await self.get_or_ask_user_for_character(ctx, p, name)
 		if not char:
 			return await ctx.send(f'You don\'t have a character with the name {name}')
@@ -266,8 +252,7 @@ class RPGCog(MyCog):
 					brief='Get current character info',
 					aliases=['curchar', 'cur', 'char'])
 	async def current_character(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if not p.current_character:
 			return await ctx.send('You don\'t have a character set')
 		return await self.paginated_embeds(ctx, p.current_character.pages)
@@ -310,8 +295,7 @@ class RPGCog(MyCog):
 					brief='Move areas',
 					aliases=['ma', 'move'])
 	async def move_areas(self, ctx, name: typing.Optional[str] = ''):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to move areas')
 		ar = await self.get_or_ask_user_for_area(ctx, name)
@@ -332,8 +316,7 @@ class RPGCog(MyCog):
 					brief='Find a battle',
 					aliases=['fb'])
 	async def find_battle(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
 		if p.current_character.current_area is None:
@@ -436,8 +419,7 @@ class RPGCog(MyCog):
 					brief='Find a battle',
 					aliases=['fbs'])
 	async def find_battles(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
 		if p.current_character.current_area is None:
@@ -547,8 +529,7 @@ class RPGCog(MyCog):
 					brief='Equipment',
 					aliases=['eq'])
 	async def _equipment(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an equipment')
 		# Do something similar to the paginated_embeds, but with a forward, back, equip, and sell icons
@@ -691,8 +672,7 @@ class RPGCog(MyCog):
 					brief='Consumables',
 					aliases=['con'])
 	async def _consumables(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an consumables')
 		if not p.current_character._inventory['consumables']:
@@ -761,8 +741,7 @@ class RPGCog(MyCog):
 					brief='Unequip items',
 					aliases=['uneq'])
 	async def unequip(self, ctx, slot):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an inventory')
 		if slot.lower() not in ['helmet', 'chest', 'legs', 'boots', 'gloves', 'amulet', 'ring', 'weapon', 'offhand']:
@@ -780,8 +759,7 @@ class RPGCog(MyCog):
 					brief='Show learned spells',
 					aliases=['sp'])
 	async def spells(self, ctx):
-		# TODO: Replace with Player.get_player
-		p = self.get_or_add_player_from_ctx(ctx)
+		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view learned spells')
 		spells = [s for s in spell.get_spells_by_profession(p.current_character.profession) if s.level <= p.current_character.level]	
