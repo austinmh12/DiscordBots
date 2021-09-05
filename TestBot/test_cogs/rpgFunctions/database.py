@@ -173,7 +173,7 @@ def migrate_db(version):
 	migration_versions.sort()
 	for migration_version in migration_versions:
 		for step in migration_steps[migration_version]:
-			sql('poketcg', step)
+			sql('rpg', step)
 	update_version(version)
 
 migration_steps = {
@@ -183,24 +183,24 @@ migration_steps = {
 		"alter table characters add column spells text default '[]'",
 		'create table spells (name text, profession text, level integer, min_damage integer, max_damage integer, stat text, cost integer)',
 		'''insert into spells values
-		('Roar','Warrior',3,5,7,'STR',2)
-		,('Frenzy','Warrior',5,10,11,'STR',5)
-		,('Stomp','Warrior',8,15,20,'STR',10)
-		,('Cleave','Warrior',10,25,26,'STR',12)
-		,('Pinpoint','Archer',2,8,9,'DEX',1)
-		,('Deadeye','Archer',4,5,18,'DEX',3)
-		,('Straight Shot','Archer',6,12,20,'DEX',7)
-		,('Double Shot','Archer',9,30,36,'DEX',15)
-		,('Firebolt','Wizard',1,2,3,'INT',2)
-		,('Thunderbolt','Wizard',1,2,3,'INT',2)
-		,('Icebolt','Wizard',2,3,5,'INT',3)
-		,('Earthbolt','Wizard',3,5,8,'INT',5)
-		,('Fire Strike','Wizard',5,8,12,'INT',8)
-		,('Lightning Strike','Wizard',7,11,17,'INT',10)
-		,('Ice Strike','Wizard',9,14,21,'INT',13)
-		,('Earth Strike','Wizard',10,15,23,'INT',15)
-		,('Sneak','Rogue',2,7,8,'DEX',3)
-		,('Backstab','Rogue',5,7,12,'DEX',5)
-		,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
+			('Roar','Warrior',3,5,7,'STR',2)
+			,('Frenzy','Warrior',5,10,11,'STR',5)
+			,('Stomp','Warrior',8,15,20,'STR',10)
+			,('Cleave','Warrior',10,25,26,'STR',12)
+			,('Pinpoint','Archer',2,8,9,'DEX',1)
+			,('Deadeye','Archer',4,5,18,'DEX',3)
+			,('Straight Shot','Archer',6,12,20,'DEX',7)
+			,('Double Shot','Archer',9,30,36,'DEX',15)
+			,('Firebolt','Wizard',1,2,3,'INT',2)
+			,('Thunderbolt','Wizard',1,2,3,'INT',2)
+			,('Icebolt','Wizard',2,3,5,'INT',3)
+			,('Earthbolt','Wizard',3,5,8,'INT',5)
+			,('Fire Strike','Wizard',5,8,12,'INT',8)
+			,('Lightning Strike','Wizard',7,11,17,'INT',10)
+			,('Ice Strike','Wizard',9,14,21,'INT',13)
+			,('Earth Strike','Wizard',10,15,23,'INT',15)
+			,('Sneak','Rogue',2,7,8,'DEX',3)
+			,('Backstab','Rogue',5,7,12,'DEX',5)
+			,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
 	]
 }
