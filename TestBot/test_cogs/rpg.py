@@ -260,16 +260,25 @@ class RPGCog(MyCog):
 		return await ctx.send(f'You moved to **{area.name}**')
 
 	## Combat
-	# TODO: Create combat group
-	# TODO: Add battle command
-	# v4.0.0: Add boss command
-	# v4.0.0: Add dungeon command
-	@commands.command(name='findbattles',
+	@commands.group(name='combat',
 					pass_context=True,
-					description='Find a monster to battle in the current area',
-					brief='Find a battle',
-					aliases=['fbs'])
-	async def find_battles(self, ctx):
+					invoke_without_command=True,
+					description='Main command for combat related functions',
+					brief='Combat functions',
+					aliases=['cb'])
+	async def combat_main(self, ctx):
+		msg = 'Here are the available combat commands:\n'
+		msg += '**.combat battle** to start battling\n'
+		# msg += '**.combat boss** to battle the boss of the current area\n'
+		# msg += '**.combat dungeon** to take on the dungeon of the current area'
+		return await ctx.send(msg)
+
+	@combat_main.command(name='battle',
+						pass_context=True,
+						description='Find a monster to battle in the current area',
+						brief='Find a battle',
+						aliases=['bt'])
+	async def combat_battle(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
@@ -372,6 +381,19 @@ class RPGCog(MyCog):
 			p.current_character.update()
 			cb = combat.Combat(p.current_character)
 			await msg.edit(embed=cb.embed)
+
+	# v4.0.0: Add boss command
+	@combat_main.command(name='boss',
+						pass_context=True)
+	async def combat_boss(self, ctx):
+		...
+
+	# v4.0.0: Add dungeon command
+	@combat_main.command(name='dungeon',
+						pass_context=True,
+						aliases=['dgn'])
+	async def combat_dungeon(self, ctx):
+		...
 
 	## Equipment/Inventory
 	# TODO: Create inventory group
