@@ -74,7 +74,6 @@ class RPGCog(MyCog):
 
 	# Commands
 	## Characters
-	# TODO: Create character group
 	@commands.group(name='character',
 					pass_context=True,
 					invoke_without_command=True,
@@ -92,7 +91,6 @@ class RPGCog(MyCog):
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
 
-	# TODO: Add create command
 	@character_main.command(name='create',
 							pass_context=True,
 							description='Create a character',
@@ -152,11 +150,11 @@ class RPGCog(MyCog):
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
 
-	# TODO: Add info command
 	@character_main.command(name='info',
 						pass_context=True,
 						description='Get information about one of your characters',
-						brief='Get character info')
+						brief='Get character info',
+						aliases=['i'])
 	async def character_info(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		char = Character.get_character(p.id, p.guild_id, name)
@@ -164,7 +162,6 @@ class RPGCog(MyCog):
 			return await ctx.send(f'You don\'t have a character with the name **{name}**')
 		return await self.paginated_embeds(ctx, char.pages)
 
-	# TODO: Add swap command
 	@character_main.command(name='swap',
 							pass_context=True,
 							description='Swap your current character',
@@ -178,7 +175,6 @@ class RPGCog(MyCog):
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)
 
-	# TODO: Add delete command
 	@character_main.command(name='delete',
 							pass_context=True,
 							description='Delete one of your characters',
@@ -199,7 +195,6 @@ class RPGCog(MyCog):
 		else:
 			return await ctx.send(f'You will keep **{char.name}**')
 
-	# TODO: Add current command
 	@character_main.command(name='current',
 							pass_context=True,
 							description='Get information about your current character',
