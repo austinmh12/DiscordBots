@@ -8,7 +8,7 @@ import os.path
 from datetime import datetime as dt, timedelta as td
 
 from .rpgFunctions import character as Character
-from .rpgFunctions import profession
+from .rpgFunctions import profession as Profession
 from .rpgFunctions import player as Player
 from .rpgFunctions import equipment
 from .rpgFunctions import area
@@ -111,11 +111,11 @@ class RPGCog(MyCog):
 			marked_for_deletion = await self.get_reply(ctx, msg, bool)
 			if marked_for_deletion is None:
 				return await ctx.send(f'You will keep **{existing_char.name}**')
-		while prof.lower() not in profession.all_professions:
+		while prof.lower() not in Profession.all_professions:
 			prof = await self.get_reply(ctx, 'What is your desired profession?')
 			if prof is None:
 				return
-		prof = profession.get_profession(prof)
+		prof = Profession.get_profession(prof)
 		if prof.weight == 'Light':
 			starting_chest = equipment.get_equipment(10)
 			starting_legs = equipment.get_equipment(11)
@@ -207,19 +207,26 @@ class RPGCog(MyCog):
 		return await self.paginated_embeds(ctx, p.current_character.pages)
 
 	## Professions
-	# TODO: Create profession group
+	@commands.group(name='profession',
+					pass_context=True,
+					invoke_without_command=True,
+					description='Main command for profession related functions',
+					brief='Profession functions',
+					aliases=['prof'])
+	async def profession_main(self, ctx):
+		profs = Profession.get_professions()
+		return await self.paginated_embeds(ctx, [p.page for p in profs])
+
 	# TODO: Add info command
-	@commands.command(name='viewprofessions',
+	@commands.command(name='info',
 					pass_context=True,
 					description='View all available professions for characters',
 					brief='View professions',
-					aliases=['viewprofs', 'vp'])
-	# TODO: Split into view_professions (default) and view_profession (info)
-	async def view_professions(self, ctx, name: typing.Optional[str] = ''):
-		profs = {p.name: p for p in profession.get_professions()}
-		prof = profs.get(name, None)
+					aliases=['i'])
+	async def profession_info(self, ctx, name):
+		prof = Profession.get_profession(name)
 		if not prof:
-			return await self.paginated_embeds(ctx, [p.page for p in profs.values()])
+			return await ctx.send(f'There isn\'t a profession with the name **{name}**')
 		return await self.paginated_embeds(ctx, prof.page)
 
 	## Areas
