@@ -87,7 +87,7 @@ class RPGCog(MyCog):
 		if p.current_character:
 			desc += p.current_character.name
 		desc += '\n\n__All characters__\n'
-		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c._death_timer) + " " if c._death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
+		desc += '\n'.join([f'{":skull_crossbones: " + format_remaining_time(c.death_timer) + " " if c.death_timer > dt.now() else ""}**{c.name}** ({c.profession.name}) --- _{c.level}_' for c in chars])
 		page = Page(ctx.author.display_name, desc, colour=(150, 150, 150), icon=ctx.author.avatar_url)
 		return await self.paginated_embeds(ctx, page)
 
@@ -270,17 +270,18 @@ class RPGCog(MyCog):
 						brief='Find a battle',
 						aliases=['bt'])
 	async def combat_battle(self, ctx):
+		added = False
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to battle')
 		if p.current_character.current_area is None:
 			return await ctx.send('You need to be in an area before you can battle')
-		if p.current_character._death_timer > dt.now():
+		if p.current_character.death_timer > dt.now():
 			return await ctx.send(f'**{p.current_character.name}** is dead for another **{format_remaining_time(p.current_character._death_timer)}**')
 		cb = combat.Combat(p.current_character)
 		msg = await ctx.send(embed=cb.embed)
 		await msg.add_reaction(attack_emoji)
-		if p.current_character._spells:
+		if p.current_character.spells:
 			await msg.add_reaction(spell1_emoji)
 		await msg.add_reaction(run_emoji)
 		while True:
@@ -288,27 +289,31 @@ class RPGCog(MyCog):
 			def is_combat_icon(m):
 				return all([
 					(m.emoji.name in [attack_emoji, run_emoji, 'spell1']),
-					m.member.id != self.bot.user.id,
+					m.user_id != self.bot.user.id,
 					m.message_id == msg.id,
-					m.member == ctx.author
+					m.user_id == ctx.author.id
 				])
 
 			def is_spell_slot_icon(m):
 				return all([
 					(m.emoji.name in ['spell1', 'spell2', 'spell3', 'spell4']),
-					m.member.id != self.bot.user.id,
+					m.user_id != self.bot.user.id,
 					m.message_id == msg.id,
-					m.member == ctx.author
+					m.user_id == ctx.author.id
 				])
 
 			while not cb.winner:
 				try:
-					react = await self.bot.wait_for('raw_reaction_add', check=is_combat_icon, timeout=600)
+					if added:
+						react = await self.bot.wait_for('raw_reaction_remove', check=is_combat_icon, timeout=120)
+						added = False
+					else:
+						react = await self.bot.wait_for('raw_reaction_add', check=is_combat_icon, timeout=120)
+						added = True
 				except asyncio.TimeoutError:
-					log.debug('Timeout, breaking')
+					await msg.clear_reactions()
 					break
 				if react.emoji.name == attack_emoji:
-					await msg.remove_reaction(attack_emoji, react.member)
 					cb.character_combat('Attack')
 				elif react.emoji.name == 'spell1':
 					await msg.clear_reactions()
@@ -318,9 +323,8 @@ class RPGCog(MyCog):
 						await msg.add_reaction(spell_emojis[i])
 					await msg.edit(embed=Page('Which spell?', desc, colour=(150, 150, 150)).embed)
 					try:
-						react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=600)
+						react = await self.bot.wait_for('raw_reaction_add', check=is_spell_slot_icon, timeout=120)
 					except asyncio.TimeoutError:
-						log.debug('Timeout, breaking')
 						await msg.clear_reactions()
 						await msg.add_reaction(attack_emoji)
 						await msg.add_reaction(spell1_emoji)

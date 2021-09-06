@@ -45,17 +45,17 @@ def add_character(id, guild_id, name, profession, chest_id, legs_id, weapon_id, 
 		1, # Level
 		0, # Exp
 		0, # Gold
-		None, # Helmet
+		0, # Helmet
 		chest_id, # Chest
 		legs_id, # Legs
-		None, # Boots
-		None, # Gloves
-		None, # Amulet
-		None, # Ring
+		0, # Boots
+		0, # Gloves
+		0, # Amulet
+		0, # Ring
 		weapon_id,
 		off_hand_id
 	)
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', char.to_dict().values())
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', list(char.to_dict().values()))
 	return char
 
 def delete_character(id, guild_id, name):
@@ -64,9 +64,6 @@ def delete_character(id, guild_id, name):
 ###########
 # Classes #
 ###########
-# TODO: Remove underscore attrs and make them accessible as the type they'll be
-# I.e. make current death_timer a datetime and inventory a dict
-# Handle the conversions from db in the __init__ and conversions to db in to_dict
 class Character:
 	def __init__(self, 
 				player_id,
@@ -112,7 +109,7 @@ class Character:
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] * 10 if 0 > current_con else current_con
 		self.current_mp = self.stats['INT'] * 5 if 0 > current_mp else current_mp
-		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
+		self.current_area = get_area(current_area) if isinstance(current_area, str) else current_area
 		self.death_timer = dt.fromtimestamp(death_timer) if isinstance(death_timer, int) else death_timer
 		self.inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
 		self.spells = self.parse_spells(spells) if isinstance(spells, str) else spells
@@ -130,16 +127,16 @@ class Character:
 			'exp': self.exp,
 			'gold': self.gold,
 			'helmet': self.helmet.id if self.helmet else 0,
-			'chest': self.chest if self.chest else 0,
-			'legs': self.legs if self.legs else 0,
-			'boots': self.boots if self.boots else 0,
-			'gloves': self.gloves if self.gloves else 0,
-			'amulet': self.amulet if self.amulet else 0,
-			'ring': self.ring if self.ring else 0,
-			'weapon': self.weapon if self.weapon else 0,
-			'off_hand': self.off_hand if self.off_hand else 0,
+			'chest': self.chest.id if self.chest else 0,
+			'legs': self.legs.id if self.legs else 0,
+			'boots': self.boots.id if self.boots else 0,
+			'gloves': self.gloves.id if self.gloves else 0,
+			'amulet': self.amulet.id if self.amulet else 0,
+			'ring': self.ring.id if self.ring else 0,
+			'weapon': self.weapon.id if self.weapon else 0,
+			'off_hand': self.off_hand.id if self.off_hand else 0,
 			'current_con': self.current_con,
-			'current_area': self.current_area,
+			'current_area': self.current_area.name if self.current_area else '',
 			'death_timer': self.death_timer.timestamp(),
 			'inventory': self.inventory_to_db(),
 			'current_mp': self.current_mp,
@@ -181,14 +178,7 @@ class Character:
 		col_val = []
 		for k in current.keys():
 			if current[k] != self.cached[k]:
-				if isinstance(current[k], Equipment):
-					col_val.append((k, current[k].id))
-				elif isinstance(current[k], Area):
-					col_val.append((k, current[k].name))
-				elif isinstance(current[k], Profession):
-					col_val.append((k, current[k].name))
-				else:
-					col_val.append((k, current[k]))
+				col_val.append((k, current[k]))
 		if not col_val:
 			return
 		sql_str += ', '.join([f'{col} = ?' for col, _ in col_val])
@@ -361,7 +351,7 @@ class Character:
 		pages = []
 
 		# Character Overview
-		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self._death_timer > dt.now() else ""}\n'
+		splash_desc = f'**Level:** {self.level} | **EXP:** {self.exp} ({self.exp_to_next_level}){" :skull_crossbones:" if self.death_timer > dt.now() else ""}\n'
 		splash_desc += f'**Current HP:** {self.current_con}/{self.stats["CON"] * 10} | **Current MP:** {self.current_mp}/{self.stats["INT"] * 5}\n'
 		splash_desc += f'**Current Area:** {self.current_area.name if self.current_area else ""}\n'
 		splash_desc += f'**Gold:** {self.gold}\n\n'
@@ -379,7 +369,7 @@ class Character:
 		splash_desc += f'**Weapon:** {self.weapon.name if self.weapon else ""}\n'
 		splash_desc += f'**Off Hand:** {self.off_hand.name if self.off_hand else ""}\n\n'
 		splash_desc += '__**Spells**__\n'
-		splash_desc += '\n'.join([s.name for s in self._spells])
+		splash_desc += '\n'.join([s.name for s in self.spells])
 		splash_page = Page(f'{self.name} - {self.profession.name}', splash_desc, colour=(150, 150, 150))
 		pages.append(splash_page)
 
@@ -458,7 +448,7 @@ class Character:
 		return dmg
 
 	def heal(self):
-		if 0 <= (dt.now() - self._death_timer).total_seconds() <= 600:
+		if 0 <= (dt.now() - self.death_timer).total_seconds() <= 600:
 			self.current_con = self.stats['CON'] * 10
 			self.current_mp = self.stats['INT'] * 5
 		if self.stats['CON'] * 10 != self.current_con:

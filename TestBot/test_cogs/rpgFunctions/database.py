@@ -179,7 +179,7 @@ def migrate_db(version):
 migration_steps = {
 	'2.0.0': [
 		"alter table characters add column inventory text default '{}'",
-		"alter table characters add column current_mp integer default 0",
+		"alter table characters add column current_mp integer default -1",
 		"alter table characters add column spells text default '[]'",
 		'create table spells (name text, profession text, level integer, min_damage integer, max_damage integer, stat text, cost integer)',
 		'''insert into spells values
@@ -202,5 +202,5 @@ migration_steps = {
 			,('Sneak','Rogue',2,7,8,'DEX',3)
 			,('Backstab','Rogue',5,7,12,'DEX',5)
 			,('Tendon Slash','Rogue',10,25,35,'DEX',10);'''
-	]
+	] # Add the new area loot format
 }
