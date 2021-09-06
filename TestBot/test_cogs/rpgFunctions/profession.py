@@ -4,15 +4,6 @@ from .equipment import Equipment, get_equipment
 #############
 # Constants #
 #############
-all_professions = [
-	'warrior',
-	'wizard',
-	'archer',
-	'rogue',
-	'druid',
-	'artificer',
-	'paladin'
-]
 # TODO: Convert this to an Enum
 light_professions = ['Archer', 'Wizard']
 medium_professions = ['Rogue']
@@ -21,6 +12,10 @@ heavy_professions = ['Warrior']
 #############
 # Functions #
 #############
+def all_professions():
+	df = sql('rpg', 'select name from professions')
+	return [d['name'].lower() for d in df.to_dict('records')]
+
 def get_professions():
 	df = sql('rpg', 'select * from professions')
 	return [Profession(**d) for d in df.to_dict('records')]

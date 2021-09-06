@@ -111,7 +111,8 @@ class RPGCog(MyCog):
 			marked_for_deletion = await self.get_reply(ctx, msg, bool)
 			if marked_for_deletion is None:
 				return await ctx.send(f'You will keep **{existing_char.name}**')
-		while prof.lower() not in Profession.all_professions:
+		all_professions = Profession.all_professions()
+		while prof.lower() not in all_professions:
 			prof = await self.get_reply(ctx, 'What is your desired profession?')
 			if prof is None:
 				return
