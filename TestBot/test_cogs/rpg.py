@@ -11,7 +11,7 @@ from .rpgFunctions import character as Character
 from .rpgFunctions import profession as Profession
 from .rpgFunctions import player as Player
 from .rpgFunctions import equipment
-from .rpgFunctions import area
+from .rpgFunctions import area as Area
 from .rpgFunctions import combat
 from .rpgFunctions import consumable
 from .rpgFunctions import spell
@@ -217,12 +217,9 @@ class RPGCog(MyCog):
 		profs = Profession.get_professions()
 		return await self.paginated_embeds(ctx, [p.page for p in profs])
 
-	# TODO: Add info command
-	@commands.command(name='info',
-					pass_context=True,
-					description='View all available professions for characters',
-					brief='View professions',
-					aliases=['i'])
+	@profession_main.command(name='info',
+							pass_context=True,
+							aliases=['i'])
 	async def profession_info(self, ctx, name):
 		prof = Profession.get_profession(name)
 		if not prof:
@@ -230,37 +227,37 @@ class RPGCog(MyCog):
 		return await self.paginated_embeds(ctx, prof.page)
 
 	## Areas
-	# TODO: Create area group
-	# TODO: Add info command
-	# TODO: Add move command
-	@commands.command(name='viewareas',
+	@commands.group(name='area',
 					pass_context=True,
-					description='View all the areas you can travel to',
-					brief='View areas',
-					aliases=['va', 'areas'])
-	# TODO: Split into view_areas (default) and view_area (info)
-	async def view_areas(self, ctx, name: typing.Optional[str] = ''):
-		areas = {a.name: a for a in area.get_areas()}
-		a = areas.get(name, None)
-		if not a:
-			return await self.paginated_embeds(ctx, [a.page for a in areas.values()])
-		return await self.paginated_embeds(ctx, a.page)
+					invoke_without_command=True,
+					description='Main command for area related functions',
+					brief='Area functions')
+	async def area_main(self, ctx):
+		areas = Area.get_areas()
+		return await self.paginated_embeds(ctx, [a.page for a in areas])
 
-	@commands.command(name='moveareas',
+	@area_main.command(name='info',
 					pass_context=True,
-					description='Move your current character to a different area',
-					brief='Move areas',
-					aliases=['ma', 'move'])
-	async def move_areas(self, ctx, name: typing.Optional[str] = ''):
+					aliases=['i'])
+	async def area_info(self, ctx, name: typing.Optional[str] = ''):
+		area = Area.get_area(name)
+		if not area:
+			return await ctx.send(f'There isn\'t an area with the name **{name}**')
+		return await self.paginated_embeds(ctx, area.page)
+
+	@area_main.command(name='move',
+					pass_context=True,
+					aliases=['m'])
+	async def move_areas(self, ctx, name):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to move areas')
-		ar = await self.get_or_ask_user_for_area(ctx, name)
-		if not ar:
-			return await ctx.send('That area does not exist')
-		p.current_character.current_area = ar
+		area = Area.get_area(name)
+		if not area:
+			return await ctx.send(f'There isn\'t an area with the name **{name}**')
+		p.current_character.current_area = area
 		p.current_character.update()
-		return await ctx.send(f'You moved to **{ar.name}**')
+		return await ctx.send(f'You moved to **{area.name}**')
 
 	## Combat
 	# TODO: Create combat group
