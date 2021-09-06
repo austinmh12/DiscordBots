@@ -2,21 +2,11 @@ from .. import sql, log, BASE_PATH, chunk, Page
 from .equipment import Equipment, get_equipment
 
 #############
-# Constants #
-#############
-# TODO: Convert this to an Enum
-light_professions = ['Archer', 'Wizard']
-medium_professions = ['Rogue']
-heavy_professions = ['Warrior']
-
-#############
 # Functions #
 #############
 def get_professions():
 	df = sql('rpg', 'select * from professions')
 	return [Profession(**d) for d in df.to_dict('records')]
-
-all_professions = [p.name.lower() for p in get_professions()]
 
 def get_profession(name):
 	df = sql('rpg', 'select * from professions where lower(name) = ?', (name.lower(),))
@@ -72,3 +62,8 @@ class Profession:
 			desc += f'**Starting Off Hand:** {self.starting_off_hand.name}'
 		desc += f'\n\n**Weight Class:** {self.weight}'
 		return Page(self.name, desc, colour=(150, 150, 150))
+
+##
+# Constants
+##
+all_professions = [p.name.lower() for p in get_professions()]
