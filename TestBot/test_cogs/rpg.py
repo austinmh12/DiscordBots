@@ -117,35 +117,26 @@ class RPGCog(MyCog):
 				return
 		prof = Profession.get_profession(prof)
 		if prof.weight == 'Light':
-			starting_chest = equipment.get_equipment(10)
-			starting_legs = equipment.get_equipment(11)
+			starting_chest = 10
+			starting_legs = 11
 		elif prof.weight == 'Medium':
-			starting_chest = equipment.get_equipment(8)
-			starting_legs = equipment.get_equipment(9)
+			starting_chest = 8
+			starting_legs = 9
 		else:
-			starting_chest = equipment.get_equipment(5)
-			starting_legs = equipment.get_equipment(6)
-		char = Character.Character(
+			starting_chest = 5
+			starting_legs = 6
+		if existing_char and marked_for_deletion:
+			Character.delete_character(p.id, p.guild_id, existing_char.name)
+		char = Character.add_character(
 			p.id, 
 			p.guild_id, 
 			name, 
-			prof, 
-			1, # level
-			0, # exp
-			0, # gold
-			None, # helmet
-			starting_chest, # chest
-			starting_legs, # legs
-			None, # boots
-			None, # gloves
-			None, # amulet
-			None, # ring
-			prof.starting_weapon,
-			prof.starting_off_hand
+			prof.name, 
+			starting_chest, 
+			starting_legs,
+			prof.starting_weapon.id,
+			prof.starting_off_hand.id if prof.starting_off_hand else 0
 		)
-		if existing_char and marked_for_deletion:
-			Character.delete_character(p.id, p.guild_id, existing_char.name)
-		Character.add_character(char)
 		p.current_character = char
 		p.update()
 		return await self.paginated_embeds(ctx, char.pages)

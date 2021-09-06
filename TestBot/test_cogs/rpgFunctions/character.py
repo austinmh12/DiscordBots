@@ -36,8 +36,27 @@ def get_character(id, guild_id, name):
 		return None
 	return Character(**df.to_dict('records')[0])
 
-def add_character(character):
-	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', character.to_row)
+def add_character(id, guild_id, name, profession, chest_id, legs_id, weapon_id, off_hand_id):
+	char = Character(
+		id,
+		guild_id,
+		name,
+		profession,
+		1, # Level
+		0, # Exp
+		0, # Gold
+		None, # Helmet
+		chest_id, # Chest
+		legs_id, # Legs
+		None, # Boots
+		None, # Gloves
+		None, # Amulet
+		None, # Ring
+		weapon_id,
+		off_hand_id
+	)
+	sql('rpg', 'insert into characters values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', char.to_dict().values())
+	return char
 
 def delete_character(id, guild_id, name):
 	sql('rpg', 'delete from characters where player_id = ? and player_guild_id = ? and name = ?', (id, guild_id, name))
@@ -68,7 +87,7 @@ class Character:
 				off_hand,
 				current_con = -1,
 				current_area = 'Sewer',
-				death_timer = '1999-01-01 00:00:00',
+				death_timer = dt(1999, 1, 1),
 				inventory = {'equipment': [], 'consumables': []},
 				current_mp = -1,
 				spells = '[]'
@@ -76,129 +95,79 @@ class Character:
 		self.player_id = player_id
 		self.player_guild_id = player_guild_id
 		self.name = name
-		self.profession = profession if isinstance(profession, Profession) else get_profession(profession)
+		self.profession = get_profession(profession) if isinstance(profession, str) else profession
 		self.level = level
 		self.exp = exp
 		self.get_next_level_exp()
 		self.gold = gold
-		self.helmet = helmet if isinstance(helmet, Equipment) else get_equipment(helmet)
-		self.chest = chest if isinstance(chest, Equipment) else get_equipment(chest)
-		self.legs = legs if isinstance(legs, Equipment) else get_equipment(legs)
-		self.boots = boots if isinstance(boots, Equipment) else get_equipment(boots)
-		self.gloves = gloves if isinstance(gloves, Equipment) else get_equipment(gloves)
-		self.amulet = amulet if isinstance(amulet, Equipment) else get_equipment(amulet)
-		self.ring = ring if isinstance(ring, Equipment) else get_equipment(ring)
-		self.weapon = weapon if isinstance(weapon, Equipment) else get_equipment(weapon)
-		self.off_hand = off_hand if isinstance(off_hand, Equipment) else get_equipment(off_hand)
+		self.helmet = get_equipment(helmet) if isinstance(helmet, int) else helmet
+		self.chest = get_equipment(chest) if isinstance(chest, int) else chest
+		self.legs = get_equipment(legs) if isinstance(legs, int) else legs
+		self.boots = get_equipment(boots) if isinstance(boots, int) else boots
+		self.gloves = get_equipment(gloves) if isinstance(gloves, int) else gloves
+		self.amulet = get_equipment(amulet) if isinstance(amulet, int) else amulet
+		self.ring = get_equipment(ring) if isinstance(ring, int) else ring
+		self.weapon = get_equipment(weapon) if isinstance(weapon, int) else weapon
+		self.off_hand = get_equipment(off_hand) if isinstance(off_hand, int) else off_hand
 		self.calculate_stats()
 		self.current_con = self.stats['CON'] * 10 if 0 > current_con else current_con
 		self.current_mp = self.stats['INT'] * 5 if 0 > current_mp else current_mp
 		self.current_area = current_area if isinstance(current_area, Area) else get_area(current_area)
-		self._death_timer = dt.strptime(death_timer, '%Y-%m-%d %H:%M:%S') if isinstance(death_timer, str) else death_timer
-		self._inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
-		self._spells = self.parse_spells(spells) if isinstance(spells, str) else spells
+		self.death_timer = dt.fromtimestamp(death_timer) if isinstance(death_timer, int) else death_timer
+		self.inventory = self.parse_inventory(inventory) if isinstance(inventory, str) else inventory
+		self.spells = self.parse_spells(spells) if isinstance(spells, str) else spells
 
 		# Original cached user
-		self.loaded = self.to_dict().copy()
+		self.cached = self.to_dict().copy()
 
-		# Migrations
-		## v2.0.0
-		### Inventory
-		if isinstance(self._inventory, list):
-			log.info('Migrating inventory')
-			self._inventory = {'equipment': self._inventory, 'consumables': []}
-
-	# TODO: Remove
-	@property
-	def death_timer(self):
-		return dt.strftime(self._death_timer, '%Y-%m-%d %H:%M:%S')
-
-	# TODO: Remove
-	@property
-	def inventory(self):
-		if isinstance(self._inventory, list):
-			return json.dumps([i.id for i in self._inventory])
-		ret = {
-			'equipment': [e.id for e in self._inventory['equipment']], 
-			'consumables': [c.id for c in self._inventory['consumables']]
-		}
-		return json.dumps(ret)
-
-	# TODO: Remove
-	@property
-	def spells(self):
-		return json.dumps([s.name for s in self._spells])
-
-	# TODO: Remove
-	@property
-	def to_row(self):
-		return (
-			self.player_id,
-			self.player_guild_id,
-			self.name,
-			self.profession.name,
-			self.level,
-			self.exp,
-			self.gold,
-			self.helmet.id if self.helmet else 0,
-			self.chest.id if self.chest else 0,
-			self.legs.id if self.legs else 0,
-			self.boots.id if self.boots else 0,
-			self.gloves.id if self.gloves else 0,
-			self.amulet.id if self.amulet else 0,
-			self.ring.id if self.ring else 0,
-			self.weapon.id if self.weapon else 0,
-			self.off_hand.id if self.off_hand else 0,
-			self.current_con,
-			self.current_area.name if self.current_area else '',
-			self.death_timer,
-			self.inventory,
-			self.current_mp,
-			self.spells
-		)
-
-	# TODO: Modify to handle database conversions
 	def to_dict(self):
 		return {
 			'player_id': self.player_id,
 			'player_guild_id': self.player_guild_id,
 			'name': self.name,
-			'profession': self.profession,
+			'profession': self.profession.name,
 			'level': self.level,
 			'exp': self.exp,
 			'gold': self.gold,
-			'helmet': self.helmet,
-			'chest': self.chest,
-			'legs': self.legs,
-			'boots': self.boots,
-			'gloves': self.gloves,
-			'amulet': self.amulet,
-			'ring': self.ring,
-			'weapon': self.weapon,
-			'off_hand': self.off_hand,
+			'helmet': self.helmet.id if self.helmet else 0,
+			'chest': self.chest if self.chest else 0,
+			'legs': self.legs if self.legs else 0,
+			'boots': self.boots if self.boots else 0,
+			'gloves': self.gloves if self.gloves else 0,
+			'amulet': self.amulet if self.amulet else 0,
+			'ring': self.ring if self.ring else 0,
+			'weapon': self.weapon if self.weapon else 0,
+			'off_hand': self.off_hand if self.off_hand else 0,
 			'current_con': self.current_con,
 			'current_area': self.current_area,
-			'death_timer': self.death_timer,
-			'inventory': self.inventory,
+			'death_timer': self.death_timer.timestamp(),
+			'inventory': self.inventory_to_db(),
 			'current_mp': self.current_mp,
-			'spells': self.spells
+			'spells': self.spells_to_db()
 		}
+
+	def inventory_to_db(self):
+		ret = {
+			'equipment': [e.id for e in self.inventory['equipment']], 
+			'consumables': [c.id for c in self.inventory['consumables']]
+		}
+		return json.dumps(ret)
 
 	def parse_inventory(self, inv):
 		inventory = json.loads(inv)
-		if isinstance(inventory, list):
-			return [get_equipment(i) for i in inventory]
-		else:
-			ret = {'equipment': [], 'consumables': []}
-			for e in inventory['equipment']:
-				eq = get_equipment(e)
-				if eq:
-					ret['equipment'].append(eq)
-			for c in inventory['consumables']:
-				co = get_consumable(c)
-				if co:
-					ret['consumables'].append(co)
-			return ret
+		ret = {'equipment': [], 'consumables': []}
+		for e in inventory['equipment']:
+			eq = get_equipment(e)
+			if eq:
+				ret['equipment'].append(eq)
+		for c in inventory['consumables']:
+			co = get_consumable(c)
+			if co:
+				ret['consumables'].append(co)
+		return ret
+
+	def spells_to_db(self):
+		return json.dumps([s.name for s in self.spells])
 
 	def parse_spells(self, spells):
 		spells = json.loads(spells)
@@ -206,10 +175,12 @@ class Character:
 	
 	def update(self):
 		current = self.to_dict()
+		if current == self.cached:
+			return
 		sql_str = 'update characters set '
 		col_val = []
 		for k in current.keys():
-			if current[k] != self.loaded[k]:
+			if current[k] != self.cached[k]:
 				if isinstance(current[k], Equipment):
 					col_val.append((k, current[k].id))
 				elif isinstance(current[k], Area):
@@ -218,12 +189,12 @@ class Character:
 					col_val.append((k, current[k].name))
 				else:
 					col_val.append((k, current[k]))
+		if not col_val:
+			return
 		sql_str += ', '.join([f'{col} = ?' for col, _ in col_val])
 		sql_str += ' where player_id = ? and player_guild_id = ? and name = ?'
 		vals = [v for _, v in col_val]
 		vals.extend([self.player_id, self.player_guild_id, self.name])
-		if not col_val:
-			return
 		return sql('rpg', sql_str, vals)
 
 	def get_next_level_exp(self):
