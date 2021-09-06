@@ -12,13 +12,11 @@ heavy_professions = ['Warrior']
 #############
 # Functions #
 #############
-def all_professions():
-	df = sql('rpg', 'select name from professions')
-	return [d['name'].lower() for d in df.to_dict('records')]
-
 def get_professions():
 	df = sql('rpg', 'select * from professions')
 	return [Profession(**d) for d in df.to_dict('records')]
+
+all_professions = [p.name.lower() for p in get_professions()]
 
 def get_profession(name):
 	df = sql('rpg', 'select * from professions where lower(name) = ?', (name.lower(),))
