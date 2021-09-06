@@ -128,10 +128,8 @@ class MyCog(commands.Cog):
 					break
 				if react.emoji.name == NEXT:
 					idx = (idx + 1) % len(pages)
-					await msg.remove_reaction(NEXT, react.member)
 				else:
 					idx = (idx - 1) % len(pages)
-					await msg.remove_reaction(BACK, react.member)
 				emb = pages[idx].embed
 				emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 				await msg.edit(content=content, embed=emb)
