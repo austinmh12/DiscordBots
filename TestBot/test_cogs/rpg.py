@@ -396,16 +396,25 @@ class RPGCog(MyCog):
 		...
 
 	## Equipment/Inventory
-	# TODO: Create inventory group
-	# TODO: Add equipment command
-	# TODO: Add consumables command
-	# TODO: Add spells command
-	@commands.command(name='equipment',
+	@commands.group(name='inventory',
 					pass_context=True,
-					description='View your equipment',
-					brief='Equipment',
-					aliases=['eq'])
-	async def _equipment(self, ctx):
+					invoke_without_command=True,
+					description='Main command for inventory related functions',
+					brief='Inventory functions',
+					aliases=['inv'])
+	async def inventory_main(self, ctx):
+		msg = 'Here are the available inventory commands:\n'
+		msg += '**.inventory equipment** to view your current character\'s equipment\n'
+		msg += '**.inventory consumables** to view your current character\'s consumables\n'
+		msg += '**.inventory spells** to view your current character\'s spells'
+		return await ctx.send(msg)
+
+	@inventory_main.command(name='equipment',
+							pass_context=True,
+							description='View your equipment',
+							brief='Equipment',
+							aliases=['eq'])
+	async def inventory_equipment(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an equipment')
@@ -543,12 +552,12 @@ class RPGCog(MyCog):
 			emb.set_footer(text=f'{idx + 1}/{len(pages)}')
 			await msg.edit(content='', embed=emb)
 
-	@commands.command(name='consumables',
-					pass_context=True,
-					description='View your consumables',
-					brief='Consumables',
-					aliases=['con'])
-	async def _consumables(self, ctx):
+	@inventory_main.command(name='consumables',
+							pass_context=True,
+							description='View your consumables',
+							brief='Consumables',
+							aliases=['con'])
+	async def inventory_consumables(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
 			return await ctx.send('You need a character to view an consumables')
@@ -630,11 +639,11 @@ class RPGCog(MyCog):
 			return await ctx.send('You have nothing equipped in that slot.')
 
 	## Spells
-	@commands.command(name='spells',
-					pass_context=True,
-					description='Show the spells your character has learned',
-					brief='Show learned spells',
-					aliases=['sp'])
+	@inventory_main.command(name='spells',
+							pass_context=True,
+							description='Show the spells your character has learned',
+							brief='Show learned spells',
+							aliases=['sp'])
 	async def spells(self, ctx):
 		p = Player.get_player(ctx.author.id, ctx.author.guild.id)
 		if p.current_character is None:
