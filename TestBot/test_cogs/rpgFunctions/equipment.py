@@ -1,6 +1,7 @@
 from .. import sql, log, BASE_PATH, chunk, Page
-from . import *
+from math import floor, ceil
 from random import randint, choice
+from abc import ABC, abstractmethod
 
 #############
 # Constants #
@@ -216,7 +217,7 @@ def generate_random_magic_properties(type, rarity, level):
 # Classes #
 ###########
 # TODO: Convert this to an ABC
-class Equipment:
+class Equipment(ABC):
 	def __init__(self,
 				id,
 				name,
@@ -229,7 +230,12 @@ class Equipment:
 				con_bonus,
 				def_bonus,
 				atk_bonus,
-				**kwargs
+				weight,
+				defense,
+				min_damage,
+				max_damage,
+				stat,
+				crit_chance
 	):
 		self.id = id
 		self.name = name
@@ -259,20 +265,28 @@ class Equipment:
 		desc += f'**ATK:** {self.atk_bonus} {self.stat_indicator(self.atk_bonus, equipment.atk_bonus)} | **DEF:** {self.def_bonus} {self.stat_indicator(self.def_bonus, equipment.def_bonus)}\n\n'
 		return desc
 
-	def __eq__(self, e):
-		if e is None:
-			return False
-		return self.id == e.id
-
-class Weapon(Equipment):
-	def __init__(self, min_damage, max_damage, stat, crit_chance, **kwargs):
-		super().__init__(**kwargs)
-		self.min_damage = min_damage
-		self.max_damage = max_damage
-		self.stat = stat
-		self.crit_chance = crit_chance
+	@property
+	@abstractmethod
+	def price(self):
+		pass
 
 	@property
+	@abstractmethod
+	def equipment_rating(self):
+		pass
+
+	@abstractmethod
+	def equipment_rating_with_character_stats(self, character):
+		pass
+
+	@abstractmethod
+	def compare(self, character):
+		pass
+
+	@abstractmethod
+	def stat_page(self, character):
+		pass
+
 	def to_row(self):
 		return (
 			self.id,
@@ -286,14 +300,20 @@ class Weapon(Equipment):
 			self.con_bonus,
 			self.def_bonus,
 			self.atk_bonus,
-			'',
-			0,
+			self.weight,
+			self.defense,
 			self.min_damage,
 			self.max_damage,
 			self.stat,
 			self.crit_chance
 		)
 
+	def __eq__(self, e):
+		if e is None:
+			return False
+		return self.id == e.id
+
+class Weapon(Equipment):
 	@property
 	def price(self):
 		return floor(self.equipment_rating + rarity_price_bonus[self.rarity] * self.level)
@@ -310,7 +330,7 @@ class Weapon(Equipment):
 		average_damage = self.avg_dmg + floor(character.stats[self.stat] / 10)
 		return (1 - self.crit_chance) * average_damage + self.crit_chance * 1.5 * average_damage
 
-	def compare_weapons(self, character):
+	def compare(self, character):
 		if not character.weapon:
 			return ''
 		rating = 1 - (character.weapon.equipment_rating_with_character_stats(character) / self.equipment_rating_with_character_stats(character))
@@ -339,33 +359,6 @@ class Weapon(Equipment):
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
 class Armour(Equipment):
-	def __init__(self, weight, defense, **kwargs):
-		super().__init__(**kwargs)
-		self.weight = weight
-		self.defense = defense
-
-	@property
-	def to_row(self):
-		return (
-			self.id,
-			self.name,
-			self.rarity,
-			self.type,
-			self.level,
-			self.str_bonus,
-			self.dex_bonus,
-			self.int_bonus,
-			self.con_bonus,
-			self.def_bonus,
-			self.atk_bonus,
-			self.weight,
-			self.defense,
-			0,
-			0,
-			'',
-			0
-		)
-
 	@property
 	def price(self):
 		return floor(self.level * rarity_price_bonus[self.rarity] * (1 + self.equipment_rating))
@@ -391,7 +384,7 @@ class Armour(Equipment):
 		else:
 			return character.off_hand
 
-	def compare_armour(self, character):
+	def compare(self, character):
 		if self.weight != character.profession.weight:
 			return ':x:'
 		equipment = self.get_character_equipment(character)
@@ -422,40 +415,25 @@ class Armour(Equipment):
 		return Page(self.name, desc, colour=rarity_colour[self.rarity])
 
 class Jewelry(Equipment):
-	def __init__(self, **kwargs):
-		super().__init__(**kwargs)
-
-	@property
-	def to_row(self):
-		return (
-			self.id,
-			self.name,
-			self.rarity,
-			self.type,
-			self.level,
-			self.str_bonus,
-			self.dex_bonus,
-			self.int_bonus,
-			self.con_bonus,
-			self.def_bonus,
-			self.atk_bonus,
-			'',
-			0,
-			0,
-			0,
-			'',
-			0
-		)
-
 	@property
 	def price(self):
 		return floor(self.level * rarity_price_bonus[self.rarity])
+
+	@property
+	def equipment_rating(self):
+		return 0
+
+	def equipment_rating_with_character_stats(self, character):
+		return 0
 
 	def get_character_equipment(self, character):
 		if self.type == 'Ring':
 			return character.ring
 		else:
 			return character.amulet
+
+	def compare(self, character):
+		return ''
 
 	def stat_page(self, character):
 		eq = self.get_character_equipment(character)
