@@ -33,11 +33,40 @@ intents = discord.Intents.default()
 intents.members = True
 client = Bot(command_prefix=commands.when_mentioned_or('.'), intents=intents, help_command=None)
 
+amogus_alphabet = {
+	'a': 881569779637452811,
+	'b': 881573421161537546,
+	'c': 881570972367486976,
+	'd': 881573101635256351,
+	'e': 881565979233107980,
+	'f': 881573138348003339,
+	'g': 881569855311073371,
+	'h': 881565907820892230,
+	'i': 881570959188975636,
+	'j': 881573167435493436,
+	'k': 881570985948618782,
+	'l': 881573187400396870,
+	'm': 881569802567688212,
+	'n': 881573209596629002,
+	'o': 881569826479435806,
+	'p': 881573226789105665,
+	'q': 881573242979094528,
+	'r': 881570944160788561,
+	's': 881565820097032322,
+	't': 881573258988773417,
+	'u': 881569871194882108,
+	'v': 881573272481853512,
+	'w': 881573289921765456,
+	'x': 881573308833878066,
+	'y': 881573324348612629,
+	'z': 881573340903514195
+}
+
 @client.event
 async def on_ready():
 	log.info('Client is ready.')
-	# for ch in client.get_all_channels():
-	# 	log.debug(f'{ch.name} - {ch.id}')
+	for ch in client.emojis:
+		log.debug(f'{ch.id} - {ch.name}')
 
 @client.event
 async def on_reaction_add(r, u):
@@ -99,11 +128,11 @@ async def big_blue_letters(ctx, *message):
 				brief='Big blue letters')
 async def amogus_letters(ctx, *message):
 	blue_words = []
-	message = '   '.join(message).lower()
+	message = ' '.join(message).lower()
 	await ctx.message.delete()
 	words = message.split(' ')
 	for word in words:
-		new_word = ' '.join([f':amoogus_{letter}:' for letter in list(word) if letter in ascii_lowercase])
+		new_word = ''.join([f'<:amoogus_{letter}:{amogus_alphabet.get(letter)}>' for letter in list(word) if letter in ascii_lowercase])
 		blue_words.append(new_word)
 	msgs = []
 	msg = ''
