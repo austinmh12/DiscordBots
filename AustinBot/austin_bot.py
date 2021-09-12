@@ -99,11 +99,11 @@ async def big_blue_letters(ctx, *message):
 				brief='Big blue letters')
 async def amogus_letters(ctx, *message):
 	blue_words = []
-	message = ' '.join(message).lower()
+	message = '   '.join(message).lower()
 	await ctx.message.delete()
 	words = message.split(' ')
 	for word in words:
-		new_word = ''.join([f':amoogus_{letter}:' for letter in list(word) if letter in ascii_lowercase])
+		new_word = ' '.join([f':amoogus_{letter}:' for letter in list(word) if letter in ascii_lowercase])
 		blue_words.append(new_word)
 	msgs = []
 	msg = ''
