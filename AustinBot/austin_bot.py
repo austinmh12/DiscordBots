@@ -93,6 +93,31 @@ async def big_blue_letters(ctx, *message):
 		if msg:
 			await ctx.send(msg)
 
+@client.command(name='amogus',
+				pass_context=True,
+				description='Replaces your message with big blue letters',
+				brief='Big blue letters')
+async def amogus_letters(ctx, *message):
+	blue_words = []
+	message = ' '.join(message).lower()
+	await ctx.message.delete()
+	words = message.split(' ')
+	for word in words:
+		new_word = ''.join([f':amoogus_{letter}:' for letter in list(word) if letter in ascii_lowercase])
+		blue_words.append(new_word)
+	msgs = []
+	msg = ''
+	for word in blue_words:
+		tmp = f'{word}   '
+		if len(msg) + len(tmp) > 2000:
+			msgs.append(msg)
+			msg = ''
+		msg += tmp
+	msgs.append(msg)
+	for msg in msgs:
+		if msg:
+			await ctx.send(msg)
+
 @client.command()
 async def help(ctx, cog_name: typing.Optional[str] = 'PokeRoulette'):
 	cog = client.cogs.get(cog_name, None)
